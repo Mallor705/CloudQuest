@@ -1,4 +1,4 @@
-﻿﻿# Sync-Save.ps1
+﻿# Sync-Save.ps1
 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
