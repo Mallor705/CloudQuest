@@ -1,90 +1,103 @@
 # ER_Sync.ps1
+# Versão 4.0 - Notificações na Bandeja do Sistema
 
 # Configurações
-$RclonePath = "D:\messi\Documents\rclone\rclone.exe"    #Diretorio do rclone
-$CloudRemote = "onedrive"                               # Nome do remote configurado no rclone
-$CloudDir = "SaveGames/EldenRing"                       # Diretório remoto no OneDrive
-$LocalDir = "$env:APPDATA\EldenRing"                    # Diretório local para saves
-$GameProcess = "eldenring"                              # Nome do processo do jogo
-$GameExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"  # Caminho do executável do jogo
+$RclonePath = "D:\messi\Documents\rclone\rclone.exe"
+$CloudRemote = "onedrive"
+$CloudDir = "SaveGames/EldenRing"
+$LocalDir = "$env:APPDATA\EldenRing"
+$GameProcess = "eldenring"
+$GameExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
 
-
-# Criar diretórios se não existirem
-if (-not (Test-Path -Path $LocalDir)) {
-    try {
-        New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
-    }   
-    catch {
-        Write-Host "Erro ao criar diretório local: $_" -ForegroundColor Red
-        exit 1
-    }
-}
-
-# Criar diretório remoto
-try {
-    & $RclonePath mkdir "$($CloudRemote):$($CloudDir)"
-}
-catch {
-    Write-Host "Erro ao criar diretório remoto: $_" -ForegroundColor Red
+# Verificar modo de execução
+if (-not [Environment]::UserInteractive) {
+    Write-Warning "Execute este script diretamente (não como serviço)!"
     exit 1
 }
 
-# Função de sincronização bidirecional
-function Sync-Saves {
-    Write-Host "Sincronizando saves..."
+# Carregar biblioteca para notificações
+Add-Type -AssemblyName System.Windows.Forms
 
-    # Fase 1: Baixar da nuvem
-    try {
-        & $RclonePath copy "$($CloudRemote):$($CloudDir)/" "$LocalDir/" `
-            --progress `
-            --update `
-            --create-empty-src-dirs
-    }
-    catch {
-        Write-Host "Erro ao baixar da nuvem: $_" -ForegroundColor Red
-        exit 1
-    }
+# Configurar ícone na bandeja
+$script:notifyIcon = New-Object System.Windows.Forms.NotifyIcon
+$notifyIcon.Icon = [System.Drawing.SystemIcons]::Information
+$notifyIcon.Visible = $true
 
-    # Fase 2: Enviar para a nuvem
+# Função de notificação na bandeja
+function Show-BalloonTip {
+    param(
+        [string]$Title,
+        [string]$Message,
+        [string]$Type = "Info"
+    )
+
+    $notifyIcon.BalloonTipTitle = $Title
+    $notifyIcon.BalloonTipText = $Message
+    $notifyIcon.BalloonTipIcon = [System.Windows.Forms.ToolTipIcon]::$Type
+    $notifyIcon.ShowBalloonTip(3000)
+    Start-Sleep -Seconds 2
+}
+
+# Criar diretório local
+if (-not (Test-Path -Path $LocalDir)) {
     try {
-        & $RclonePath copy "$LocalDir/" "$($CloudRemote):$($CloudDir)/" `
-            --progress `
-            --update `
-            --create-empty-src-dirs
-    }
+        New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
+        Show-BalloonTip -Title "Sync-Save" -Message "Diretório local criado" -Type "Info"
+    }   
     catch {
-        Write-Host "Erro ao enviar para a nuvem: $_" -ForegroundColor Red
+        Show-BalloonTip -Title "ERRO Sync-Save" -Message "Falha ao criar diretório: $_" -Type "Error"
         exit 1
     }
 }
 
-# Etapa 1: Sincronização inicial
-Sync-Saves
+# Função Rclone oculta
+function Invoke-RcloneCommand {
+    param($Arguments)
+    $process = Start-Process -FilePath $RclonePath -ArgumentList $Arguments -PassThru -WindowStyle Hidden -Wait
+    if ($process.ExitCode -ne 0) {
+        throw "Erro Rclone (Código $($process.ExitCode))"
+    }
+}
 
-# Etapa 2: Iniciar o jogo
-Write-Host "Iniciando o jogo..."
-Start-Process -FilePath $GameExePath -PassThru
+# Processo de sincronização
+function Sync-Saves {
+    Show-BalloonTip -Title "Sync-Save" -Message "Iniciando sincronização..." -Type "Info"
+    
+    try {
+        # Download da nuvem
+        Invoke-RcloneCommand "copy `"$($CloudRemote):$($CloudDir)/`" `"$LocalDir/`" --update --create-empty-src-dirs"
+        # Upload para nuvem
+        Invoke-RcloneCommand "copy `"$LocalDir/`" `"$($CloudRemote):$($CloudDir)/`" --update --create-empty-src-dirs"
+        Show-BalloonTip -Title "Sync-Save" -Message "Sincronização concluída" -Type "Info"
+    }
+    catch {
+        Show-BalloonTip -Title "ERRO Sync-Save" -Message "Falha na sincronização: $_" -Type "Error"
+        exit 1
+    }
+}
 
-# Esperar inicialização do processo
-Write-Host "Aguardando o jogo iniciar..."
-do {
-    Start-Sleep -Seconds 5
-    $process = Get-Process -Name $GameProcess -ErrorAction SilentlyContinue
-} until ($process)
+# Execução principal
+try {
+    Sync-Saves
+    
+    # Iniciar jogo
+    Show-BalloonTip -Title "Sync-Save" -Message "Iniciando Elden Ring..." -Type "Info"
+    Start-Process -FilePath $GameExePath -PassThru
+    
+    # Monitorar processo
+    while ($null -ne (Get-Process -Name $GameProcess -ErrorAction SilentlyContinue)) {
+        Start-Sleep -Seconds 5
+    }
 
-# Etapa 3: Monitorar fechamento do jogo
-Write-Host "Aguardando o jogo fechar..."
-do {
-    Start-Sleep -Seconds 5
-    $process = Get-Process -Name $GameProcess -ErrorAction SilentlyContinue
-} while ($process)
-
-# Garantir liberação de recursos
-Start-Sleep -Seconds 1
-
-# Etapa 4: Sincronização final
-Sync-Saves
-
-# Manter terminal aberto
-Write-Host "Sincronização concluída!"
-# Read-Host -Prompt "Pressione Enter para sair..."
+    Sync-Saves
+    Show-BalloonTip -Title "Sync-Save" -Message "Processo finalizado" -Type "Info"
+}
+catch {
+    Show-BalloonTip -Title "ERRO Fatal" -Message "$_" -Type "Error"
+    exit 1
+}
+finally {
+    # Limpeza
+    $notifyIcon.Visible = $false
+    $notifyIcon.Dispose()
+}
