@@ -32,8 +32,6 @@ function Write-Log {
 
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
-# NOTIFICAÇÕES PERSONALIZADAS
-# ====================================================
 # NOTIFICAÇÕES PERSONALIZADAS (ESTILO STEAM)
 # ====================================================
 function Show-CustomNotification {
@@ -60,7 +58,7 @@ function Show-CustomNotification {
         [int]($screen.Height - $formHeight - 20)
     )
     $form.TopMost = $true
-    $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46) # Cor de fundo estilo Steam
+    $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46)
 
     # Painel principal
     $panel = New-Object System.Windows.Forms.Panel
@@ -68,11 +66,12 @@ function Show-CustomNotification {
     $panel.BackColor = $form.BackColor
     $form.Controls.Add($panel)
 
-    # Ícone (usando ícone de nuvem do sistema)
+    # Ícone
     $iconSize = 24
-    $icon = [System.Drawing.SystemIcons]::Information.ToBitmap() # Ícone genérico (ajuste conforme necessidade)
-    if ($Type -eq "error") {
-        $icon = [System.Drawing.SystemIcons]::Error.ToBitmap()
+    $icon = if ($Type -eq "error") {
+        [System.Drawing.SystemIcons]::Error.ToBitmap()
+    } else {
+        [System.Drawing.SystemIcons]::Information.ToBitmap()
     }
 
     $iconBox = New-Object System.Windows.Forms.PictureBox
@@ -93,22 +92,19 @@ function Show-CustomNotification {
 
     $lblMessage = New-Object System.Windows.Forms.Label
     $lblMessage.Font = New-Object System.Drawing.Font("Segoe UI", 9)
-    $lblMessage.ForeColor = [System.Drawing.Color]::FromArgb(200, 200, 200) # Cinza claro
+    $lblMessage.ForeColor = [System.Drawing.Color]::FromArgb(200, 200, 200)
     $lblMessage.Location = New-Object System.Drawing.Point($textX, 30)
     $lblMessage.Size = New-Object System.Drawing.Size([int]($formWidth - $textX - 10), 30)
     $lblMessage.Text = $Message
     $panel.Controls.Add($lblMessage)
 
-    # Temporizador (3 segundos)
-    $timer = New-Object System.Windows.Forms.Timer
-    $timer.Interval = 3000
-    $timer.Add_Tick({ 
-        $form.Close()
-        $timer.Dispose()
-    })
-    $timer.Start()
-
-    $form.ShowDialog()
+    # Retornar o formulário para controle externo
+    $form.Add_Shown({ $form.Activate() })
+    $form.ShowInTaskbar = $false
+    
+    # Exibir e retornar o objeto
+    $form.Show()
+    return $form
 }
 
 # VERIFICAÇÕES DO RCLONE
@@ -138,12 +134,13 @@ function Test-RcloneConfig {
     }
 }
 
-# FUNÇÃO PRINCIPAL DO RCLONE
+# FUNÇÃO PRINCIPAL DO RCLONE (MODIFICADA)
 # ====================================================
 function Invoke-RcloneCommand {
     param(
         [string]$Source,
-        [string]$Destination
+        [string]$Destination,
+        [System.Windows.Forms.Form]$NotificationForm
     )
 
     $maxRetries = 3
@@ -192,6 +189,10 @@ function Invoke-RcloneCommand {
 
             $success = $true
             Write-Log -Message "Sincronização bem-sucedida" -Level Info
+            # Fechar notificação ao finalizar
+            if ($success) {
+                $NotificationForm.Close()
+            }
         }
         catch {
             $retryCount++
@@ -200,29 +201,34 @@ function Invoke-RcloneCommand {
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
 
+    # Fechar notificação mesmo em caso de falha
+    $NotificationForm.Close()
+
     if (-not $success) {
         throw "Falha após $maxRetries tentativas: $Source -> $Destination"
     }
 }
 
-# FLUXO DE SINCRONIZAÇÃO
+# FLUXO DE SINCRONIZAÇÃO ATUALIZADO
 # ====================================================
 function Sync-Saves {
     param([string]$Direction)
 
+    $notification = $null
     try {
         switch ($Direction) {
             "down" {
-                Show-CustomNotification -Title "Steam Cloud" -Message "Sincronizando com Nuvem" -Type "sync"
-                Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir
+                $notification = Show-CustomNotification -Title "Steam Cloud" -Message "Sincronizando com Nuvem" -Type "sync"
+                Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir -NotificationForm $notification
             }
             "up" {
-                Show-CustomNotification -Title "Steam Cloud" -Message "Atualizando Nuvem" -Type "update"
-                Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/"
+                $notification = Show-CustomNotification -Title "Steam Cloud" -Message "Atualizando Nuvem" -Type "update"
+                Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/" -NotificationForm $notification
             }
         }
     }
     catch {
+        if ($null -ne $notification) { $notification.Close() }
         Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
         Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
         exit 1
