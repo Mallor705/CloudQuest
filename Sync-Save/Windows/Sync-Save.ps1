@@ -324,25 +324,29 @@ try {
     Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
 
 # Monitorar jogo usando evento WMI (sem polling)
-# Monitorar jogo usando evento WMI (sem polling)
 try {
     Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
 
-    # Declarar variável de script (evita variável global)
+    # Declarar variável de script
     $script:processExited = $false
 
-    # Registrar evento para detectar término do processo
-    $query = "SELECT * FROM Win32_ProcessStopTrace WHERE ProcessID = $($gameProcess.Id)"
+    # Consulta WMI ajustada para evitar acesso negado
+    $query = @"
+    SELECT * FROM __InstanceDeletionEvent WITHIN 1 
+    WHERE TargetInstance ISA 'Win32_Process' 
+    AND TargetInstance.ProcessId = $($gameProcess.Id)
+"@
+
     $action = {
-        Write-Log -Message "Processo finalizado (PID: $($event.SourceEventArgs.NewEvent.ProcessID))" -Level Info
-        $script:processExited = $true  # Altere para escopo de script
+        Write-Log -Message "Processo finalizado (PID: $($event.SourceEventArgs.NewEvent.TargetInstance.ProcessId)" -Level Info
+        $script:processExited = $true
     }
 
-    # Criar assinatura do evento
+    # Registrar evento
     $eventJob = Register-CimIndicationEvent -Query $query -Action $action -ErrorAction Stop
 
-    # Esperar até que o processo termine (com timeout de segurança)
-    $timeout = 5  # ajuste conforme necessidade
+    # Timeout de segurança (60 segundos)
+    $timeout = 60
     $startTime = Get-Date
     
     while ((-not $script:processExited) -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
