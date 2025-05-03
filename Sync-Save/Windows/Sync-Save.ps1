@@ -323,27 +323,49 @@ try {
     # Após detectar o processo do jogo:
     Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
 
-    # Monitorar pelo PID específico
-    try {
-        Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
-        $gameProcess = Get-Process -Id $gameProcess.Id -ErrorAction Stop
-        
-        while (-not $gameProcess.HasExited) {
-            Start-Sleep -Seconds 5
-            $gameProcess.Refresh() # Atualiza o status do processo
-            Write-Log -Message "Processo ainda em execução (PID: $($gameProcess.Id))" -Level Info
-        }
-        
-        Write-Log -Message "Processo finalizado (PID: $($gameProcess.Id))" -Level Info
-    }
-    catch {
-        Write-Log -Message "Erro ao monitorar o processo: $_" -Level Error
-        throw "Falha no monitoramento"
+# Monitorar jogo usando evento WMI (sem polling)
+# Monitorar jogo usando evento WMI (sem polling)
+try {
+    Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
+
+    # Declarar variável de script (evita variável global)
+    $script:processExited = $false
+
+    # Registrar evento para detectar término do processo
+    $query = "SELECT * FROM Win32_ProcessStopTrace WHERE ProcessID = $($gameProcess.Id)"
+    $action = {
+        Write-Log -Message "Processo finalizado (PID: $($event.SourceEventArgs.NewEvent.ProcessID))" -Level Info
+        $script:processExited = $true  # Altere para escopo de script
     }
 
-    # Sincronizar APÓS o processo ser fechado
-    Start-Sleep -Seconds 5  # Pausa de 5 segundos
-    Sync-Saves -Direction "up"
+    # Criar assinatura do evento
+    $eventJob = Register-CimIndicationEvent -Query $query -Action $action -ErrorAction Stop
+
+    # Esperar até que o processo termine (com timeout de segurança)
+    $timeout = 5  # ajuste conforme necessidade
+    $startTime = Get-Date
+    
+    while ((-not $script:processExited) -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
+        Start-Sleep -Seconds 5
+    }
+
+    # Limpar recursos
+    Unregister-Event -SubscriptionId $eventJob.Id -ErrorAction SilentlyContinue
+    Remove-Job -Job $eventJob -ErrorAction SilentlyContinue
+    Remove-Variable -Name processExited -Scope Script -ErrorAction SilentlyContinue
+
+    if (-not $script:processExited) {
+        throw "Timeout: Processo não finalizado em $timeout segundos"
+    }
+}
+catch {
+    Write-Log -Message "Erro ao monitorar o processo: $_" -Level Error
+    throw "Falha no monitoramento"
+}
+
+# Sincronizar APÓS o processo ser fechado
+Start-Sleep -Seconds 5  # Pausa de 5 segundos
+Sync-Saves -Direction "up"
     Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
 catch {
