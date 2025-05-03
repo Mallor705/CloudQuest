@@ -27,10 +27,10 @@ function Write-Log {
     
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logEntry = "[$timestamp] [$Level] $Message"
-    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
+    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8 -Force
 }
 
-"`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" | Out-File $LogPath -Encoding UTF8
+Add-Content -Path $LogPath -Value "`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" -Encoding UTF8
 
 # NOTIFICAÇÕES PERSONALIZADAS
 # ====================================================
@@ -59,8 +59,8 @@ function Show-CustomNotification {
     $form.Size = New-Object System.Drawing.Size($formWidth, $formHeight)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
     $form.Location = New-Object System.Drawing.Point(
-        $screen.Width - $formWidth - 20,
-        $screen.Height - $formHeight - 20
+        [int]($screen.Width - $formWidth - 20), # Garantir que os valores sejam inteiros
+        [int]($screen.Height - $formHeight - 20) # Garantir que os valores sejam inteiros
     )
     $form.TopMost = $true
 
@@ -85,9 +85,16 @@ function Show-CustomNotification {
         [System.Drawing.SystemIcons]::Information.ToBitmap() 
     }
 
+    # Garantir que os valores sejam numéricos
+    $formHeight = [int]$formHeight
+    $iconSize = [int]$iconSize
+    
     $iconBox = New-Object System.Windows.Forms.PictureBox
     $iconBox.Size = New-Object System.Drawing.Size($iconSize, $iconSize)
-    $iconBox.Location = New-Object System.Drawing.Point(10, ($formHeight - $iconSize)/2)
+    $iconBox.Location = New-Object System.Drawing.Point(
+        10, 
+        [int](($formHeight - $iconSize) / 2) # Garantir que os valores sejam inteiros
+    )
     $iconBox.Image = $icon
     $panel.Controls.Add($iconBox)
 
@@ -97,7 +104,10 @@ function Show-CustomNotification {
     $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::White
     $lblTitle.Location = New-Object System.Drawing.Point($textX, 15)
-    $lblTitle.Size = New-Object System.Drawing.Size(($formWidth - $textX - 10), 20)
+    $lblTitle.Size = New-Object System.Drawing.Size(
+        [int]($formWidth - $textX - 10), # Garantir que os valores sejam inteiros
+        20
+    )
     $lblTitle.Text = $Title
     $panel.Controls.Add($lblTitle)
 
@@ -105,7 +115,10 @@ function Show-CustomNotification {
     $lblMessage.Font = New-Object System.Drawing.Font("Segoe UI", 9)
     $lblMessage.ForeColor = [System.Drawing.Color]::White
     $lblMessage.Location = New-Object System.Drawing.Point($textX, 35)
-    $lblMessage.Size = New-Object System.Drawing.Size(($formWidth - $textX - 10), 40)
+    $lblMessage.Size = New-Object System.Drawing.Size(
+        [int]($formWidth - $textX - 10), # Garantir que os valores sejam inteiros
+        40
+    )
     $lblMessage.Text = $Message
     $panel.Controls.Add($lblMessage)
 
@@ -262,7 +275,7 @@ try {
 
     # Aguardar processo do jogo
     Write-Log -Message "Aguardando processo do jogo..." -Level Info
-    $timeout = 120  # 2 minutos
+    $timeout = 10
     $startTime = Get-Date
     $gameProcess = $null
 
