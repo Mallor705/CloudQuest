@@ -9,6 +9,8 @@ $LocalDir = "$env:APPDATA\EldenRing"
 $GameProcess = "eldenring"
 $GameName = "Elden Ring"
 $LauncherExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
+
+# CONFIGURAÇÕES DO SCRIPT   
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
 
@@ -80,7 +82,7 @@ function Show-CustomNotification {
         param($sender, $e)
         
         # Verifica se o sender e ClientRectangle são válidos
-        if ($sender -eq $null -or $sender.ClientRectangle.IsEmpty) {
+        if ($null -eq $sender -or $sender.ClientRectangle.IsEmpty) {
             $rect = New-Object System.Drawing.Rectangle(0, 0, $panel.Width, $panel.Height)
         }
         else {
