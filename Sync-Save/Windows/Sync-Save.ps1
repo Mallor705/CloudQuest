@@ -29,10 +29,10 @@ function Write-Log {
     
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logEntry = "[$timestamp] [$Level] $Message"
-    $logEntry | Out-File -FilePath $LogPath -Append
+    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8  # Corrige encoding
 }
 
-# NOTIFICAÇÕES PERSONALIZADAS (VERSÃO CORRIGIDA)
+# NOTIFICAÇÕES PERSONALIZADAS
 # ---------------------------------------------------------------------------------------
 function Show-CustomNotification {
     param(
@@ -121,37 +121,51 @@ function Invoke-RcloneCommand {
         "`"$Destination`"",
         "--update",
         "--create-empty-src-dirs",
-        "--stats=0",
-        "--log-level=ERROR"
+        "--stats=1s",
+        "--log-level=NOTICE",  # Nível mais detalhado
+        "--retries=3",         # Tentativas de repetição
+        "--retries-sleep=5s"   # Intervalo entre tentativas
     )
 
     Write-Log -Message "Executando: rclone $($arguments -join ' ')" -Level Info
+    $startTime = Get-Date
 
-    $processInfo = New-Object System.Diagnostics.ProcessStartInfo
-    $processInfo.FileName = $RclonePath
-    $processInfo.Arguments = $arguments
-    $processInfo.RedirectStandardError = $true
-    $processInfo.RedirectStandardOutput = $true
-    $processInfo.UseShellExecute = $false
-    $processInfo.CreateNoWindow = $true
-
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $processInfo
-    $process.Start() | Out-Null
-
-    $output = $process.StandardOutput.ReadToEnd()
-    $errorOutput = $process.StandardError.ReadToEnd()
-    $process.WaitForExit()
-
-    if (-not [string]::IsNullOrEmpty($output)) {
-        Write-Log -Message "Saída do Rclone: $output" -Level Info
+    try {
+        $output = & $RclonePath $arguments 2>&1  # Captura todos os fluxos
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Erro Rclone (Código $LASTEXITCODE)"
+        }
+        
+        Write-Log -Message "Comando executado com sucesso" -Level Info
+        Write-Log -Message "Saída detalhada:`n$output" -Level Info
     }
-
-    if ($process.ExitCode -ne 0) {
-        Write-Log -Message "Erro Rclone (Código $($process.ExitCode)): $errorOutput" -Level Error
-        throw "Erro durante a sincronização"
+    catch {
+        Write-Log -Message "FALHA NA SINCRONIZAÇÃO - Detalhes:`n$output" -Level Error
+        throw $_.Exception
+    }
+    finally {
+        $duration = (Get-Date) - $startTime
+        Write-Log -Message "Duração da operação: $($duration.ToString('mm\:ss'))" -Level Info
     }
 }
+
+# VERIFICAÇÃO DO REMOTE RCLONE
+function Test-RcloneConfig {
+    try {
+        Write-Log -Message "Verificando configuração do remote '$CloudRemote'" -Level Info
+        $check = & $RclonePath listremotes
+        if (-not ($check -match "^${CloudRemote}:$")) {
+            throw "Remote '$CloudRemote' não configurado"
+        }
+        Write-Log -Message "Remote validado com sucesso" -Level Info
+    }
+    catch {
+        Write-Log -Message "ERRO DE CONFIGURAÇÃO: $_" -Level Error
+        throw
+    }
+}
+
 
 function Sync-Saves {
     try {
