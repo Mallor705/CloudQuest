@@ -1,8 +1,8 @@
 # ER_Sync.ps1
-# Versão 6.0 - Codificação UTF-8, Verificação de Configuração e Tratamento Aprimorado
+# Versão Final: Sincronização + Log UTF-8 + Notificações + Retentativas
 
 # CONFIGURAÇÕES DO USUÁRIO
-# =======================================================================================
+# ====================================================
 $RclonePath = "D:\messi\Documents\rclone\rclone.exe"
 $CloudRemote = "onedrive"
 $CloudDir = "SaveGames/EldenRing"
@@ -12,14 +12,12 @@ $GameExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launc
 $LogPath = "$env:APPDATA\Sync-Save.log"
 
 # INICIALIZAÇÃO DO SISTEMA
-# =======================================================================================
+# ====================================================
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# CONFIGURAÇÃO DO LOG (UTF-8)
-# =======================================================================================
-"`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" | Out-File -FilePath $LogPath -Append -Encoding UTF8
-
+# CONFIGURAÇÃO DE LOG (UTF-8)
+# ====================================================
 function Write-Log {
     param(
         [string]$Message,
@@ -32,26 +30,21 @@ function Write-Log {
     $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
 }
 
+"`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" | Out-File $LogPath -Encoding UTF8
+
 # NOTIFICAÇÕES PERSONALIZADAS
-# =======================================================================================
+# ====================================================
 function Show-CustomNotification {
     param(
         [string]$Title,
         [string]$Message,
-        [string]$Type = "info"  # info, success, error
+        [string]$Type = "info" # info, success, error
     )
 
-    # Configuração de cores
-    $colors = @{
-        "info"    = [System.Drawing.Color]::FromArgb(45,125,255)
-        "success" = [System.Drawing.Color]::FromArgb(40,167,69)
-        "error"   = [System.Drawing.Color]::FromArgb(220,53,69)
-    }
-
-    # Cálculo de posição corrigido
-    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-    $formWidth = 350
+    # Configuração de layout
+    $formWidth = 300
     $formHeight = 80
+    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 
     # Criar formulário
     $form = New-Object System.Windows.Forms.Form
@@ -64,41 +57,52 @@ function Show-CustomNotification {
     )
     $form.TopMost = $true
 
+    # Configurar cores
+    $colors = @{
+        "info"    = [System.Drawing.Color]::FromArgb(70,130,180)   # Azul
+        "success" = [System.Drawing.Color]::FromArgb(34,139,34)    # Verde
+        "error"   = [System.Drawing.Color]::FromArgb(178,34,34)    # Vermelho
+    }
+
     # Painel principal
     $panel = New-Object System.Windows.Forms.Panel
     $panel.Dock = [System.Windows.Forms.DockStyle]::Fill
     $panel.BackColor = $colors[$Type]
     $form.Controls.Add($panel)
 
-    # Ícone dinâmico
-    $iconBox = New-Object System.Windows.Forms.PictureBox
-    $iconBox.Size = New-Object System.Drawing.Size(32, 32)
-    $iconBox.Location = New-Object System.Drawing.Point(15, 20)
-    $iconBox.Image = if ($Type -eq "error") { 
+    # Elementos gráficos
+    $iconSize = 32
+    $icon = if ($Type -eq "error") { 
         [System.Drawing.SystemIcons]::Error.ToBitmap() 
     } else { 
         [System.Drawing.SystemIcons]::Information.ToBitmap() 
     }
+
+    $iconBox = New-Object System.Windows.Forms.PictureBox
+    $iconBox.Size = New-Object System.Drawing.Size($iconSize, $iconSize)
+    $iconBox.Location = New-Object System.Drawing.Point(10, ($formHeight - $iconSize)/2)
+    $iconBox.Image = $icon
     $panel.Controls.Add($iconBox)
 
-    # Elementos de texto
+    # Textos
+    $textX = $iconSize + 20
     $lblTitle = New-Object System.Windows.Forms.Label
     $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::White
-    $lblTitle.Location = New-Object System.Drawing.Point(60, 15)
-    $lblTitle.Size = New-Object System.Drawing.Size(270, 20)
+    $lblTitle.Location = New-Object System.Drawing.Point($textX, 15)
+    $lblTitle.Size = New-Object System.Drawing.Size(($formWidth - $textX - 10), 20)
     $lblTitle.Text = $Title
     $panel.Controls.Add($lblTitle)
 
     $lblMessage = New-Object System.Windows.Forms.Label
     $lblMessage.Font = New-Object System.Drawing.Font("Segoe UI", 9)
     $lblMessage.ForeColor = [System.Drawing.Color]::White
-    $lblMessage.Location = New-Object System.Drawing.Point(60, 35)
-    $lblMessage.Size = New-Object System.Drawing.Size(270, 40)
+    $lblMessage.Location = New-Object System.Drawing.Point($textX, 35)
+    $lblMessage.Size = New-Object System.Drawing.Size(($formWidth - $textX - 10), 40)
     $lblMessage.Text = $Message
     $panel.Controls.Add($lblMessage)
 
-    # Temporizador de fechamento
+    # Temporizador
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 3000
     $timer.Add_Tick({ 
@@ -111,127 +115,161 @@ function Show-CustomNotification {
     $form.ShowDialog()
 }
 
-# FUNÇÕES DO RCLONE
-# =======================================================================================
+# VERIFICAÇÕES DO RCLONE
+# ====================================================
 function Test-RcloneConfig {
     try {
-        Write-Log -Message "Verificando configuração do remote '$CloudRemote'" -Level Info
-        $check = & $RclonePath listremotes
-        if (-not ($check -match "^${CloudRemote}:$")) {
+        Write-Log -Message "Verificando configuração do Rclone..." -Level Info
+        
+        # Verificar existência do executável
+        if (-not (Test-Path $RclonePath)) {
+            throw "Arquivo do Rclone não encontrado: $RclonePath"
+        }
+
+        # Verificar remote configurado
+        $remotes = & $RclonePath listremotes 2>&1
+        if (-not ($remotes -match "^${CloudRemote}:")) {
             throw "Remote '$CloudRemote' não configurado"
         }
-        Write-Log -Message "Remote validado com sucesso" -Level Info
+
+        Write-Log -Message "Configuração do Rclone validada" -Level Info
     }
     catch {
-        Write-Log -Message "ERRO DE CONFIGURAÇÃO: $_" -Level Error
-        throw
+        Write-Log -Message "ERRO: Falha na verificação do Rclone - $_" -Level Error
+        Show-CustomNotification -Title "Erro de Configuração" -Message "Verifique as configurações do Rclone" -Type "error"
+        exit 1
     }
 }
 
+# FUNÇÃO PRINCIPAL DO RCLONE
+# ====================================================
 function Invoke-RcloneCommand {
-    param($Source, $Destination)
-
-    $arguments = @(
-        "copy",
-        "`"$Source`"",
-        "`"$Destination`"",
-        "--update",
-        "--create-empty-src-dirs",
-        "--stats=1s",
-        "--log-level=NOTICE",
-        "--retries=3",
-        "--retries-sleep=5s"
+    param(
+        [string]$Source,
+        [string]$Destination
     )
 
-    $startTime = Get-Date
-    Write-Log -Message "Executando: rclone $($arguments -join ' ')" -Level Info
+    $maxRetries = 3
+    $retryCount = 0
+    $success = $false
 
-    try {
-        $output = & $RclonePath $arguments 2>&1
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "Erro Rclone (Código $LASTEXITCODE)"
+    do {
+        try {
+            Write-Log -Message "Tentativa $($retryCount+1)/$maxRetries: $Source -> $Destination" -Level Info
+            
+            $arguments = @(
+                "copy",
+                "`"$Source`"",
+                "`"$Destination`"",
+                "--update",
+                "--create-empty-src-dirs",
+                "--stats=1s",
+                "--log-level=DEBUG",
+                "--retries=2",
+                "--retries-sleep=5s"
+            )
+
+            $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $processInfo.FileName = $RclonePath
+            $processInfo.Arguments = $arguments
+            $processInfo.RedirectStandardError = $true
+            $processInfo.RedirectStandardOutput = $true
+            $processInfo.UseShellExecute = $false
+            $processInfo.CreateNoWindow = $true
+
+            $process = New-Object System.Diagnostics.Process
+            $process.StartInfo = $processInfo
+            $process.Start() | Out-Null
+
+            $output = $process.StandardOutput.ReadToEnd()
+            $errorOutput = $process.StandardError.ReadToEnd()
+            $process.WaitForExit()
+
+            if ($process.ExitCode -ne 0) {
+                throw "Código de erro $($process.ExitCode)`nSaída: $($output + $errorOutput)"
+            }
+
+            $success = $true
+            Write-Log -Message "Sincronização bem-sucedida" -Level Info
         }
-        
-        Write-Log -Message "Saída detalhada:`n$($output -join "`n")" -Level Info
-        return $true
-    }
-    catch {
-        Write-Log -Message "FALHA NA SINCRONIZAÇÃO - Detalhes:`n$($output -join "`n")" -Level Error
-        throw $_.Exception
-    }
-    finally {
-        $duration = (Get-Date) - $startTime
-        Write-Log -Message "Duração da operação: $($duration.ToString('mm\:ss'))" -Level Info
+        catch {
+            $retryCount++
+            Write-Log -Message "Falha na tentativa $retryCount: $_" -Level Warning
+            Start-Sleep -Seconds 5
+        }
+    } while (-not $success -and $retryCount -lt $maxRetries)
+
+    if (-not $success) {
+        throw "Falha após $maxRetries tentativas: $Source -> $Destination"
     }
 }
 
-# FUNÇÃO DE SINCRONIZAÇÃO
-# =======================================================================================
+# FLUXO DE SINCRONIZAÇÃO
+# ====================================================
 function Sync-Saves {
+    param([string]$Direction) # "up" ou "down"
+
     try {
-        Show-CustomNotification -Title "Sincronização" -Message "Iniciando sincronização de saves..." -Type "info"
-        
-        # Fase de download
-        if (-not (Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir)) {
-            throw "Falha na sincronização (Download)"
+        Show-CustomNotification -Title "Sincronização" -Message "Iniciando processo..." -Type "info"
+
+        switch ($Direction) {
+            "down" {
+                Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir
+            }
+            "up" {
+                Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/"
+            }
         }
-        
-        # Fase de upload
-        if (-not (Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/")) {
-            throw "Falha na sincronização (Upload)"
-        }
-        
-        Show-CustomNotification -Title "Sincronização" -Message "Sincronização concluída!" -Type "success"
+
+        Show-CustomNotification -Title "Sincronização" -Message "Concluído com sucesso!" -Type "success"
     }
     catch {
-        Show-CustomNotification -Title "Erro de Sincronização" -Message "Falha durante a sincronização" -Type "error"
+        Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
+        Show-CustomNotification -Title "Erro de Sincronização" -Message "Verifique o log" -Type "error"
         exit 1
     }
 }
 
 # EXECUÇÃO PRINCIPAL
-# =======================================================================================
+# ====================================================
 try {
-    # Verificação inicial
+    # Validação inicial
     Test-RcloneConfig
 
-    # Criar diretório se necessário
+    # Criar diretório local
     if (-not (Test-Path -Path $LocalDir)) {
         try {
             New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
-            Show-CustomNotification -Title "Configuração" -Message "Diretório local criado" -Type "success"
-            Write-Log -Message "Diretório local criado com sucesso" -Level Info
+            Write-Log -Message "Diretório local criado: $LocalDir" -Level Info
         }
         catch {
-            Show-CustomNotification -Title "Erro Crítico" -Message "Falha ao criar diretório" -Type "error"
             Write-Log -Message "Falha ao criar diretório: $_" -Level Error
-            exit 1
+            throw
         }
     }
 
-    # Sincronização inicial
-    Sync-Saves
+    # Sincronização inicial (Download)
+    Sync-Saves -Direction "down"
 
-    # Inicialização do jogo
+    # Iniciar jogo
     Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
     $gameProcess = Start-Process -FilePath $GameExePath -PassThru
     Write-Log -Message "Processo do jogo iniciado (PID: $($gameProcess.Id))" -Level Info
 
-    # Monitoramento
-    Write-Log -Message "Monitorando execução do jogo..." -Level Info
+    # Monitorar execução
+    Write-Log -Message "Monitorando processo do jogo..." -Level Info
     while ($null -ne (Get-Process -Name $GameProcess -ErrorAction SilentlyContinue)) {
         Start-Sleep -Seconds 5
     }
 
-    # Sincronização final
-    Sync-Saves
-    Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado com sucesso!" -Type "success"
+    # Sincronização final (Upload)
+    Sync-Saves -Direction "up"
+    Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
 catch {
     Write-Log -Message "ERRO FATAL: $($_.Exception.Message)" -Level Error
     Write-Log -Message "Stack Trace: $($_.ScriptStackTrace)" -Level Error
-    Show-CustomNotification -Title "Erro Fatal" -Message "Operação interrompida" -Type "error"
+    Show-CustomNotification -Title "Erro Crítico" -Message "Consulte o arquivo de log" -Type "error"
     exit 1
 }
 finally {
