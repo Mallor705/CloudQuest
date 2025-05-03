@@ -1,7 +1,8 @@
 # ER_Sync.ps1
-# Versão Completa: Sincronização + Log + Notificações Personalizadas
+# Versão Final: Sincronização + Log + Notificações Personalizadas Corrigidas
 
 # CONFIGURAÇÕES DO USUÁRIO
+# ---------------------------------------------------------------------------------------
 $RclonePath = "D:\messi\Documents\rclone\rclone.exe"
 $CloudRemote = "onedrive"
 $CloudDir = "SaveGames/EldenRing"
@@ -16,6 +17,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # CONFIGURAÇÃO DO LOG
+# ---------------------------------------------------------------------------------------
 "`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" | Out-File -FilePath $LogPath -Append
 
 function Write-Log {
@@ -30,7 +32,7 @@ function Write-Log {
     $logEntry | Out-File -FilePath $LogPath -Append
 }
 
-# NOTIFICAÇÕES PERSONALIZADAS
+# NOTIFICAÇÕES PERSONALIZADAS (VERSÃO CORRIGIDA)
 # ---------------------------------------------------------------------------------------
 function Show-CustomNotification {
     param(
@@ -46,14 +48,18 @@ function Show-CustomNotification {
         "error"   = [System.Drawing.Color]::FromArgb(220,53,69)    # Vermelho
     }
 
+    # Cálculo corrigido da posição
+    $screenWidth = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Width
+    $screenHeight = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Height
+
     # Criar formulário
     $form = New-Object System.Windows.Forms.Form
     $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
     $form.Size = New-Object System.Drawing.Size(350, 80)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
     $form.Location = New-Object System.Drawing.Point(
-        [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Width - 370,
-        [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Height - 90
+        ($screenWidth - 370),  # Posição X corrigida
+        ($screenHeight - 90)   # Posição Y corrigida
     )
     $form.TopMost = $true
 
@@ -63,14 +69,18 @@ function Show-CustomNotification {
     $panel.BackColor = $colors[$Type]
     $form.Controls.Add($panel)
 
-    # Ícone
+    # Ícone dinâmico
     $iconBox = New-Object System.Windows.Forms.PictureBox
     $iconBox.Size = New-Object System.Drawing.Size(32, 32)
     $iconBox.Location = New-Object System.Drawing.Point(15, 20)
-    $iconBox.Image = if ($Type -eq "error") { [System.Drawing.SystemIcons]::Error.ToBitmap() } else { [System.Drawing.SystemIcons]::Information.ToBitmap() }
+    $iconBox.Image = if ($Type -eq "error") { 
+        [System.Drawing.SystemIcons]::Error.ToBitmap() 
+    } else { 
+        [System.Drawing.SystemIcons]::Information.ToBitmap() 
+    }
     $panel.Controls.Add($iconBox)
 
-    # Textos
+    # Elementos de texto
     $lblTitle = New-Object System.Windows.Forms.Label
     $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::White
@@ -87,17 +97,20 @@ function Show-CustomNotification {
     $lblMessage.Text = $Message
     $panel.Controls.Add($lblMessage)
 
-    # Temporizador
+    # Temporizador de fechamento
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 3000
-    $timer.Add_Tick({ $form.Close(); $timer.Dispose() })
+    $timer.Add_Tick({ 
+        $form.Close()
+        $timer.Dispose()
+    })
     $timer.Start()
 
     Write-Log -Message "$Title - $Message" -Level $Type
     $form.ShowDialog()
 }
 
-# FUNÇÕES PRINCIPAIS
+# FUNÇÕES DE SINCRONIZAÇÃO
 # ---------------------------------------------------------------------------------------
 function Invoke-RcloneCommand {
     param($Source, $Destination)
@@ -144,10 +157,10 @@ function Sync-Saves {
     try {
         Show-CustomNotification -Title "Sincronização" -Message "Iniciando sincronização de saves..." -Type "info"
         
-        # Download da nuvem
+        # Fase de download
         Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir
         
-        # Upload para nuvem
+        # Fase de upload
         Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/"
         
         Show-CustomNotification -Title "Sincronização" -Message "Sincronização concluída!" -Type "success"
@@ -161,14 +174,16 @@ function Sync-Saves {
 # EXECUÇÃO PRINCIPAL
 # ---------------------------------------------------------------------------------------
 try {
-    # Criar diretório se necessário
+    # Verificação de diretório
     if (-not (Test-Path -Path $LocalDir)) {
         try {
             New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
             Show-CustomNotification -Title "Configuração" -Message "Diretório local criado" -Type "success"
+            Write-Log -Message "Diretório local criado com sucesso" -Level Info
         }
         catch {
             Show-CustomNotification -Title "Erro Crítico" -Message "Falha ao criar diretório" -Type "error"
+            Write-Log -Message "Falha ao criar diretório: $_" -Level Error
             exit 1
         }
     }
@@ -176,12 +191,12 @@ try {
     # Sincronização inicial
     Sync-Saves
 
-    # Iniciar jogo
+    # Inicialização do jogo
     Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
     $gameProcess = Start-Process -FilePath $GameExePath -PassThru
     Write-Log -Message "Processo do jogo iniciado (PID: $($gameProcess.Id))" -Level Info
 
-    # Monitorar processo
+    # Monitoramento
     Write-Log -Message "Monitorando execução do jogo..." -Level Info
     while ($null -ne (Get-Process -Name $GameProcess -ErrorAction SilentlyContinue)) {
         Start-Sleep -Seconds 5
