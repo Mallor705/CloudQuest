@@ -327,10 +327,10 @@ try {
 try {
     Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
 
-    # Declarar variável de script
-    $script:processExited = $false
+    # Usar Synchronized HashTable para garantir atualização em tempo real
+    $syncObject = [Hashtable]::Synchronized(@{ processExited = $false })
 
-    # Consulta WMI ajustada para evitar acesso negado
+    # Consulta WMI ajustada
     $query = @"
     SELECT * FROM __InstanceDeletionEvent WITHIN 1 
     WHERE TargetInstance ISA 'Win32_Process' 
@@ -339,27 +339,27 @@ try {
 
     $action = {
         Write-Log -Message "Processo finalizado (PID: $($event.SourceEventArgs.NewEvent.TargetInstance.ProcessId)" -Level Info
-        $script:processExited = $true
+        $syncObject.processExited = $true  # Atualiza variável sincronizada
     }
 
     # Registrar evento
     $eventJob = Register-CimIndicationEvent -Query $query -Action $action -ErrorAction Stop
 
-    # Timeout de segurança (60 segundos)
-    $timeout = 60
+    # Timeout de segurança ajustado para 10 segundos (após evento)
+    $timeout = 10
     $startTime = Get-Date
     
-    while ((-not $script:processExited) -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
-        Start-Sleep -Seconds 5
+    # Loop verifica a variável sincronizada
+    while ((-not $syncObject.processExited) -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
+        Start-Sleep -Milliseconds 500  # Verificação mais rápida
     }
 
     # Limpar recursos
     Unregister-Event -SubscriptionId $eventJob.Id -ErrorAction SilentlyContinue
     Remove-Job -Job $eventJob -ErrorAction SilentlyContinue
-    Remove-Variable -Name processExited -Scope Script -ErrorAction SilentlyContinue
 
-    if (-not $script:processExited) {
-        throw "Timeout: Processo não finalizado em $timeout segundos"
+    if (-not $syncObject.processExited) {
+        throw "Timeout: Processo não finalizado em $timeout segundos após evento"
     }
 }
 catch {
