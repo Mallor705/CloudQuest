@@ -9,7 +9,8 @@ $CloudDir = "SaveGames/EldenRing"
 $LocalDir = "$env:APPDATA\EldenRing"
 $GameProcess = "eldenring"         # Processo REAL do jogo
 $LauncherExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
-$LogPath = "$env:APPDATA\Sync-Save.log"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
 
 # INICIALIZAÇÃO DO SISTEMA
 # ====================================================
@@ -30,7 +31,7 @@ function Write-Log {
     $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8 -Force
 }
 
-Add-Content -Path $LogPath -Value "`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" -Encoding UTF8
+Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
 # NOTIFICAÇÕES PERSONALIZADAS
 # ====================================================
