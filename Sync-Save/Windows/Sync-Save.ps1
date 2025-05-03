@@ -182,11 +182,7 @@ function Invoke-RcloneCommand {
                 "`"$Source`"",
                 "`"$Destination`"",
                 "--update",
-                "--create-empty-src-dirs",
-                "--stats=1s",
-                "--log-level=DEBUG",
-                "--retries=2",
-                "--retries-sleep=5s"
+                "--create-empty-src-dirs"
             )
 
             # Configurar timeout (30 segundos)
@@ -263,6 +259,16 @@ function Sync-Saves {
 try {
     Test-RcloneConfig
 
+    try {
+        Write-Log -Message "Criando diretório remoto (se não existir)..." -Level Info
+        & $RclonePath mkdir "$($CloudRemote):$($CloudDir)"
+        Write-Log -Message "Diretório remoto verificado/criado: $($CloudRemote):$($CloudDir)" -Level Info
+    }
+    catch {
+        Write-Log -Message "Falha ao criar diretório remoto: $_" -Level Error
+        throw
+    }
+
     if (-not (Test-Path -Path $LocalDir)) {
         try {
             New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
@@ -336,6 +342,7 @@ try {
     }
 
     # Sincronizar APÓS o processo ser fechado
+    Start-Sleep -Seconds 5  # Pausa de 5 segundos
     Sync-Saves -Direction "up"
     Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
