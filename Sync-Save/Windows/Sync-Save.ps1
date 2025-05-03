@@ -317,9 +317,6 @@ try {
         throw "Processo do jogo não iniciado após $timeout segundos"
     }
 
-    Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
-
-    # Monitorar jogo
     # Após detectar o processo do jogo:
     Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
 
