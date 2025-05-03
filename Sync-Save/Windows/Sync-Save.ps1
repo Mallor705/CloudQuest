@@ -171,9 +171,9 @@ function Show-CustomNotification {
     $bgIcon.Image = [System.Drawing.Image]::FromFile($bgPath)
     $bgIcon.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
-    # Timer para fechar após 3 segundos
+    # Timer para fechar após 5 segundos
     $timer = New-Object System.Windows.Forms.Timer
-    $timer.Interval = 3000
+    $timer.Interval = 5000
     $timer.Enabled = $true
     $timer.Add_Tick({ $form.Close(); $timer.Stop() })
 
@@ -275,9 +275,9 @@ function Invoke-RcloneCommand {
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
 
-    # Fechar notificação se já passaram 3 segundos
+    # Fechar notificação se já passaram 5 segundos
     $elapsed = (Get-Date) - $startTime
-    $remaining = [int](3000 - $elapsed.TotalMilliseconds)
+    $remaining = [int](5000 - $elapsed.TotalMilliseconds)
     
     if ($remaining -gt 0) {
         Start-Sleep -Milliseconds $remaining
