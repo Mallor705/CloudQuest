@@ -74,11 +74,11 @@ function Show-CustomNotification {
 
     # Posicionamento baseado na direção
     $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
-    $rightPosition = $screen.Right - 310
+    $rightPosition = $screen.Right - 300
     if ($Direction -eq "sync") {
-        $form.Location = New-Object System.Drawing.Point($rightPosition, 50)
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     } else {
-        $form.Location = New-Object System.Drawing.Point($rightPosition, 150)
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     }
 
     # Painel com gradiente
