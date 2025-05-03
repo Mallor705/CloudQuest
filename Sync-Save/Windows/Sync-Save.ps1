@@ -7,6 +7,7 @@ $CloudRemote = "onedrive"
 $CloudDir = "SaveGames/EldenRing"
 $LocalDir = "$env:APPDATA\EldenRing"
 $GameProcess = "eldenring"
+$GameName = "Elden Ring"
 $LauncherExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
@@ -132,7 +133,7 @@ function Show-CustomNotification {
     $lblTitle.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
 
     $lblApp = New-Object System.Windows.Forms.Label
-    $lblApp.Text = "ELDEN RING"
+    $lblApp.Text = "$GameName"
     $lblApp.Location = New-Object System.Drawing.Point(76, 34)
     $lblApp.Size = New-Object System.Drawing.Size(215, 15)
     $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 14, [System.Drawing.FontStyle]::Bold)
