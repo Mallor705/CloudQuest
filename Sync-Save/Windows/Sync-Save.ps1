@@ -38,78 +38,135 @@ function Show-CustomNotification {
     param(
         [string]$Title,
         [string]$Message,
-        [string]$Type = "info"
+        [string]$Type = "info",
+        [string]$Direction = "sync"  # Novo parâmetro para direção (sync/update)
     )
 
     Write-Log -Message "$Title - $Message" -Level "Info"
 
-    # Configurações de layout
-    $formWidth = 300
-    $formHeight = 100
-    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    # Configurações da fonte (Montserrat - requer instalação)
+    $montserratBold = [System.Drawing.FontFamily]::new("Montserrat")
+    $montserratRegular = if ($null -ne $montserratBold) { $montserratBold } else { "Segoe UI" }
 
-    # Criar formulário
+   # Configurações do formulário
+    $formWidth = 304
+    $formHeight = 75
     $form = New-Object System.Windows.Forms.Form
     $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
     $form.Size = New-Object System.Drawing.Size($formWidth, $formHeight)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
-    $form.Location = New-Object System.Drawing.Point(
-        [int]($screen.Width - $formWidth - 20),
-        [int]($screen.Height - $formHeight - 20)
-    )
+    $form.BackColor = [System.Drawing.Color]::FromArgb(28, 32, 39)
     $form.TopMost = $true
-    $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46)
 
-    # Timer assíncrono para fechar após 3 segundos
+    # Habilitar DoubleBuffered usando reflexão
+    $formType = $form.GetType()
+    $doubleBufferedProperty = $formType.GetProperty("DoubleBuffered", [System.Reflection.BindingFlags] "NonPublic, Instance")
+    $doubleBufferedProperty.SetValue($form, $true, $null)
+
+    # Posicionamento baseado na direção
+    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $rightPosition = $screen.Right - 310
+    if ($Direction -eq "sync") {
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 50)
+    } else {
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 150)
+    }
+
+    # Painel com gradiente
+    $panel = New-Object System.Windows.Forms.Panel
+    $panel.Dock = [System.Windows.Forms.DockStyle]::Fill
+    $panel.Add_Paint({
+        param($sender, $e)
+        
+        # Verifica se o sender e ClientRectangle são válidos
+        if ($sender -eq $null -or $sender.ClientRectangle.IsEmpty) {
+            $rect = New-Object System.Drawing.Rectangle(0, 0, $panel.Width, $panel.Height)
+        }
+        else {
+            $rect = $sender.ClientRectangle
+        }
+    
+        # Define as cores e o modo do gradiente
+        $startColor = [System.Drawing.Color]::FromArgb(17, 23, 30)
+        $endColor = [System.Drawing.Color]::FromArgb(28, 32, 39)
+        $mode = [System.Drawing.Drawing2D.LinearGradientMode]::Vertical
+    
+        # Cria o gradiente
+        $gradient = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+            $rect,
+            $startColor,
+            $endColor,
+            $mode
+        )
+    
+        try {
+            $e.Graphics.FillRectangle($gradient, $rect)
+        }
+        catch {
+            Write-Log -Message "Erro ao renderizar gradiente: $_" -Level Error
+        }
+        finally {
+            $gradient.Dispose()
+        }
+    })
+
+    # Ícones (ajuste os caminhos conforme necessário)
+    $iconPath = if ($Direction -eq "sync") { 
+        Join-Path -Path $ScriptDir -ChildPath "down.png"
+    } else { 
+        Join-Path -Path $ScriptDir -ChildPath "up.png" 
+    }
+    
+    $bgPath = if ($Direction -eq "sync") {
+        Join-Path -Path $ScriptDir -ChildPath "down_background.png"
+    } else {
+        Join-Path -Path $ScriptDir -ChildPath "up_background.png"
+    }
+
+    # Controles
+    $lblTitle = New-Object System.Windows.Forms.Label
+    $lblTitle.Text = "Chrono Sync"
+    $lblTitle.Location = New-Object System.Drawing.Point(75, 15)
+    $lblTitle.Size = New-Object System.Drawing.Size(93, 15)
+    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 10, [System.Drawing.FontStyle]::Bold)
+    $lblTitle.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+
+    $lblApp = New-Object System.Windows.Forms.Label
+    $lblApp.Text = "ELDEN RING"
+    $lblApp.Location = New-Object System.Drawing.Point(76, 34)
+    $lblApp.Size = New-Object System.Drawing.Size(215, 15)
+    $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 14, [System.Drawing.FontStyle]::Bold)
+    $lblApp.ForeColor = [System.Drawing.Color]::White
+
+    $lblStatus = New-Object System.Windows.Forms.Label
+    $lblStatus.Text = if ($Direction -eq "sync") { "Sincronizando com a Nuvem..." } else { "Atualizando a Nuvem..." }
+    $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
+    $lblStatus.Size = New-Object System.Drawing.Size(140, 15)
+    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 10, [System.Drawing.FontStyle]::Regular)
+    $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+
+    $picIcon = New-Object System.Windows.Forms.PictureBox
+    $picIcon.Location = New-Object System.Drawing.Point(10, 15)
+    $picIcon.Size = New-Object System.Drawing.Size(55, 44)
+    $picIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
+    $picIcon.Image = [System.Drawing.Image]::FromFile($iconPath)
+
+    $bgIcon = New-Object System.Windows.Forms.PictureBox
+    $bgIcon.Location = New-Object System.Drawing.Point(201, -4)
+    $bgIcon.Size = New-Object System.Drawing.Size(103, 83)
+    $bgIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
+    $bgIcon.Image = [System.Drawing.Image]::FromFile($bgPath)
+
+    # Timer para fechar após 3 segundos
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 3000
     $timer.Enabled = $true
-    Register-ObjectEvent -InputObject $timer -EventName Tick -Action {
-        $form.Close()
-        $timer.Stop()
-        $timer.Dispose()
-    } | Out-Null
+    $timer.Add_Tick({ $form.Close(); $timer.Stop() })
 
-    # Painel principal
-    $panel = New-Object System.Windows.Forms.Panel
-    $panel.Dock = [System.Windows.Forms.DockStyle]::Fill
-    $panel.BackColor = $form.BackColor
+    # Adicionar controles
+    $panel.Controls.AddRange(@($lblTitle, $lblApp, $lblStatus, $picIcon, $bgIcon))
     $form.Controls.Add($panel)
-
-    # Ícone
-    $iconSize = 24
-    $icon = if ($Type -eq "error") {
-        [System.Drawing.SystemIcons]::Error.ToBitmap()
-    } else {
-        [System.Drawing.SystemIcons]::Information.ToBitmap()
-    }
-
-    $iconBox = New-Object System.Windows.Forms.PictureBox
-    $iconBox.Size = New-Object System.Drawing.Size($iconSize, $iconSize)
-    $iconBox.Location = New-Object System.Drawing.Point(10, [int](($formHeight - $iconSize) / 2))
-    $iconBox.Image = $icon
-    $panel.Controls.Add($iconBox)
-
-    # Textos
-    $textX = $iconSize + 20
-    $lblTitle = New-Object System.Windows.Forms.Label
-    $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-    $lblTitle.ForeColor = [System.Drawing.Color]::White
-    $lblTitle.Location = New-Object System.Drawing.Point($textX, 10)
-    $lblTitle.Size = New-Object System.Drawing.Size([int]($formWidth - $textX - 10), 20)
-    $lblTitle.Text = $Title
-    $panel.Controls.Add($lblTitle)
-
-    $lblMessage = New-Object System.Windows.Forms.Label
-    $lblMessage.Font = New-Object System.Drawing.Font("Segoe UI", 9)
-    $lblMessage.ForeColor = [System.Drawing.Color]::FromArgb(200, 200, 200)
-    $lblMessage.Location = New-Object System.Drawing.Point($textX, 30)
-    $lblMessage.Size = New-Object System.Drawing.Size([int]($formWidth - $textX - 10), 30)
-    $lblMessage.Text = $Message
-    $panel.Controls.Add($lblMessage)
-
     $form.Add_Shown({ $form.Activate() })
-    $form.ShowInTaskbar = $false
     $form.Show()
 
     return @{ Form = $form; Timer = $timer }
@@ -206,11 +263,16 @@ function Invoke-RcloneCommand {
 
     # Fechar notificação se já passaram 3 segundos
     $elapsed = (Get-Date) - $startTime
-    if ($elapsed.TotalMilliseconds -lt 3000) {
-        Start-Sleep -Milliseconds (3000 - $elapsed.TotalMilliseconds)
+    $remaining = [int](3000 - $elapsed.TotalMilliseconds)
+    
+    if ($remaining -gt 0) {
+        Start-Sleep -Milliseconds $remaining
     }
-    $Notification.Form.Close()
-    $Notification.Timer.Stop()
+
+    if ($Notification -and $Notification.Form -and $Notification.Timer) {
+        $Notification.Form.Close()
+        $Notification.Timer.Stop()
+    }
 
     if (-not $success) {
         throw "Falha após $maxRetries tentativas: $Source -> $Destination"
@@ -226,11 +288,11 @@ function Sync-Saves {
     try {
         switch ($Direction) {
             "down" {
-                $notification = Show-CustomNotification -Title "Steam Cloud" -Message "Sincronizando com Nuvem" -Type "sync"
+                $notification = Show-CustomNotification -Title "Chrono Sync" -Message "Sincronizando" -Direction "sync"
                 Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir -Notification $notification
             }
             "up" {
-                $notification = Show-CustomNotification -Title "Steam Cloud" -Message "Atualizando Nuvem" -Type "update"
+                $notification = Show-CustomNotification -Title "Chrono Sync" -Message "Atualizando" -Direction "update"
                 Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/" -Notification $notification
             }
         }
