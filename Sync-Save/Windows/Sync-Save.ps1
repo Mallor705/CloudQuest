@@ -1,8 +1,8 @@
 # ER_Sync.ps1
-# Versão Final: Sincronização + Log + Notificações Personalizadas Corrigidas
+# Versão 6.0 - Codificação UTF-8, Verificação de Configuração e Tratamento Aprimorado
 
 # CONFIGURAÇÕES DO USUÁRIO
-# ---------------------------------------------------------------------------------------
+# =======================================================================================
 $RclonePath = "D:\messi\Documents\rclone\rclone.exe"
 $CloudRemote = "onedrive"
 $CloudDir = "SaveGames/EldenRing"
@@ -12,13 +12,13 @@ $GameExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launc
 $LogPath = "$env:APPDATA\Sync-Save.log"
 
 # INICIALIZAÇÃO DO SISTEMA
-# ---------------------------------------------------------------------------------------
+# =======================================================================================
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# CONFIGURAÇÃO DO LOG
-# ---------------------------------------------------------------------------------------
-"`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" | Out-File -FilePath $LogPath -Append
+# CONFIGURAÇÃO DO LOG (UTF-8)
+# =======================================================================================
+"`n=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===" | Out-File -FilePath $LogPath -Append -Encoding UTF8
 
 function Write-Log {
     param(
@@ -29,11 +29,11 @@ function Write-Log {
     
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logEntry = "[$timestamp] [$Level] $Message"
-    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8  # Corrige encoding
+    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
 }
 
 # NOTIFICAÇÕES PERSONALIZADAS
-# ---------------------------------------------------------------------------------------
+# =======================================================================================
 function Show-CustomNotification {
     param(
         [string]$Title,
@@ -43,23 +43,24 @@ function Show-CustomNotification {
 
     # Configuração de cores
     $colors = @{
-        "info"    = [System.Drawing.Color]::FromArgb(45,125,255)   # Azul
-        "success" = [System.Drawing.Color]::FromArgb(40,167,69)    # Verde
-        "error"   = [System.Drawing.Color]::FromArgb(220,53,69)    # Vermelho
+        "info"    = [System.Drawing.Color]::FromArgb(45,125,255)
+        "success" = [System.Drawing.Color]::FromArgb(40,167,69)
+        "error"   = [System.Drawing.Color]::FromArgb(220,53,69)
     }
 
-    # Cálculo corrigido da posição
-    $screenWidth = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Width
-    $screenHeight = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Height
+    # Cálculo de posição corrigido
+    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $formWidth = 350
+    $formHeight = 80
 
     # Criar formulário
     $form = New-Object System.Windows.Forms.Form
     $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
-    $form.Size = New-Object System.Drawing.Size(350, 80)
+    $form.Size = New-Object System.Drawing.Size($formWidth, $formHeight)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
     $form.Location = New-Object System.Drawing.Point(
-        ($screenWidth - 370),  # Posição X corrigida
-        ($screenHeight - 90)   # Posição Y corrigida
+        $screen.Width - $formWidth - 20,
+        $screen.Height - $formHeight - 20
     )
     $form.TopMost = $true
 
@@ -110,47 +111,8 @@ function Show-CustomNotification {
     $form.ShowDialog()
 }
 
-# FUNÇÕES DE SINCRONIZAÇÃO
-# ---------------------------------------------------------------------------------------
-function Invoke-RcloneCommand {
-    param($Source, $Destination)
-
-    $arguments = @(
-        "copy",
-        "`"$Source`"",
-        "`"$Destination`"",
-        "--update",
-        "--create-empty-src-dirs",
-        "--stats=1s",
-        "--log-level=NOTICE",  # Nível mais detalhado
-        "--retries=3",         # Tentativas de repetição
-        "--retries-sleep=5s"   # Intervalo entre tentativas
-    )
-
-    Write-Log -Message "Executando: rclone $($arguments -join ' ')" -Level Info
-    $startTime = Get-Date
-
-    try {
-        $output = & $RclonePath $arguments 2>&1  # Captura todos os fluxos
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "Erro Rclone (Código $LASTEXITCODE)"
-        }
-        
-        Write-Log -Message "Comando executado com sucesso" -Level Info
-        Write-Log -Message "Saída detalhada:`n$output" -Level Info
-    }
-    catch {
-        Write-Log -Message "FALHA NA SINCRONIZAÇÃO - Detalhes:`n$output" -Level Error
-        throw $_.Exception
-    }
-    finally {
-        $duration = (Get-Date) - $startTime
-        Write-Log -Message "Duração da operação: $($duration.ToString('mm\:ss'))" -Level Info
-    }
-}
-
-# VERIFICAÇÃO DO REMOTE RCLONE
+# FUNÇÕES DO RCLONE
+# =======================================================================================
 function Test-RcloneConfig {
     try {
         Write-Log -Message "Verificando configuração do remote '$CloudRemote'" -Level Info
@@ -166,16 +128,59 @@ function Test-RcloneConfig {
     }
 }
 
+function Invoke-RcloneCommand {
+    param($Source, $Destination)
 
+    $arguments = @(
+        "copy",
+        "`"$Source`"",
+        "`"$Destination`"",
+        "--update",
+        "--create-empty-src-dirs",
+        "--stats=1s",
+        "--log-level=NOTICE",
+        "--retries=3",
+        "--retries-sleep=5s"
+    )
+
+    $startTime = Get-Date
+    Write-Log -Message "Executando: rclone $($arguments -join ' ')" -Level Info
+
+    try {
+        $output = & $RclonePath $arguments 2>&1
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Erro Rclone (Código $LASTEXITCODE)"
+        }
+        
+        Write-Log -Message "Saída detalhada:`n$($output -join "`n")" -Level Info
+        return $true
+    }
+    catch {
+        Write-Log -Message "FALHA NA SINCRONIZAÇÃO - Detalhes:`n$($output -join "`n")" -Level Error
+        throw $_.Exception
+    }
+    finally {
+        $duration = (Get-Date) - $startTime
+        Write-Log -Message "Duração da operação: $($duration.ToString('mm\:ss'))" -Level Info
+    }
+}
+
+# FUNÇÃO DE SINCRONIZAÇÃO
+# =======================================================================================
 function Sync-Saves {
     try {
         Show-CustomNotification -Title "Sincronização" -Message "Iniciando sincronização de saves..." -Type "info"
         
         # Fase de download
-        Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir
+        if (-not (Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir)) {
+            throw "Falha na sincronização (Download)"
+        }
         
         # Fase de upload
-        Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/"
+        if (-not (Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/")) {
+            throw "Falha na sincronização (Upload)"
+        }
         
         Show-CustomNotification -Title "Sincronização" -Message "Sincronização concluída!" -Type "success"
     }
@@ -186,9 +191,12 @@ function Sync-Saves {
 }
 
 # EXECUÇÃO PRINCIPAL
-# ---------------------------------------------------------------------------------------
+# =======================================================================================
 try {
-    # Verificação de diretório
+    # Verificação inicial
+    Test-RcloneConfig
+
+    # Criar diretório se necessário
     if (-not (Test-Path -Path $LocalDir)) {
         try {
             New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
@@ -222,7 +230,9 @@ try {
 }
 catch {
     Write-Log -Message "ERRO FATAL: $($_.Exception.Message)" -Level Error
-    Show-CustomNotification -Title "Erro Fatal" -Message "Ocorreu um erro crítico" -Type "error"
+    Write-Log -Message "Stack Trace: $($_.ScriptStackTrace)" -Level Error
+    Show-CustomNotification -Title "Erro Fatal" -Message "Operação interrompida" -Type "error"
+    exit 1
 }
 finally {
     Write-Log -Message "=== Sessão finalizada ===`n" -Level Info
