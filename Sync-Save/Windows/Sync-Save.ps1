@@ -45,7 +45,7 @@ function Show-CustomNotification {
 
     # Configurações de layout
     $formWidth = 300
-    $formHeight = 60
+    $formHeight = 100
     $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 
     # Criar formulário
