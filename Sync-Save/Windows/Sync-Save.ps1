@@ -7,8 +7,8 @@ $RclonePath = "D:\messi\Documents\rclone\rclone.exe"
 $CloudRemote = "onedrive"
 $CloudDir = "SaveGames/EldenRing"
 $LocalDir = "$env:APPDATA\EldenRing"
-$GameProcess = "eldenring"
-$GameExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
+$GameProcess = "eldenring"         # Processo REAL do jogo
+$LauncherExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
 $LogPath = "$env:APPDATA\Sync-Save.log"
 
 # INICIALIZAÇÃO DO SISTEMA
@@ -38,8 +38,15 @@ function Show-CustomNotification {
     param(
         [string]$Title,
         [string]$Message,
-        [string]$Type = "info" # info, success, error
+        [string]$Type = "info"
     )
+
+    # Mapear para níveis de log
+    $logLevel = switch ($Type) {
+        'success' { 'Info' }
+        default   { $Type }
+    }
+    Write-Log -Message "$Title - $Message" -Level $logLevel
 
     # Configuração de layout
     $formWidth = 300
@@ -59,9 +66,9 @@ function Show-CustomNotification {
 
     # Configurar cores
     $colors = @{
-        "info"    = [System.Drawing.Color]::FromArgb(70,130,180)   # Azul
-        "success" = [System.Drawing.Color]::FromArgb(34,139,34)    # Verde
-        "error"   = [System.Drawing.Color]::FromArgb(178,34,34)    # Vermelho
+        "info"    = [System.Drawing.Color]::FromArgb(70,130,180)
+        "success" = [System.Drawing.Color]::FromArgb(34,139,34)
+        "error"   = [System.Drawing.Color]::FromArgb(178,34,34)
     }
 
     # Painel principal
@@ -111,7 +118,6 @@ function Show-CustomNotification {
     })
     $timer.Start()
 
-    Write-Log -Message "$Title - $Message" -Level $Type
     $form.ShowDialog()
 }
 
@@ -121,13 +127,14 @@ function Test-RcloneConfig {
     try {
         Write-Log -Message "Verificando configuração do Rclone..." -Level Info
         
-        # Verificar existência do executável
         if (-not (Test-Path $RclonePath)) {
             throw "Arquivo do Rclone não encontrado: $RclonePath"
         }
 
-        # Verificar remote configurado
         $remotes = & $RclonePath listremotes 2>&1
+        if ($remotes -is [System.Management.Automation.ErrorRecord]) {
+            throw $remotes.Exception.Message
+        }
         if (-not ($remotes -match "^${CloudRemote}:")) {
             throw "Remote '$CloudRemote' não configurado"
         }
@@ -155,7 +162,7 @@ function Invoke-RcloneCommand {
 
     do {
         try {
-            Write-Log -Message "Tentativa $($retryCount+1)/$maxRetries: $Source -> $Destination" -Level Info
+            Write-Log -Message "Tentativa $($retryCount+1)/${maxRetries}: $Source -> $Destination" -Level Info
             
             $arguments = @(
                 "copy",
@@ -194,7 +201,7 @@ function Invoke-RcloneCommand {
         }
         catch {
             $retryCount++
-            Write-Log -Message "Falha na tentativa $retryCount: $_" -Level Warning
+            Write-Log -Message "Falha na tentativa ${retryCount}: $_" -Level Warning
             Start-Sleep -Seconds 5
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
@@ -207,7 +214,7 @@ function Invoke-RcloneCommand {
 # FLUXO DE SINCRONIZAÇÃO
 # ====================================================
 function Sync-Saves {
-    param([string]$Direction) # "up" ou "down"
+    param([string]$Direction)
 
     try {
         Show-CustomNotification -Title "Sincronização" -Message "Iniciando processo..." -Type "info"
@@ -233,10 +240,8 @@ function Sync-Saves {
 # EXECUÇÃO PRINCIPAL
 # ====================================================
 try {
-    # Validação inicial
     Test-RcloneConfig
 
-    # Criar diretório local
     if (-not (Test-Path -Path $LocalDir)) {
         try {
             New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
@@ -248,21 +253,35 @@ try {
         }
     }
 
-    # Sincronização inicial (Download)
     Sync-Saves -Direction "down"
 
-    # Iniciar jogo
+    # Iniciar Launcher
     Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
-    $gameProcess = Start-Process -FilePath $GameExePath -PassThru
-    Write-Log -Message "Processo do jogo iniciado (PID: $($gameProcess.Id))" -Level Info
+    $launcherProcess = Start-Process -FilePath $LauncherExePath -PassThru
+    Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
 
-    # Monitorar execução
-    Write-Log -Message "Monitorando processo do jogo..." -Level Info
-    while ($null -ne (Get-Process -Name $GameProcess -ErrorAction SilentlyContinue)) {
+    # Aguardar processo do jogo
+    Write-Log -Message "Aguardando processo do jogo..." -Level Info
+    $timeout = 120  # 2 minutos
+    $startTime = Get-Date
+    $gameProcess = $null
+
+    while (-not $gameProcess -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
+        $gameProcess = Get-Process -Name $GameProcess -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 5
     }
 
-    # Sincronização final (Upload)
+    if (-not $gameProcess) {
+        throw "Processo do jogo não iniciado após $timeout segundos"
+    }
+
+    Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
+
+    # Monitorar jogo
+    while ($null -ne (Get-Process -Name $GameProcess -ErrorAction SilentlyContinue)) {
+        Start-Sleep -Seconds 10
+    }
+
     Sync-Saves -Direction "up"
     Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
