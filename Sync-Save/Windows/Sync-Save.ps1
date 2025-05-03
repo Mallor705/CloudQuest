@@ -277,6 +277,11 @@ try {
     Write-Log -Message "Aguardando processo do jogo..." -Level Info
     $timeout = 10
     $startTime = Get-Date
+
+    if (-not $GameProcess -or [string]::IsNullOrWhiteSpace($GameProcess)) {
+        throw "O parâmetro 'GameProcess' não foi configurado ou está vazio. Verifique as configurações do script."
+    }
+
     $gameProcess = $null
 
     while (-not $gameProcess -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
