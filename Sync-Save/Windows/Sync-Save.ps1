@@ -137,34 +137,39 @@ function Show-CustomNotification {
     $lblTitle.Text = "Chrono Sync"
     $lblTitle.Location = New-Object System.Drawing.Point(75, 15)
     $lblTitle.AutoSize = $true  # Permite que o label se ajuste ao texto
-    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 6, [System.Drawing.FontStyle]::Bold)
+    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 8, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+    $lblTitle.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
     $lblApp = New-Object System.Windows.Forms.Label
     $lblApp.Text = "$GameName"
     $lblApp.Location = New-Object System.Drawing.Point(76, 34)
     $lblApp.AutoSize = $true  # Permite que o label se ajuste ao texto
-    $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 8, [System.Drawing.FontStyle]::Bold)
+    $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 10, [System.Drawing.FontStyle]::Bold)
     $lblApp.ForeColor = [System.Drawing.Color]::White
+    $lblApp.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
     $lblStatus = New-Object System.Windows.Forms.Label
     $lblStatus.Text = if ($Direction -eq "sync") { "Sincronizando com a Nuvem..." } else { "Atualizando a Nuvem..." }
     $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
     $lblStatus.AutoSize = $true  # Permite que o label se ajuste ao texto
-    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 6, [System.Drawing.FontStyle]::Regular)
+    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 8, [System.Drawing.FontStyle]::Regular)
     $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+    $lblStatus.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
     $picIcon = New-Object System.Windows.Forms.PictureBox
     $picIcon.Location = New-Object System.Drawing.Point(10, 15)
     $picIcon.Size = New-Object System.Drawing.Size(55, 44)
     $picIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
     $picIcon.Image = [System.Drawing.Image]::FromFile($iconPath)
+    $picIcon.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
     $bgIcon = New-Object System.Windows.Forms.PictureBox
     $bgIcon.Location = New-Object System.Drawing.Point(201, -4)
     $bgIcon.Size = New-Object System.Drawing.Size(103, 83)
     $bgIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
     $bgIcon.Image = [System.Drawing.Image]::FromFile($bgPath)
+    $bgIcon.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
     # Timer para fechar após 3 segundos
     $timer = New-Object System.Windows.Forms.Timer
