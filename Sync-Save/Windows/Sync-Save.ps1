@@ -50,9 +50,15 @@ function Show-CustomNotification {
     # Configurações da fonte (Montserrat - requer instalação)
     $montserratBold = [System.Drawing.FontFamily]::new("Montserrat")
     $montserratRegular = if ($null -ne $montserratBold) { $montserratBold } else { "Segoe UI" }
+    if ($montserratRegular -eq $montserratBold) {
+        Write-Log -Message "Usando fonte Montserrat" -Level "Info"
+    }
+    else {
+        Write-Log -Message "Usando fonte Segoe UI" -Level "Info"
+    }
 
    # Configurações do formulário
-    $formWidth = 304
+    $formWidth = 300
     $formHeight = 75
     $form = New-Object System.Windows.Forms.Form
     $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
