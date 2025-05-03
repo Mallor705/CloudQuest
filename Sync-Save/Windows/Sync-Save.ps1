@@ -279,13 +279,23 @@ try {
     $startTime = Get-Date
 
     if (-not $GameProcess -or [string]::IsNullOrWhiteSpace($GameProcess)) {
+        Write-Log -Message "O parâmetro 'GameProcess' está vazio ou nulo. Verifique as configurações do script." -Level Error
         throw "O parâmetro 'GameProcess' não foi configurado ou está vazio. Verifique as configurações do script."
     }
+    Write-Log -Message "Parâmetro 'GameProcess' validado: $GameProcess" -Level Info
+
+    # Garantir que o valor de $GameProcess não seja alterado
+    $validatedGameProcess = $GameProcess
+    Write-Log -Message "Usando o valor de 'GameProcess': $validatedGameProcess" -Level Info
 
     $gameProcess = $null
 
     while (-not $gameProcess -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
-        $gameProcess = Get-Process -Name $GameProcess -ErrorAction SilentlyContinue
+        try {
+            $gameProcess = Get-Process -Name $validatedGameProcess -ErrorAction SilentlyContinue
+        } catch {
+            Write-Log -Message "Erro ao buscar o processo '$validatedGameProcess': $_" -Level Warning
+        }
         Start-Sleep -Seconds 5
     }
 
