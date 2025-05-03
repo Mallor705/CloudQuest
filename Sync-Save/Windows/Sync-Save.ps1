@@ -136,22 +136,22 @@ function Show-CustomNotification {
     $lblTitle = New-Object System.Windows.Forms.Label
     $lblTitle.Text = "Chrono Sync"
     $lblTitle.Location = New-Object System.Drawing.Point(75, 15)
-    $lblTitle.Size = New-Object System.Drawing.Size(93, 15)
-    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 10, [System.Drawing.FontStyle]::Bold)
+    $lblTitle.AutoSize = $true  # Permite que o label se ajuste ao texto
+    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 6, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
 
     $lblApp = New-Object System.Windows.Forms.Label
     $lblApp.Text = "$GameName"
     $lblApp.Location = New-Object System.Drawing.Point(76, 34)
-    $lblApp.Size = New-Object System.Drawing.Size(215, 15)
-    $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 14, [System.Drawing.FontStyle]::Bold)
+    $lblApp.AutoSize = $true  # Permite que o label se ajuste ao texto
+    $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 8, [System.Drawing.FontStyle]::Bold)
     $lblApp.ForeColor = [System.Drawing.Color]::White
 
     $lblStatus = New-Object System.Windows.Forms.Label
     $lblStatus.Text = if ($Direction -eq "sync") { "Sincronizando com a Nuvem..." } else { "Atualizando a Nuvem..." }
     $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
-    $lblStatus.Size = New-Object System.Drawing.Size(140, 15)
-    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 10, [System.Drawing.FontStyle]::Regular)
+    $lblStatus.AutoSize = $true  # Permite que o label se ajuste ao texto
+    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 6, [System.Drawing.FontStyle]::Regular)
     $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
 
     $picIcon = New-Object System.Windows.Forms.PictureBox
