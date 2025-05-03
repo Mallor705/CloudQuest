@@ -337,7 +337,7 @@ catch {
     throw "Falha no monitoramento"
 }
     # Sincronizar APÓS o processo ser fechado
-    Start-Sleep -Seconds 5  # Pausa de 5 segundos
+    # Start-Sleep -Seconds 5  # Pausa de 5 segundos
     Sync-Saves -Direction "up"
     Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
