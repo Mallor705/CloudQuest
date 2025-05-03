@@ -1,5 +1,4 @@
-# ER_Sync.ps1
-# Versão Final: Sincronização + Log UTF-8 + Notificações + Retentativas
+# Sync-Save.ps1
 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
