@@ -320,7 +320,7 @@ try {
     # Após detectar o processo do jogo:
     Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
 
-# Monitorar jogo (sem WMI)
+# Monitorar jogo
 try {
     Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
     
