@@ -1,0 +1,61 @@
+.chrono-sync {
+    position: absolute;
+    top: 15.35px;
+    left: 75px;
+    letter-spacing: -0.04em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    width: 92.4px;
+    height: 7.4px;
+}
+.jogo {
+    position: absolute;
+    top: 33.51px;
+    left: 75.72px;
+    font-size: 14px;
+    letter-spacing: -0.04em;
+    display: flex;
+    color: #fff;
+    align-items: center;
+    width: 214.6px;
+    height: 8px;
+}
+.sincronizando-com-a {
+    position: absolute;
+    top: 52.48px;
+    left: 75px;
+    letter-spacing: -0.04em;
+    font-weight: 300;
+    display: flex;
+    align-items: center;
+    width: 139px;
+    height: 7px;
+}
+.down-icon {
+    position: absolute;
+    top: 15.85px;
+    left: 9.58px;
+    width: 55.1px;
+    height: 43.3px;
+}
+.down-background-icon {
+    position: absolute;
+    top: -2.96px;
+    left: 201.34px;
+    width: 103px;
+    height: 80.9px;
+    opacity: 0.08;
+}
+.chrono-sync-parent {
+    width: 100%;
+    position: relative;
+    background: linear-gradient(-1.39deg, #11171e, #1c2027);
+    height: 75px;
+    overflow: hidden;
+    text-align: left;
+    font-size: 10px;
+    color: #8c9197;
+    font-family: Montserrat;
+}
+
