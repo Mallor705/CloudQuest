@@ -285,7 +285,7 @@ try {
 
     # Iniciar Launcher
     Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
-    $launcherProcess = Start-Process -FilePath $LauncherExePath -PassThru
+    $launcherProcess = Start-Process -FilePath $LauncherExePath -WindowStyle Hidden -PassThru
     Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
 
     # Aguardar processo do jogo
