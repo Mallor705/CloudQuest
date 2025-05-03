@@ -189,6 +189,7 @@ function Invoke-RcloneCommand {
                 "--retries-sleep=5s"
             )
 
+            # Configurar timeout (30 segundos)
             $processInfo = New-Object System.Diagnostics.ProcessStartInfo
             $processInfo.FileName = $RclonePath
             $processInfo.Arguments = $arguments
@@ -201,9 +202,16 @@ function Invoke-RcloneCommand {
             $process.StartInfo = $processInfo
             $process.Start() | Out-Null
 
+            # Timeout de 30 segundos para operação
+            $completed = $process.WaitForExit(30000) 
+
+            if (-not $completed) {
+                $process.Kill()
+                throw "Timeout: Rclone excedeu 30 segundos."
+            }
+
             $output = $process.StandardOutput.ReadToEnd()
             $errorOutput = $process.StandardError.ReadToEnd()
-            $process.WaitForExit()
 
             if ($process.ExitCode -ne 0) {
                 throw "Código de erro $($process.ExitCode)`nSaída: $($output + $errorOutput)"
