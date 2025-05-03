@@ -53,12 +53,16 @@ function Show-CustomNotification {
     $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
     $form.Size = New-Object System.Drawing.Size($formWidth, $formHeight)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
+    $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46)
+    $form.TopMost = $true
+    $form.ShowInTaskbar = $false
+
+    # Posição inicial (fora da tela na parte inferior)
+    $startY = [int]($screen.Height + $formHeight)
     $form.Location = New-Object System.Drawing.Point(
         [int]($screen.Width - $formWidth - 20),
-        [int]($screen.Height - $formHeight - 20)
+        $startY
     )
-    $form.TopMost = $true
-    $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46)
 
     # Painel principal
     $panel = New-Object System.Windows.Forms.Panel
@@ -105,6 +109,63 @@ function Show-CustomNotification {
     # Exibir e retornar o objeto
     $form.Show()
     return $form
+
+    # Animação de entrada
+    $targetY = [int]($screen.Height - $formHeight - 20)
+    $steps = 30
+    $stepSize = ($startY - $targetY) / $steps
+    $animationTimer = New-Object System.Windows.Forms.Timer
+    $animationTimer.Interval = 10
+    $currentStep = 0
+
+    $animationTimer.Add_Tick({
+        $thisForm = $args[0]
+        $thisTimer = $args[1]
+        $thisForm.Top -= $stepSize
+        $currentStep++
+        
+        if ($currentStep -ge $steps) {
+            $thisTimer.Stop()
+            $thisTimer.Dispose()
+        }
+    })
+
+    # Exibir formulário e iniciar animação
+    $form.Add_Shown({
+        $args[0].Start()
+    }.GetNewClosure($animationTimer))
+    
+    $form.Show()
+    $animationTimer.Start($form, $animationTimer)
+
+    return $form
+}
+
+function Close-NotificationWithAnimation {
+    param(
+        [System.Windows.Forms.Form]$Form
+    )
+
+    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $targetY = [int]($screen.Height + $Form.Height)
+    $steps = 30
+    $stepSize = ($targetY - $Form.Top) / $steps
+    $animationTimer = New-Object System.Windows.Forms.Timer
+    $animationTimer.Interval = 10
+
+    $animationTimer.Add_Tick({
+        $thisForm = $args[0]
+        $thisTimer = $args[1]
+        $thisForm.Top += $stepSize
+        
+        if ($thisForm.Top -ge $targetY) {
+            $thisTimer.Stop()
+            $thisForm.Close()
+            $thisTimer.Dispose()
+        }
+    })
+
+    $animationTimer.Start($Form, $animationTimer)
 }
 
 # VERIFICAÇÕES DO RCLONE
@@ -205,11 +266,15 @@ function Invoke-RcloneCommand {
     $NotificationForm.Close()
 
     if (-not $success) {
+        Close-NotificationWithAnimation -Form $NotificationForm
         throw "Falha após $maxRetries tentativas: $Source -> $Destination"
     }
+    
+    # Fechar com animação após sucesso
+    Close-NotificationWithAnimation -Form $NotificationForm
 }
 
-# FLUXO DE SINCRONIZAÇÃO ATUALIZADO
+# FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
 # ====================================================
 function Sync-Saves {
     param([string]$Direction)
@@ -228,8 +293,9 @@ function Sync-Saves {
         }
     }
     catch {
-        if ($null -ne $notification) { $notification.Close() }
-        Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
+        if ($null -ne $notification) { 
+            Close-NotificationWithAnimation -Form $notification 
+        }
         Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
         exit 1
     }
