@@ -34,23 +34,20 @@ Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss
 
 # NOTIFICAÇÕES PERSONALIZADAS
 # ====================================================
+# NOTIFICAÇÕES PERSONALIZADAS (ESTILO STEAM)
+# ====================================================
 function Show-CustomNotification {
     param(
         [string]$Title,
         [string]$Message,
-        [string]$Type = "info"
+        [string]$Type = "info" # Tipos: "sync", "update", "error"
     )
 
-    # Mapear para níveis de log
-    $logLevel = switch ($Type) {
-        'success' { 'Info' }
-        default   { $Type }
-    }
-    Write-Log -Message "$Title - $Message" -Level $logLevel
+    Write-Log -Message "$Title - $Message" -Level "Info"
 
-    # Configuração de layout
+    # Configurações de layout
     $formWidth = 300
-    $formHeight = 80
+    $formHeight = 60
     $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 
     # Criar formulário
@@ -59,42 +56,28 @@ function Show-CustomNotification {
     $form.Size = New-Object System.Drawing.Size($formWidth, $formHeight)
     $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
     $form.Location = New-Object System.Drawing.Point(
-        [int]($screen.Width - $formWidth - 20), # Garantir que os valores sejam inteiros
-        [int]($screen.Height - $formHeight - 20) # Garantir que os valores sejam inteiros
+        [int]($screen.Width - $formWidth - 20),
+        [int]($screen.Height - $formHeight - 20)
     )
     $form.TopMost = $true
-
-    # Configurar cores
-    $colors = @{
-        "info"    = [System.Drawing.Color]::FromArgb(70,130,180)
-        "success" = [System.Drawing.Color]::FromArgb(34,139,34)
-        "error"   = [System.Drawing.Color]::FromArgb(178,34,34)
-    }
+    $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46) # Cor de fundo estilo Steam
 
     # Painel principal
     $panel = New-Object System.Windows.Forms.Panel
     $panel.Dock = [System.Windows.Forms.DockStyle]::Fill
-    $panel.BackColor = $colors[$Type]
+    $panel.BackColor = $form.BackColor
     $form.Controls.Add($panel)
 
-    # Elementos gráficos
-    $iconSize = 32
-    $icon = if ($Type -eq "error") { 
-        [System.Drawing.SystemIcons]::Error.ToBitmap() 
-    } else { 
-        [System.Drawing.SystemIcons]::Information.ToBitmap() 
+    # Ícone (usando ícone de nuvem do sistema)
+    $iconSize = 24
+    $icon = [System.Drawing.SystemIcons]::Information.ToBitmap() # Ícone genérico (ajuste conforme necessidade)
+    if ($Type -eq "error") {
+        $icon = [System.Drawing.SystemIcons]::Error.ToBitmap()
     }
 
-    # Garantir que os valores sejam numéricos
-    $formHeight = [int]$formHeight
-    $iconSize = [int]$iconSize
-    
     $iconBox = New-Object System.Windows.Forms.PictureBox
     $iconBox.Size = New-Object System.Drawing.Size($iconSize, $iconSize)
-    $iconBox.Location = New-Object System.Drawing.Point(
-        10, 
-        [int](($formHeight - $iconSize) / 2) # Garantir que os valores sejam inteiros
-    )
+    $iconBox.Location = New-Object System.Drawing.Point(10, [int](($formHeight - $iconSize) / 2))
     $iconBox.Image = $icon
     $panel.Controls.Add($iconBox)
 
@@ -103,26 +86,20 @@ function Show-CustomNotification {
     $lblTitle = New-Object System.Windows.Forms.Label
     $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::White
-    $lblTitle.Location = New-Object System.Drawing.Point($textX, 15)
-    $lblTitle.Size = New-Object System.Drawing.Size(
-        [int]($formWidth - $textX - 10), # Garantir que os valores sejam inteiros
-        20
-    )
+    $lblTitle.Location = New-Object System.Drawing.Point($textX, 10)
+    $lblTitle.Size = New-Object System.Drawing.Size([int]($formWidth - $textX - 10), 20)
     $lblTitle.Text = $Title
     $panel.Controls.Add($lblTitle)
 
     $lblMessage = New-Object System.Windows.Forms.Label
     $lblMessage.Font = New-Object System.Drawing.Font("Segoe UI", 9)
-    $lblMessage.ForeColor = [System.Drawing.Color]::White
-    $lblMessage.Location = New-Object System.Drawing.Point($textX, 35)
-    $lblMessage.Size = New-Object System.Drawing.Size(
-        [int]($formWidth - $textX - 10), # Garantir que os valores sejam inteiros
-        40
-    )
+    $lblMessage.ForeColor = [System.Drawing.Color]::FromArgb(200, 200, 200) # Cinza claro
+    $lblMessage.Location = New-Object System.Drawing.Point($textX, 30)
+    $lblMessage.Size = New-Object System.Drawing.Size([int]($formWidth - $textX - 10), 30)
     $lblMessage.Text = $Message
     $panel.Controls.Add($lblMessage)
 
-    # Temporizador
+    # Temporizador (3 segundos)
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 3000
     $timer.Add_Tick({ 
@@ -234,22 +211,20 @@ function Sync-Saves {
     param([string]$Direction)
 
     try {
-        Show-CustomNotification -Title "Sincronização" -Message "Iniciando processo..." -Type "info"
-
         switch ($Direction) {
             "down" {
+                Show-CustomNotification -Title "Steam Cloud" -Message "Sincronizando com Nuvem" -Type "sync"
                 Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir
             }
             "up" {
+                Show-CustomNotification -Title "Steam Cloud" -Message "Atualizando Nuvem" -Type "update"
                 Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/"
             }
         }
-
-        Show-CustomNotification -Title "Sincronização" -Message "Concluído com sucesso!" -Type "success"
     }
     catch {
         Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
-        Show-CustomNotification -Title "Erro de Sincronização" -Message "Verifique o log" -Type "error"
+        Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
         exit 1
     }
 }
@@ -283,7 +258,7 @@ try {
     Sync-Saves -Direction "down"
 
     # Iniciar Launcher
-    Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
+    # Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
     $launcherProcess = Start-Process -FilePath $LauncherExePath -WindowStyle Hidden -PassThru
     Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
 
@@ -336,7 +311,7 @@ catch {
     # Sincronizar APÓS o processo ser fechado
     # Start-Sleep -Seconds 5  # Pausa de 5 segundos
     Sync-Saves -Direction "up"
-    Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
+    # Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
 catch {
     Write-Log -Message "ERRO FATAL: $($_.Exception.Message)" -Level Error
