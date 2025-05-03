@@ -1,4 +1,4 @@
-# Sync-Save.ps1
+﻿﻿# Sync-Save.ps1
 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
@@ -6,7 +6,7 @@ $RclonePath = "D:\messi\Documents\rclone\rclone.exe"
 $CloudRemote = "onedrive"
 $CloudDir = "SaveGames/EldenRing"
 $LocalDir = "$env:APPDATA\EldenRing"
-$GameProcess = "eldenring"         # Processo REAL do jogo
+$GameProcess = "eldenring"
 $LauncherExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
@@ -32,13 +32,13 @@ function Write-Log {
 
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
-# NOTIFICAÇÕES PERSONALIZADAS (ESTILO STEAM)
+# NOTIFICAÇÕES PERSONALIZADAS (ATUALIZADA)
 # ====================================================
 function Show-CustomNotification {
     param(
         [string]$Title,
         [string]$Message,
-        [string]$Type = "info" # Tipos: "sync", "update", "error"
+        [string]$Type = "info"
     )
 
     Write-Log -Message "$Title - $Message" -Level "Info"
@@ -59,6 +59,16 @@ function Show-CustomNotification {
     )
     $form.TopMost = $true
     $form.BackColor = [System.Drawing.Color]::FromArgb(34, 39, 46)
+
+    # Timer assíncrono para fechar após 3 segundos
+    $timer = New-Object System.Windows.Forms.Timer
+    $timer.Interval = 3000
+    $timer.Enabled = $true
+    Register-ObjectEvent -InputObject $timer -EventName Tick -Action {
+        $form.Close()
+        $timer.Stop()
+        $timer.Dispose()
+    } | Out-Null
 
     # Painel principal
     $panel = New-Object System.Windows.Forms.Panel
@@ -98,13 +108,11 @@ function Show-CustomNotification {
     $lblMessage.Text = $Message
     $panel.Controls.Add($lblMessage)
 
-    # Retornar o formulário para controle externo
     $form.Add_Shown({ $form.Activate() })
     $form.ShowInTaskbar = $false
-    
-    # Exibir e retornar o objeto
     $form.Show()
-    return $form
+
+    return @{ Form = $form; Timer = $timer }
 }
 
 # VERIFICAÇÕES DO RCLONE
@@ -134,18 +142,19 @@ function Test-RcloneConfig {
     }
 }
 
-# FUNÇÃO PRINCIPAL DO RCLONE (MODIFICADA)
+# FUNÇÃO PRINCIPAL DO RCLONE (ATUALIZADA)
 # ====================================================
 function Invoke-RcloneCommand {
     param(
         [string]$Source,
         [string]$Destination,
-        [System.Windows.Forms.Form]$NotificationForm
+        [hashtable]$Notification
     )
 
     $maxRetries = 3
     $retryCount = 0
     $success = $false
+    $startTime = Get-Date
 
     do {
         try {
@@ -159,7 +168,6 @@ function Invoke-RcloneCommand {
                 "--create-empty-src-dirs"
             )
 
-            # Configurar timeout (30 segundos)
             $processInfo = New-Object System.Diagnostics.ProcessStartInfo
             $processInfo.FileName = $RclonePath
             $processInfo.Arguments = $arguments
@@ -172,8 +180,7 @@ function Invoke-RcloneCommand {
             $process.StartInfo = $processInfo
             $process.Start() | Out-Null
 
-            # Timeout de 30 segundos para operação
-            $completed = $process.WaitForExit(30000) 
+            $completed = $process.WaitForExit(30000)
 
             if (-not $completed) {
                 $process.Kill()
@@ -189,10 +196,6 @@ function Invoke-RcloneCommand {
 
             $success = $true
             Write-Log -Message "Sincronização bem-sucedida" -Level Info
-            # Fechar notificação ao finalizar
-            if ($success) {
-                $NotificationForm.Close()
-            }
         }
         catch {
             $retryCount++
@@ -201,15 +204,20 @@ function Invoke-RcloneCommand {
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
 
-    # Fechar notificação mesmo em caso de falha
-    $NotificationForm.Close()
+    # Fechar notificação se já passaram 3 segundos
+    $elapsed = (Get-Date) - $startTime
+    if ($elapsed.TotalMilliseconds -lt 3000) {
+        Start-Sleep -Milliseconds (3000 - $elapsed.TotalMilliseconds)
+    }
+    $Notification.Form.Close()
+    $Notification.Timer.Stop()
 
     if (-not $success) {
         throw "Falha após $maxRetries tentativas: $Source -> $Destination"
     }
 }
 
-# FLUXO DE SINCRONIZAÇÃO ATUALIZADO
+# FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
 # ====================================================
 function Sync-Saves {
     param([string]$Direction)
@@ -219,29 +227,31 @@ function Sync-Saves {
         switch ($Direction) {
             "down" {
                 $notification = Show-CustomNotification -Title "Steam Cloud" -Message "Sincronizando com Nuvem" -Type "sync"
-                Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir -NotificationForm $notification
+                Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir -Notification $notification
             }
             "up" {
                 $notification = Show-CustomNotification -Title "Steam Cloud" -Message "Atualizando Nuvem" -Type "update"
-                Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/" -NotificationForm $notification
+                Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/" -Notification $notification
             }
         }
     }
     catch {
-        if ($null -ne $notification) { $notification.Close() }
+        if ($null -ne $notification) { 
+            $notification.Timer.Stop()
+            $notification.Form.Close()
+        }
         Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
         Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
         exit 1
     }
 }
 
-# EXECUÇÃO PRINCIPAL
+# EXECUÇÃO PRINCIPAL (ATUALIZADA)
 # ====================================================
 try {
     Test-RcloneConfig
 
     try {
-        Write-Log -Message "Criando diretório remoto (se não existir)..." -Level Info
         & $RclonePath mkdir "$($CloudRemote):$($CloudDir)"
         Write-Log -Message "Diretório remoto verificado/criado: $($CloudRemote):$($CloudDir)" -Level Info
     }
@@ -264,7 +274,6 @@ try {
     Sync-Saves -Direction "down"
 
     # Iniciar Launcher
-    # Show-CustomNotification -Title "Execução" -Message "Iniciando Elden Ring..." -Type "info"
     $launcherProcess = Start-Process -FilePath $LauncherExePath -WindowStyle Hidden -PassThru
     Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
 
@@ -272,17 +281,7 @@ try {
     Write-Log -Message "Aguardando processo do jogo..." -Level Info
     $timeout = 10
     $startTime = Get-Date
-
-    if (-not $GameProcess -or [string]::IsNullOrWhiteSpace($GameProcess)) {
-        Write-Log -Message "O parâmetro 'GameProcess' está vazio ou nulo. Verifique as configurações do script." -Level Error
-        throw "O parâmetro 'GameProcess' não foi configurado ou está vazio. Verifique as configurações do script."
-    }
-    Write-Log -Message "Parâmetro 'GameProcess' validado: $GameProcess" -Level Info
-
-    # Garantir que o valor de $GameProcess não seja alterado
     $validatedGameProcess = $GameProcess
-    Write-Log -Message "Usando o valor de 'GameProcess': $validatedGameProcess" -Level Info
-
     $gameProcess = $null
 
     while (-not $gameProcess -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
@@ -298,26 +297,23 @@ try {
         throw "Processo do jogo não iniciado após $timeout segundos"
     }
 
-    # Após detectar o processo do jogo:
-    Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
+    # Monitorar jogo (NÃO BLOQUEANTE)
+    try {
+        Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
+        
+        while (-not $gameProcess.HasExited) {
+            Start-Sleep -Milliseconds 500
+            [System.Windows.Forms.Application]::DoEvents() # Manter UI responsiva
+        }
 
-# Monitorar jogo
-try {
-    Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
-    
-    # Usar Wait-Process (não requer admin)
-    $gameProcess | Wait-Process -ErrorAction Stop
-    
-    Write-Log -Message "Processo finalizado (PID: $($gameProcess.Id))" -Level Info
-}
-catch {
-    Write-Log -Message "Erro ao monitorar o processo: $_" -Level Error
-    throw "Falha no monitoramento"
-}
-    # Sincronizar APÓS o processo ser fechado
-    # Start-Sleep -Seconds 5  # Pausa de 5 segundos
+        Write-Log -Message "Processo finalizado (PID: $($gameProcess.Id))" -Level Info
+    }
+    catch {
+        Write-Log -Message "Erro ao monitorar o processo: $_" -Level Error
+        throw "Falha no monitoramento"
+    }
+
     Sync-Saves -Direction "up"
-    # Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
 catch {
     Write-Log -Message "ERRO FATAL: $($_.Exception.Message)" -Level Error
