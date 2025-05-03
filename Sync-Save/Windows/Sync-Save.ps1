@@ -306,10 +306,28 @@ try {
     Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
 
     # Monitorar jogo
-    while ($null -ne (Get-Process -Name $GameProcess -ErrorAction SilentlyContinue)) {
-        Start-Sleep -Seconds 10
+    # Após detectar o processo do jogo:
+    Write-Log -Message "Processo do jogo detectado (PID: $($gameProcess.Id))" -Level Info
+
+    # Monitorar pelo PID específico
+    try {
+        Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
+        $gameProcess = Get-Process -Id $gameProcess.Id -ErrorAction Stop
+        
+        while (-not $gameProcess.HasExited) {
+            Start-Sleep -Seconds 5
+            $gameProcess.Refresh() # Atualiza o status do processo
+            Write-Log -Message "Processo ainda em execução (PID: $($gameProcess.Id))" -Level Info
+        }
+        
+        Write-Log -Message "Processo finalizado (PID: $($gameProcess.Id))" -Level Info
+    }
+    catch {
+        Write-Log -Message "Erro ao monitorar o processo: $_" -Level Error
+        throw "Falha no monitoramento"
     }
 
+    # Sincronizar APÓS o processo ser fechado
     Sync-Saves -Direction "up"
     Show-CustomNotification -Title "Conclusão" -Message "Processo finalizado!" -Type "success"
 }
