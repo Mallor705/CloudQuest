@@ -1,19 +1,19 @@
-﻿=== [ 2025-05-04 16:09:00 ] Sessão iniciada ===
+﻿=== [ 2025-05-04 16:22:07 ] Sessão iniciada ===
 
-[2025-05-04 16:09:00] [Info] Verificando configuração do Rclone...
-[2025-05-04 16:09:00] [Info] Configuração do Rclone validada
-[2025-05-04 16:09:01] [Info] Diretório remoto verificado/criado: onedrive:SaveGames/EldenRing
-[2025-05-04 16:09:01] [Info] Chrono Sync - Sincronizando
-[2025-05-04 16:09:01] [Info] Usando fonte Montserrat
-[2025-05-04 16:09:01] [Info] Tentativa 1/3: onedrive:SaveGames/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
-[2025-05-04 16:09:03] [Info] Sincronização bem-sucedida
-[2025-05-04 16:09:06] [Info] Launcher iniciado (PID: 18164)
-[2025-05-04 16:09:06] [Info] Aguardando processo do jogo...
-[2025-05-04 16:09:16] [Info] Iniciando monitoramento do processo (PID: 1248)...
-[2025-05-04 16:09:32] [Info] Processo finalizado (PID: 1248)
-[2025-05-04 16:09:32] [Info] Chrono Sync - Atualizando
-[2025-05-04 16:09:32] [Info] Usando fonte Montserrat
-[2025-05-04 16:09:32] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:SaveGames/EldenRing/
-[2025-05-04 16:09:34] [Info] Sincronização bem-sucedida
-[2025-05-04 16:09:37] [Info] === Sessão finalizada ===
+[2025-05-04 16:22:07] [Info] Verificando configuração do Rclone...
+[2025-05-04 16:22:07] [Info] Configuração do Rclone validada
+[2025-05-04 16:22:08] [Info] Diretório remoto verificado/criado: onedrive:SaveGames/EldenRing
+[2025-05-04 16:22:08] [Info] Chrono Sync - Sincronizando
+[2025-05-04 16:22:09] [Info] Usando fonte Montserrat
+[2025-05-04 16:22:09] [Info] Tentativa 1/3: onedrive:SaveGames/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
+[2025-05-04 16:22:10] [Info] Sincronização bem-sucedida
+[2025-05-04 16:22:14] [Info] Launcher iniciado (PID: 5152)
+[2025-05-04 16:22:14] [Info] Aguardando processo do jogo...
+[2025-05-04 16:22:24] [Info] Iniciando monitoramento do processo (PID: 12184)...
+[2025-05-04 16:22:24] [Info] Processo finalizado (PID: 12184)
+[2025-05-04 16:22:24] [Info] Chrono Sync - Atualizando
+[2025-05-04 16:22:24] [Info] Usando fonte Montserrat
+[2025-05-04 16:22:24] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:SaveGames/EldenRing/
+[2025-05-04 16:22:25] [Info] Sincronização bem-sucedida
+[2025-05-04 16:22:29] [Info] === Sessão finalizada ===
 

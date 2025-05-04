@@ -177,11 +177,17 @@ function Show-CustomNotification {
     $timer.Enabled = $true
     $timer.Add_Tick({ $form.Close(); $timer.Stop() })
 
-    # Adicionar controles
+    # Adicionar controles somente após todos os componentes estarem carregados
+    $form.Opacity = 0
+    $form.SuspendLayout()
     $panel.Controls.AddRange(@($lblTitle, $lblApp, $lblStatus, $picIcon, $bgIcon))
     $form.Controls.Add($panel)
+    $form.ResumeLayout($false)
+    $form.PerformLayout()
     $form.Add_Shown({ $form.Activate() })
     $form.Show()
+    $form.Refresh()
+    $form.Opacity = 1
 
     return @{ Form = $form; Timer = $timer }
 }
