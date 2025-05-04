@@ -121,15 +121,15 @@ function Show-CustomNotification {
 
     # Ícones (ajuste os caminhos conforme necessário)
     $iconPath = if ($Direction -eq "sync") { 
-        Join-Path -Path $ScriptDir -ChildPath "asstes\down.png"
+        Join-Path -Path $ScriptDir -ChildPath "assets\down.png"
     } else { 
-        Join-Path -Path $ScriptDir -ChildPath "asstes\up.png" 
+        Join-Path -Path $ScriptDir -ChildPath "assets\up.png" 
     }
     
     $bgPath = if ($Direction -eq "sync") {
-        Join-Path -Path $ScriptDir -ChildPath "asstes\down_background.png"
+        Join-Path -Path $ScriptDir -ChildPath "assets\down_background.png"
     } else {
-        Join-Path -Path $ScriptDir -ChildPath "asstes\up_background.png"
+        Join-Path -Path $ScriptDir -ChildPath "assets\up_background.png"
     }
 
     # Controles
