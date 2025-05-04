@@ -137,7 +137,7 @@ function Show-CustomNotification {
     $lblTitle.Text = "Chrono Sync"
     $lblTitle.Location = New-Object System.Drawing.Point(75, 15)
     $lblTitle.AutoSize = $true  # Permite que o label se ajuste ao texto
-    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 8, [System.Drawing.FontStyle]::Bold)
+    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 6, [System.Drawing.FontStyle]::Bold)
     $lblTitle.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
     $lblTitle.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
@@ -153,7 +153,7 @@ function Show-CustomNotification {
     $lblStatus.Text = if ($Direction -eq "sync") { "Sincronizando com a Nuvem..." } else { "Atualizando a Nuvem..." }
     $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
     $lblStatus.AutoSize = $true  # Permite que o label se ajuste ao texto
-    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 8, [System.Drawing.FontStyle]::Regular)
+    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 6, [System.Drawing.FontStyle]::Regular)
     $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
     $lblStatus.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
@@ -355,7 +355,7 @@ try {
 
     # Aguardar processo do jogo
     Write-Log -Message "Aguardando processo do jogo..." -Level Info
-    $timeout = 10
+    $timeout = 20
     $startTime = Get-Date
     $validatedGameProcess = $GameProcess
     $gameProcess = $null
