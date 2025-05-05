@@ -1,11 +1,14 @@
 ﻿{
     "CloudRemote":  "onedrive",
-    "AppID":  "1245620",
+    "AppID":  [
+                  "1245620",
+                  "\u0000"
+              ],
     "ExecutablePath":  "F:\\messi\\Games\\Steam\\steamapps\\common\\ELDEN RING\\Game\\ersc_launcher.exe",
     "CloudDir":  "SaveGames/EldenRing",
     "RclonePath":  "D:\\messi\\Documents\\rclone\\rclone.exe",
-    "GameProcess":  "ersc_launcher",
+    "GameProcess":  "eldenring",
     "ExeFolder":  "F:\\messi\\Games\\Steam\\steamapps\\common\\ELDEN RING\\Game",
-    "GameName":  "ELDEN RING",
+    "GameName":  "Elden Ring",
     "LocalDir":  "C:\\Users\\messi\\AppData\\Roaming\\EldenRing"
 }

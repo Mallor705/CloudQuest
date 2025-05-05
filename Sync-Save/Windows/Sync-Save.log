@@ -34,3 +34,26 @@
 [2025-05-05 00:50:27] [Info] Sincronização bem-sucedida
 [2025-05-05 00:50:30] [Info] === Sessão finalizada ===
 
+[2025-05-05 01:00:35] [Info] Verificando configuração do Rclone...
+[2025-05-05 01:00:35] [Error] ERRO: Falha na verificação do Rclone - Arquivo do Rclone não encontrado:  D:\messi\Documents\rclone\rclone.exe
+[2025-05-05 01:00:35] [Info] Erro de Configuração - Verifique as configurações do Rclone
+[2025-05-05 01:00:35] [Info] Usando fonte Montserrat
+[2025-05-05 01:00:35] [Info] === Sessão finalizada ===
+
+[2025-05-05 01:02:04] [Info] Verificando configuração do Rclone...
+[2025-05-05 01:02:04] [Info] Configuração do Rclone validada
+[2025-05-05 01:02:05] [Info] Diretório remoto verificado/criado: onedrive:SaveGames/EldenRing
+[2025-05-05 01:02:05] [Info] Chrono Sync - Sincronizando
+[2025-05-05 01:02:05] [Info] Usando fonte Montserrat
+[2025-05-05 01:02:05] [Info] Tentativa 1/3: onedrive:SaveGames/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
+[2025-05-05 01:02:07] [Info] Sincronização bem-sucedida
+[2025-05-05 01:02:10] [Info] Launcher iniciado (PID: 16528)
+[2025-05-05 01:02:10] [Info] Aguardando processo do jogo...
+[2025-05-05 01:02:20] [Info] Iniciando monitoramento do processo (PID: 20800)...
+[2025-05-05 01:02:31] [Info] Processo finalizado (PID: 20800)
+[2025-05-05 01:02:31] [Info] Chrono Sync - Atualizando
+[2025-05-05 01:02:31] [Info] Usando fonte Montserrat
+[2025-05-05 01:02:31] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:SaveGames/EldenRing/
+[2025-05-05 01:02:32] [Info] Sincronização bem-sucedida
+[2025-05-05 01:02:36] [Info] === Sessão finalizada ===
+
