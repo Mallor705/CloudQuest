@@ -78,6 +78,11 @@ $CloudDir = (Read-Host "Digite o diretório no Cloud (ex.: SaveGames/EldenRing)"
 
 # Definir o nome do processo utilizando o nome do executável sem extensão
 $GameProcess = [System.IO.Path]::GetFileNameWithoutExtension($ExecutablePath)
+# Perguntar se o nome do processo está correto
+$confirm = Read-Host "O nome do processo detectado é '$GameProcess'. Está correto? (S/N)"
+if ($confirm -notmatch '^[Ss]') {
+    $GameProcess = Read-Host "Digite o nome correto do processo do jogo"
+}
 
 # Passo 5: Exibir as configurações e salvar em um arquivo JSON na pasta do executável
 Write-Host "`nConfigurações:"
