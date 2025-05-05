@@ -3,6 +3,12 @@
 $ScriptDir = $PSScriptRoot
 $LogPath = Join-Path -Path $ScriptDir -ChildPath "logs\CloudQuest.log"
 
+# Adicionado: criar diretório de logs se não existir
+$logDir = Split-Path -Path $LogPath -Parent
+if (-not (Test-Path $logDir)) {
+    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+}
+
 function Write-Log {
     param(
         [string]$Message,
