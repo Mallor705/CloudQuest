@@ -2,7 +2,7 @@
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 # Passo 1: Solicitar o caminho do executável do jogo
-$ExecutablePath = Read-Host "Digite o caminho completo do executável do jogo (ex.: D:\Games\Steam\steamapps\common\Jogo\jogo.exe)"
+$ExecutablePath = (Read-Host "Digite o caminho completo do executável do jogo (ex.: D:\Games\Steam\steamapps\common\Jogo\jogo.exe)").Trim('"')
 if (-not (Test-Path $ExecutablePath)) {
     Write-Host "Executável não encontrado. Finalizando..."
     exit 1
@@ -37,7 +37,7 @@ try {
 }
 
 # Passo 4: Solicitar as demais configurações do usuário
-$RclonePath = Read-Host "Digite o caminho do Rclone (ex.: D:\messi\Documents\rclone\rclone.exe)"
+$RclonePath = (Read-Host "Digite o caminho do Rclone (ex.: D:\messi\Documents\rclone\rclone.exe)").Trim('"')
 # Nova lógica para determinar o Cloud Remote automaticamente via rclone.conf
 $rcloneConfPath = Join-Path $env:APPDATA "rclone\rclone.conf"
 if (Test-Path $rcloneConfPath) {
@@ -72,8 +72,8 @@ if (Test-Path $rcloneConfPath) {
     Write-Warning "Arquivo rclone.conf não encontrado em $rcloneConfPath."
     $CloudRemote = Read-Host "Digite o nome do Cloud Remote (ex.: onedrive)"
 }
-$LocalDir = Read-Host "Digite o diretório local (ex.: $env:APPDATA\EldenRing)"
-$CloudDir = Read-Host "Digite o diretório no Cloud (ex.: SaveGames/EldenRing)"
+$LocalDir = (Read-Host "Digite o diretório local (ex.: $env:APPDATA\EldenRing)").Trim('"')
+$CloudDir = (Read-Host "Digite o diretório no Cloud (ex.: SaveGames/EldenRing)").Trim('"')
 
 
 # Definir o nome do processo utilizando o nome do executável sem extensão
