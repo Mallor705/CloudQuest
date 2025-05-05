@@ -1,14 +1,19 @@
-﻿=== [ 2025-05-05 13:10:12 ] SessÃ£o iniciada ===
+﻿=== [ 2025-05-05 13:38:35 ] SessÃ£o iniciada ===
 
-[2025-05-05 13:10:12] [Info] Verificando configuraÃ§Ã£o do Rclone...
-[2025-05-05 13:10:12] [Error] ERRO: Falha na verificaÃ§Ã£o do Rclone - Não é possível associar o argumento ao parâmetro 'Path' porque ele é nulo.
-[2025-05-05 13:10:12] [Info] Erro de ConfiguraÃ§Ã£o - Verifique as configuraÃ§Ãµes do Rclone
-[2025-05-05 13:10:12] [Info] Usando fonte Montserrat
-[2025-05-05 13:10:12] [Error] ERRO FATAL: Exceção ao chamar "FromFile" com "1" argumento(s): "D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\assets\down.png"
-[2025-05-05 13:10:12] [Error] Stack Trace: em Show-CustomNotification, D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\modules\Notifications.psm1: linha 128
-em Test-RcloneConfig, D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\modules\Rclone.psm1: linha 23
-em <ScriptBlock>, D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\CloudQuest.ps1: linha 44
-[2025-05-05 13:10:12] [Info] Erro CrÃ­tico - Consulte o arquivo de log
-[2025-05-05 13:10:12] [Info] Usando fonte Montserrat
-[2025-05-05 13:10:12] [Info] === SessÃ£o finalizada ===
+[2025-05-05 13:38:35] [Info] Verificando configuraÃ§Ã£o do Rclone...
+[2025-05-05 13:38:36] [Info] ConfiguraÃ§Ã£o do Rclone validada
+[2025-05-05 13:38:38] [Info] DiretÃ³rio remoto verificado/criado: onedrive:SaveGames/EldenRing
+[2025-05-05 13:38:38] [Info] CloudQuest - Sincronizando
+[2025-05-05 13:38:38] [Info] Usando fonte Montserrat
+[2025-05-05 13:38:38] [Info] Tentativa 1/3: onedrive:SaveGames/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
+[2025-05-05 13:38:40] [Info] SincronizaÃ§Ã£o bem-sucedida
+[2025-05-05 13:38:43] [Info] Launcher iniciado (PID: 17872)
+[2025-05-05 13:38:43] [Info] Aguardando processo do jogo...
+[2025-05-05 13:38:53] [Info] Iniciando monitoramento do processo (PID: 7256)...
+[2025-05-05 13:39:23] [Info] Processo finalizado (PID: 7256)
+[2025-05-05 13:39:23] [Info] CloudQuest - Atualizando
+[2025-05-05 13:39:23] [Info] Usando fonte Montserrat
+[2025-05-05 13:39:23] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:SaveGames/EldenRing/
+[2025-05-05 13:39:24] [Info] SincronizaÃ§Ã£o bem-sucedida
+[2025-05-05 13:39:28] [Info] === SessÃ£o finalizada ===
 

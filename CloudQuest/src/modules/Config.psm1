@@ -19,13 +19,11 @@ function Write-Log {
 
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
-# Exporta a função Write-Log para uso externo
-Export-ModuleMember -Function Write-Log
- 
+
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
 # Atualiza o caminho para buscar o arquivo de configuração em "..\config"
-$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\config") -ChildPath "UserConfig.json"
+$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\..\config") -ChildPath "UserConfig.json"
 if (Test-Path $configPath) {
     $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
     $RclonePath = $userConfig.RclonePath
@@ -40,3 +38,9 @@ if (Test-Path $configPath) {
     Write-Log -Message "Arquivo de configuração do usuário não encontrado." -Level Warning
     throw "Arquivo de configuração do usuário não encontrado."
 }
+
+# Exporta a função Write-Log para uso externo
+Export-ModuleMember -Function Write-Log
+# Adicionado: exportar variáveis de configuração para outros módulos
+Export-ModuleMember -Variable RclonePath, CloudRemote, CloudDir, LocalDir, GameProcess, GameName, LauncherExePath
+ 

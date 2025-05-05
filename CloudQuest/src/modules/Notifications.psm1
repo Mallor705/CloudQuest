@@ -41,7 +41,7 @@ function Show-CustomNotification {
     if ($Direction -eq "sync") {
         $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     } else {
-        $form.Location = New-Object System.Drawing.Point($rightPosition, 900)
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     }
 
     # Painel com gradiente
@@ -83,7 +83,8 @@ function Show-CustomNotification {
     })
 
     # Ícones (ajuste os caminhos conforme necessário)
-    $assetsPath = Join-Path -Path (Split-Path -Parent $PSScriptRoot) -ChildPath "assets"
+    # Atualiza o caminho dos assets para subir dois níveis e acessar "assets"
+    $assetsPath = Join-Path -Path (Split-Path -Parent (Split-Path $PSScriptRoot)) -ChildPath "assets"
     $iconPath = if ($Direction -eq "sync") { 
         Join-Path -Path $assetsPath -ChildPath "down.png"
     } else { 

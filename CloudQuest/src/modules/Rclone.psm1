@@ -4,18 +4,18 @@ function Test-RcloneConfig {
     try {
         Write-Log -Message "Verificando configuração do Rclone..." -Level Info
         
-        if (-not (Test-Path $RclonePath)) {
-            throw "Arquivo do Rclone não encontrado: $RclonePath"
+        if (-not (Test-Path $global:RclonePath)) {
+            throw "Arquivo do Rclone não encontrado: $global:RclonePath"
         }
-
-        $remotes = & $RclonePath listremotes 2>&1
+        
+        $remotes = & $global:RclonePath listremotes 2>&1
         if ($remotes -is [System.Management.Automation.ErrorRecord]) {
             throw $remotes.Exception.Message
         }
-        if (-not ($remotes -match "^${CloudRemote}:")) {
-            throw "Remote '$CloudRemote' não configurado"
+        if (-not ($remotes -match "^$($global:CloudRemote):")) {
+            throw "Remote '$global:CloudRemote' não configurado"
         }
-
+        
         Write-Log -Message "Configuração do Rclone validada" -Level Info
     }
     catch {

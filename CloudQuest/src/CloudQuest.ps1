@@ -1,6 +1,12 @@
 # CloudQuest.ps1
 # INICIALIZAÇÃO DO SISTEMA
 # ====================================================
+
+# INICIALIZAÇÃO DO SISTEMA - Adicionado runspace padrão para threads não associadas à UI
+$runspace = [runspacefactory]::CreateRunspace()
+$runspace.Open()
+[runspacefactory]::DefaultRunspace = $runspace
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
