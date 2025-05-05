@@ -1,19 +1,8 @@
-﻿=== [ 2025-05-05 13:46:52 ] SessÃ£o iniciada ===
+﻿=== [ 2025-05-05 14:42:01 ] SessÃ£o iniciada ===
 
-[2025-05-05 13:46:52] [Info] Verificando configuraÃ§Ã£o do Rclone...
-[2025-05-05 13:46:52] [Info] ConfiguraÃ§Ã£o do Rclone validada
-[2025-05-05 13:46:53] [Info] DiretÃ³rio remoto verificado/criado: onedrive:SaveGames/EldenRing
-[2025-05-05 13:46:53] [Info] CloudQuest - Sincronizando
-[2025-05-05 13:46:53] [Info] Usando fonte Montserrat
-[2025-05-05 13:46:54] [Info] Tentativa 1/3: onedrive:SaveGames/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
-[2025-05-05 13:46:55] [Info] SincronizaÃ§Ã£o bem-sucedida
-[2025-05-05 13:47:00] [Info] Launcher iniciado (PID: 16672)
-[2025-05-05 13:47:00] [Info] Aguardando processo do jogo...
-[2025-05-05 13:47:10] [Info] Iniciando monitoramento do processo (PID: 11024)...
-[2025-05-05 13:47:10] [Info] Processo finalizado (PID: 11024)
-[2025-05-05 13:47:10] [Info] CloudQuest - Atualizando
-[2025-05-05 13:47:10] [Info] Usando fonte Montserrat
-[2025-05-05 13:47:10] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:SaveGames/EldenRing/
-[2025-05-05 13:47:11] [Info] SincronizaÃ§Ã£o bem-sucedida
-[2025-05-05 13:47:16] [Info] === SessÃ£o finalizada ===
+[2025-05-05 14:42:01] [Info] Verificando configuraÃ§Ã£o do Rclone...
+[2025-05-05 14:42:01] [Error] ERRO: Falha na verificaÃ§Ã£o do Rclone - Não é possível associar o argumento ao parâmetro 'Path' porque ele é nulo.
+[2025-05-05 14:42:01] [Info] Erro de ConfiguraÃ§Ã£o - Verifique as configuraÃ§Ãµes do Rclone
+[2025-05-05 14:42:02] [Info] Usando fonte Montserrat
+[2025-05-05 14:42:02] [Info] === SessÃ£o finalizada ===
 

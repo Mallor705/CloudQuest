@@ -1,10 +1,12 @@
 # CONFIGURAÇÃO DE LOG (UTF-8)
 # ====================================================
 $ScriptDir = $PSScriptRoot
+
 # Ajusta o caminho para o diretório raiz do projeto
 $CloudQuestRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $LogPath = Join-Path -Path (Join-Path -Path $CloudQuestRoot -ChildPath "logs") -ChildPath "CloudQuest.log"
 
+$ProfileName = $global:ProfileName
 function Write-Log {
     param(
         [string]$Message,
@@ -21,10 +23,14 @@ Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss
 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
+param(
+    [string]$ProfileName
+)
 # Atualiza o caminho para buscar o arquivo de configuração em "..\config"
-$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\..\config") -ChildPath "UserConfig.json"
+$profilesDir = Join-Path -Path (Split-Path -Parent (Split-Path -Parent $ScriptDir)) -ChildPath "profiles"
+$configDir = Join-Path -Path $profilesDir -ChildPath "${ProfileName}.json"
 if (Test-Path $configPath) {
-    $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+    $userConfig = Get-Content -Path $configDir -Raw | ConvertFrom-Json
     $RclonePath = $userConfig.RclonePath
     $CloudRemote = $userConfig.CloudRemote
     $CloudDir = $userConfig.CloudDir
@@ -34,8 +40,8 @@ if (Test-Path $configPath) {
     $LauncherExePath = $userConfig.ExecutablePath
     # As variáveis (RclonePath, CloudRemote, CloudDir, LocalDir, etc.) estão corretamente definidas.
 } else {
-    Write-Log -Message "Arquivo de configuração do usuário não encontrado." -Level Warning
-    throw "Arquivo de configuração do usuário não encontrado."
+    Write-Log -Message "Perfil '$ProfileName' não encontrado em: $configDir" -Level Warning
+    throw "Perfil '$ProfileName' não encontrado!"
 }
 
 # Exporta a função Write-Log para uso externo
