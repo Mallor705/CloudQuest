@@ -2,19 +2,17 @@
 # INICIALIZAÇÃO DO SISTEMA
 # ====================================================
 
+$runspace = [runspacefactory]::CreateRunspace()
+$runspace.Open()
+[runspacefactory]::DefaultRunspace = $runspace
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-param(
-    [string]$ProfileName
-)
-
 # Importa módulos necessários
-$modulesPath = Join-Path $PSScriptRoot "modules"
-$global:ProfileName = $ProfileName
-Import-Module (Join-Path $modulesPath "Config.psm1")
-Import-Module (Join-Path $modulesPath "Notifications.psm1")
-Import-Module (Join-Path $modulesPath "Rclone.psm1")
+Import-Module (Join-Path $PSScriptRoot "modules\Config.psm1")
+Import-Module (Join-Path $PSScriptRoot "modules\Notifications.psm1")
+Import-Module (Join-Path $PSScriptRoot "modules\Rclone.psm1")
 
 # FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
 # ====================================================
