@@ -26,35 +26,20 @@ $LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
-$RclonePath = "D:\messi\Documents\rclone\rclone.exe"
-$CloudRemote = "onedrive"
-$CloudDir = "SaveGames/EldenRing"
-$LocalDir = "$env:APPDATA\EldenRing"
-$GameProcess = "eldenring"
-$GameName = "Elden Ring"
-$LauncherExePath = "F:\messi\Games\Steam\steamapps\common\ELDEN RING\Game\ersc_launcher.exe"
-
-# NOVA FUNÇÃO: Seleciona o jogo desejado
-function Select-Game {
-    Write-Host "Deseja selecionar um jogo da lista Steam? (S/N)"
-    $choice = Read-Host "Digite S para escolher da lista ou N para informar manualmente"
-    if ($choice -match '^[Ss]') {
-        Write-Host "Executando Get-SteamGames.ps1 para listar os jogos Steam..."
-        # Executa o script que lista os jogos
-        & (Join-Path $ScriptDir "Get-SteamGames.ps1")
-        Write-Host ""
-        Write-Host "Após visualizar a lista, informe os dados do jogo escolhido."
-    }
-    # Pergunta os dados do jogo
-    $selectedProcess = Read-Host "Digite o nome do processo do jogo (ex.: eldenring ou apenas o nome sem extensão)"
-    $selectedLauncher = Read-Host "Digite o caminho completo do Launcher do jogo"
-    return @{ GameProcess = $selectedProcess; LauncherExePath = $selectedLauncher }
+$configPath = Join-Path -Path $ScriptDir -ChildPath "UserConfig.json"
+if (Test-Path $configPath) {
+    $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+    $RclonePath = $userConfig.RclonePath
+    $CloudRemote = $userConfig.CloudRemote
+    $CloudDir = $userConfig.CloudDir
+    $LocalDir = $userConfig.LocalDir
+    $GameProcess = $userConfig.GameProcess
+    $GameName = $userConfig.GameName
+    $LauncherExePath = $userConfig.ExecutablePath
+} else {
+    Write-Log -Message "Arquivo de configuração do usuário não encontrado." -Level Warning
+    exit 1
 }
-
-# Atualização das variáveis de jogo com base na escolha do usuário
-$gameSelection = Select-Game
-$GameProcess = $gameSelection.GameProcess
-$LauncherExePath = $gameSelection.LauncherExePath
 
 # NOTIFICAÇÕES PERSONALIZADAS (ATUALIZADA)
 # ====================================================
