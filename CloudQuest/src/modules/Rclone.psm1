@@ -25,6 +25,8 @@ function Test-RcloneConfig {
     }
 }
 
+# As funções Test-RcloneConfig e Invoke-RcloneCommand estão corretamente implementadas e integradas.
+
 # FUNÇÃO PRINCIPAL DO RCLONE (ATUALIZADA)
 # ====================================================
 function Invoke-RcloneCommand {

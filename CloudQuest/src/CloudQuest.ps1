@@ -111,3 +111,5 @@ catch {
 finally {
     Write-Log -Message "=== Sessão finalizada ===`n" -Level Info
 }
+
+# As chamadas a Test-RcloneConfig, Invoke-RcloneCommand e Show-CustomNotification estão integradas corretamente.

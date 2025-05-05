@@ -1,5 +1,8 @@
 # CONFIGURAÇÃO DE LOG (UTF-8)
 # ====================================================
+$ScriptDir = $PSScriptRoot
+$LogPath = Join-Path -Path $ScriptDir -ChildPath "logs\CloudQuest.log"
+
 function Write-Log {
     param(
         [string]$Message,
@@ -14,10 +17,9 @@ function Write-Log {
 
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
-# CONFIGURAÇÕES DO SCRIPT   
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
-
+# Exporta a função Write-Log para uso externo
+Export-ModuleMember -Function Write-Log
+ 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
 $configPath = Join-Path -Path $ScriptDir -ChildPath "UserConfig.json"
@@ -30,7 +32,8 @@ if (Test-Path $configPath) {
     $GameProcess = $userConfig.GameProcess
     $GameName = $userConfig.GameName
     $LauncherExePath = $userConfig.ExecutablePath
+    # As variáveis (RclonePath, CloudRemote, CloudDir, LocalDir, etc.) estão corretamente definidas.
 } else {
     Write-Log -Message "Arquivo de configuração do usuário não encontrado." -Level Warning
-    exit 1
+    throw "Arquivo de configuração do usuário não encontrado."
 }

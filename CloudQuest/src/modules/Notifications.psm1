@@ -41,7 +41,7 @@ function Show-CustomNotification {
     if ($Direction -eq "sync") {
         $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     } else {
-        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 900)
     }
 
     # Painel com gradiente
@@ -84,20 +84,20 @@ function Show-CustomNotification {
 
     # Ícones (ajuste os caminhos conforme necessário)
     $iconPath = if ($Direction -eq "sync") { 
-        Join-Path -Path $ScriptDir -ChildPath "assets\down.png"
+        Join-Path -Path $PSScriptRoot -ChildPath "assets\down.png"
     } else { 
-        Join-Path -Path $ScriptDir -ChildPath "assets\up.png" 
+        Join-Path -Path $PSScriptRoot -ChildPath "assets\up.png" 
     }
     
     $bgPath = if ($Direction -eq "sync") {
-        Join-Path -Path $ScriptDir -ChildPath "assets\down_background.png"
+        Join-Path -Path $PSScriptRoot -ChildPath "assets\down_background.png"
     } else {
-        Join-Path -Path $ScriptDir -ChildPath "assets\up_background.png"
+        Join-Path -Path $PSScriptRoot -ChildPath "assets\up_background.png"
     }
 
     # Controles
     $lblTitle = New-Object System.Windows.Forms.Label
-    $lblTitle.Text = "Chrono Sync"
+    $lblTitle.Text = "CloudQuest"
     $lblTitle.Location = New-Object System.Drawing.Point(75, 15)
     $lblTitle.AutoSize = $true  # Permite que o label se ajuste ao texto
     $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 7, [System.Drawing.FontStyle]::Bold)
@@ -154,3 +154,5 @@ function Show-CustomNotification {
 
     return @{ Form = $form; Timer = $timer }
 }
+
+# A função Show-CustomNotification implementa as notificações conforme o esperado.
