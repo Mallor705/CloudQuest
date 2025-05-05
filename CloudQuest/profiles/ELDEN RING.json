@@ -1,9 +1,6 @@
 ﻿{
     "CloudRemote":  "onedrive",
-    "AppID":  [
-                  "1245620",
-                  "\u0000"
-              ],
+    "AppID":  "1245620",
     "ExecutablePath":  "F:\\messi\\Games\\Steam\\steamapps\\common\\ELDEN RING\\Game\\ersc_launcher.exe",
     "CloudDir":  "SaveGames/EldenRing",
     "RclonePath":  "D:\\messi\\Documents\\rclone\\rclone.exe",

@@ -118,7 +118,7 @@ $config = @{
 }
 
 # Caminho para a pasta "config" (na raiz do projeto, ao lado de "src" e "assets")
-$configDir = Join-Path -Path (Resolve-Path "$PSScriptRoot\..") -ChildPath "config"
+$configDir = Join-Path -Path (Resolve-Path "$PSScriptRoot\..") -ChildPath "profiles"
 
 # Cria a pasta "config" se ela não existir
 if (-not (Test-Path -Path $configDir)) {
@@ -127,6 +127,6 @@ if (-not (Test-Path -Path $configDir)) {
 }
 
 # Cria/salva o arquivo UserConfig.json
-$configFilePath = Join-Path -Path $configDir -ChildPath "UserConfig.json"
+$configFilePath = Join-Path -Path $configDir -ChildPath "$GameName.json"
 $config | ConvertTo-Json -Depth 3 | Out-File -FilePath $configFilePath -Encoding UTF8
 Write-Host "`nConfigurações salvas em: $configFilePath"
