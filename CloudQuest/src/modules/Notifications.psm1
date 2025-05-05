@@ -83,16 +83,17 @@ function Show-CustomNotification {
     })
 
     # Ícones (ajuste os caminhos conforme necessário)
+    $assetsPath = Join-Path -Path (Split-Path -Parent $PSScriptRoot) -ChildPath "assets"
     $iconPath = if ($Direction -eq "sync") { 
-        Join-Path -Path $PSScriptRoot -ChildPath "assets\down.png"
+        Join-Path -Path $assetsPath -ChildPath "down.png"
     } else { 
-        Join-Path -Path $PSScriptRoot -ChildPath "assets\up.png" 
+        Join-Path -Path $assetsPath -ChildPath "up.png" 
     }
     
     $bgPath = if ($Direction -eq "sync") {
-        Join-Path -Path $PSScriptRoot -ChildPath "assets\down_background.png"
+        Join-Path -Path $assetsPath -ChildPath "down_background.png"
     } else {
-        Join-Path -Path $PSScriptRoot -ChildPath "assets\up_background.png"
+        Join-Path -Path $assetsPath -ChildPath "up_background.png"
     }
 
     # Controles
