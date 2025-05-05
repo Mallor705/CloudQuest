@@ -1,4 +1,4 @@
-# Obter diretório atual do script
+﻿# Obter diretório atual do script
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
 # Passo 1: Solicitar o caminho do executável do jogo
