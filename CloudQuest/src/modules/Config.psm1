@@ -1,13 +1,9 @@
 # CONFIGURAÇÃO DE LOG (UTF-8)
 # ====================================================
 $ScriptDir = $PSScriptRoot
-$LogPath = Join-Path -Path $ScriptDir -ChildPath "logs\CloudQuest.log"
-
-# Adicionado: criar diretório de logs se não existir
-$logDir = Split-Path -Path $LogPath -Parent
-if (-not (Test-Path $logDir)) {
-    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-}
+# Ajusta o caminho para o diretório raiz do projeto
+$CloudQuestRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$LogPath = Join-Path -Path (Join-Path -Path $CloudQuestRoot -ChildPath "logs") -ChildPath "CloudQuest.log"
 
 function Write-Log {
     param(

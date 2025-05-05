@@ -1,1 +1,14 @@
-=== [ ...existing log content... ]
+﻿=== [ 2025-05-05 13:10:12 ] SessÃ£o iniciada ===
+
+[2025-05-05 13:10:12] [Info] Verificando configuraÃ§Ã£o do Rclone...
+[2025-05-05 13:10:12] [Error] ERRO: Falha na verificaÃ§Ã£o do Rclone - Não é possível associar o argumento ao parâmetro 'Path' porque ele é nulo.
+[2025-05-05 13:10:12] [Info] Erro de ConfiguraÃ§Ã£o - Verifique as configuraÃ§Ãµes do Rclone
+[2025-05-05 13:10:12] [Info] Usando fonte Montserrat
+[2025-05-05 13:10:12] [Error] ERRO FATAL: Exceção ao chamar "FromFile" com "1" argumento(s): "D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\assets\down.png"
+[2025-05-05 13:10:12] [Error] Stack Trace: em Show-CustomNotification, D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\modules\Notifications.psm1: linha 128
+em Test-RcloneConfig, D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\modules\Rclone.psm1: linha 23
+em <ScriptBlock>, D:\messi\Documents\GitHub\Sync-Save\CloudQuest\src\CloudQuest.ps1: linha 44
+[2025-05-05 13:10:12] [Info] Erro CrÃ­tico - Consulte o arquivo de log
+[2025-05-05 13:10:12] [Info] Usando fonte Montserrat
+[2025-05-05 13:10:12] [Info] === SessÃ£o finalizada ===
+
