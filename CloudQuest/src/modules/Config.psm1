@@ -22,7 +22,8 @@ Export-ModuleMember -Function Write-Log
  
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
-$configPath = Join-Path -Path $ScriptDir -ChildPath "UserConfig.json"
+# Atualiza o caminho para buscar o arquivo de configuração em "..\config"
+$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\config") -ChildPath "UserConfig.json"
 if (Test-Path $configPath) {
     $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
     $RclonePath = $userConfig.RclonePath
