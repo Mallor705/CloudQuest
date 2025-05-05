@@ -19,7 +19,6 @@ function Write-Log {
 
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
-
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
 # Atualiza o caminho para buscar o arquivo de configuração em "..\config"
