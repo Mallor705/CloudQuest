@@ -12,28 +12,37 @@ $exeFolder = Split-Path -Parent $ExecutablePath
 # Passo 2: Buscar o arquivo steam_appid.txt na pasta do executável
 $steamAppIdPath = Join-Path $exeFolder "steam_appid.txt"
 if (Test-Path $steamAppIdPath) {
-    $appID = (Get-Content $steamAppIdPath | ForEach-Object { $_.Trim() })
-    Write-Host "AppID lido do steam_appid.txt: $appID"
+    # Lê todo o conteúdo do arquivo, remove caracteres não numéricos e pega a primeira sequência de dígitos
+    $rawContent = Get-Content $steamAppIdPath -Raw
+    $appID = [regex]::Match($rawContent, '\d+').Value
+    
+    if (-not [string]::IsNullOrEmpty($appID)) {
+        Write-Host "AppID lido do steam_appid.txt: $appID"
+    } else {
+        Write-Warning "Nenhum AppID válido encontrado em $steamAppIdPath"
+        $appID = Read-Host "Digite manualmente o AppID do jogo"
+    }
 } else {
     Write-Warning "Arquivo steam_appid.txt não encontrado em $exeFolder"
     $appID = Read-Host "Digite manualmente o AppID do jogo"
 }
 
-# Passo 3: Consultar a API Steam para obter informações do jogo
+# Passo 3: Consultar a API Steam (apenas para AppIDs válidos)
 try {
     $apiUrl = "https://store.steampowered.com/api/appdetails?appids=$appID"
     $response = Invoke-RestMethod -Uri $apiUrl -ErrorAction Stop
-    if ($response.$appID.success) {
+
+    if ($response.$appID.success -eq $true) {
         $data = $response.$appID.data
         $GameName = $data.name
         Write-Host "Nome do jogo obtido da API: $GameName"
     } else {
-        Write-Warning "Dados não disponíveis para AppID $appID"
+        Write-Warning "AppID $appID não encontrado na Steam. Insira o nome manualmente."
         $GameName = Read-Host "Digite o nome do jogo"
     }
 } catch {
-    Write-Warning "Erro ao buscar dados na API Steam: $_"
-    $GameName = Read-Host "Digite o nome do jogo"
+    Write-Warning "Erro na API Steam: $($_.Exception.Message)"
+    $GameName = Read-Host "Digite o nome do jogo manualmente"
 }
 
 # Passo 4: Solicitar as demais configurações do usuário
