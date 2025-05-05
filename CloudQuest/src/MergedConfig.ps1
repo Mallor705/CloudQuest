@@ -84,7 +84,7 @@ if ($confirm -notmatch '^[Ss]') {
     $GameProcess = Read-Host "Digite o nome correto do processo do jogo"
 }
 
-# Passo 5: Exibir as configurações e salvar em um arquivo JSON na pasta do executável
+# Passo 5: Exibir as configurações e salvar em um arquivo JSON na pasta config
 Write-Host "`nConfigurações:"
 Write-Host "Executável: $ExecutablePath"
 Write-Host "Pasta do Executável: $exeFolder"
@@ -108,6 +108,12 @@ $config = @{
     GameProcess    = $GameProcess
 }
 
-$configFilePath = Join-Path -Path $ScriptDir -ChildPath "UserConfig.json"
+# Criar a pasta "config" se não existir
+$configDir = Join-Path -Path $ScriptDir -ChildPath "config"
+if (-not (Test-Path $configDir)) {
+    New-Item -Path $configDir -ItemType Directory | Out-Null
+}
+
+$configFilePath = Join-Path -Path $configDir -ChildPath "UserConfig.json"
 $config | ConvertTo-Json -Depth 3 | Out-File -FilePath $configFilePath -Encoding UTF8
 Write-Host "`nConfigurações salvas em: $configFilePath"
