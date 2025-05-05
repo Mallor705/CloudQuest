@@ -1,0 +1,414 @@
+# Sync-Save.ps1
+# INICIALIZAÇÃO DO SISTEMA
+# ====================================================
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+
+# CONFIGURAÇÃO DE LOG (UTF-8)
+# ====================================================
+function Write-Log {
+    param(
+        [string]$Message,
+        [ValidateSet('Info','Warning','Error')]
+        [string]$Level = 'Info'
+    )
+    
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $logEntry = "[$timestamp] [$Level] $Message"
+    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8 -Force
+}
+
+Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
+
+# CONFIGURAÇÕES DO SCRIPT   
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$LogPath = Join-Path -Path $ScriptDir -ChildPath "Sync-Save.log"
+
+# CONFIGURAÇÕES DO USUÁRIO
+# ====================================================
+$configPath = Join-Path -Path $ScriptDir -ChildPath "UserConfig.json"
+if (Test-Path $configPath) {
+    $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+    $RclonePath = $userConfig.RclonePath
+    $CloudRemote = $userConfig.CloudRemote
+    $CloudDir = $userConfig.CloudDir
+    $LocalDir = $userConfig.LocalDir
+    $GameProcess = $userConfig.GameProcess
+    $GameName = $userConfig.GameName
+    $LauncherExePath = $userConfig.ExecutablePath
+} else {
+    Write-Log -Message "Arquivo de configuração do usuário não encontrado." -Level Warning
+    exit 1
+}
+
+# NOTIFICAÇÕES PERSONALIZADAS (ATUALIZADA)
+# ====================================================
+function Show-CustomNotification {
+    param(
+        [string]$Title,
+        [string]$Message,
+        [string]$Type = "info",
+        [string]$Direction = "sync"  # Novo parâmetro para direção (sync/update)
+    )
+
+    Write-Log -Message "$Title - $Message" -Level "Info"
+
+    # Configurações da fonte (Montserrat - requer instalação)
+    $montserratBold = [System.Drawing.FontFamily]::new("Montserrat")
+    $montserratRegular = if ($null -ne $montserratBold) { $montserratBold } else { "Segoe UI" }
+    if ($montserratRegular -eq $montserratBold) {
+        Write-Log -Message "Usando fonte Montserrat" -Level "Info"
+    }
+    else {
+        Write-Log -Message "Usando fonte Segoe UI" -Level "Info"
+    }
+
+   # Configurações do formulário
+    $formWidth = 300
+    $formHeight = 75
+    $form = New-Object System.Windows.Forms.Form
+    $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+    $form.Size = New-Object System.Drawing.Size($formWidth, $formHeight)
+    $form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
+    $form.BackColor = [System.Drawing.Color]::FromArgb(28, 32, 39)
+    $form.TopMost = $true
+
+    # Habilitar DoubleBuffered usando reflexão
+    $formType = $form.GetType()
+    $doubleBufferedProperty = $formType.GetProperty("DoubleBuffered", [System.Reflection.BindingFlags] "NonPublic, Instance")
+    $doubleBufferedProperty.SetValue($form, $true, $null)
+
+    # Posicionamento baseado na direção
+    $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $rightPosition = $screen.Right - 300
+    if ($Direction -eq "sync") {
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
+    } else {
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
+    }
+
+    # Painel com gradiente
+    $panel = New-Object System.Windows.Forms.Panel
+    $panel.Dock = [System.Windows.Forms.DockStyle]::Fill
+    $panel.Add_Paint({
+        param($sender, $e)
+        
+        # Verifica se o sender e ClientRectangle são válidos
+        if ($null -eq $sender -or $sender.ClientRectangle.IsEmpty) {
+            $rect = New-Object System.Drawing.Rectangle(0, 0, $panel.Width, $panel.Height)
+        }
+        else {
+            $rect = $sender.ClientRectangle
+        }
+    
+        # Define as cores e o modo do gradiente
+        $startColor = [System.Drawing.Color]::FromArgb(17, 23, 30)
+        $endColor = [System.Drawing.Color]::FromArgb(28, 32, 39)
+        $mode = [System.Drawing.Drawing2D.LinearGradientMode]::Vertical
+    
+        # Cria o gradiente
+        $gradient = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+            $rect,
+            $startColor,
+            $endColor,
+            $mode
+        )
+    
+        try {
+            $e.Graphics.FillRectangle($gradient, $rect)
+        }
+        catch {
+            Write-Log -Message "Erro ao renderizar gradiente: $_" -Level Error
+        }
+        finally {
+            $gradient.Dispose()
+        }
+    })
+
+    # Ícones (ajuste os caminhos conforme necessário)
+    $iconPath = if ($Direction -eq "sync") { 
+        Join-Path -Path $ScriptDir -ChildPath "assets\down.png"
+    } else { 
+        Join-Path -Path $ScriptDir -ChildPath "assets\up.png" 
+    }
+    
+    $bgPath = if ($Direction -eq "sync") {
+        Join-Path -Path $ScriptDir -ChildPath "assets\down_background.png"
+    } else {
+        Join-Path -Path $ScriptDir -ChildPath "assets\up_background.png"
+    }
+
+    # Controles
+    $lblTitle = New-Object System.Windows.Forms.Label
+    $lblTitle.Text = "Chrono Sync"
+    $lblTitle.Location = New-Object System.Drawing.Point(75, 15)
+    $lblTitle.AutoSize = $true  # Permite que o label se ajuste ao texto
+    $lblTitle.Font = New-Object System.Drawing.Font($montserratRegular, 7, [System.Drawing.FontStyle]::Bold)
+    $lblTitle.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+    $lblTitle.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+
+    $lblApp = New-Object System.Windows.Forms.Label
+    $lblApp.Text = "$GameName"
+    $lblApp.Location = New-Object System.Drawing.Point(75, 30)
+    $lblApp.AutoSize = $true  # Permite que o label se ajuste ao texto
+    $lblApp.Font = New-Object System.Drawing.Font($montserratRegular, 10, [System.Drawing.FontStyle]::Bold)
+    $lblApp.ForeColor = [System.Drawing.Color]::White
+    $lblApp.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+
+    $lblStatus = New-Object System.Windows.Forms.Label
+    $lblStatus.Text = if ($Direction -eq "sync") { "Sincronizando com a Nuvem..." } else { "Atualizando a Nuvem..." }
+    $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
+    $lblStatus.AutoSize = $true  # Permite que o label se ajuste ao texto
+    $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 7, [System.Drawing.FontStyle]::Regular)
+    $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+    $lblStatus.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+
+    $picIcon = New-Object System.Windows.Forms.PictureBox
+    $picIcon.Location = New-Object System.Drawing.Point(10, 15)
+    $picIcon.Size = New-Object System.Drawing.Size(55, 44)
+    $picIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
+    $picIcon.Image = [System.Drawing.Image]::FromFile($iconPath)
+    $picIcon.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+
+    $bgIcon = New-Object System.Windows.Forms.PictureBox
+    $bgIcon.Location = New-Object System.Drawing.Point(201, -4)
+    $bgIcon.Size = New-Object System.Drawing.Size(103, 83)
+    $bgIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::StretchImage
+    $bgIcon.Image = [System.Drawing.Image]::FromFile($bgPath)
+    $bgIcon.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+
+    # Timer para fechar após 5 segundos
+    $timer = New-Object System.Windows.Forms.Timer
+    $timer.Interval = 5000
+    $timer.Enabled = $true
+    $timer.Add_Tick({ $form.Close(); $timer.Stop() })
+
+    # Adicionar controles somente após todos os componentes estarem carregados
+    $form.Opacity = 0
+    $form.SuspendLayout()
+    $panel.Controls.AddRange(@($lblTitle, $lblApp, $lblStatus, $picIcon, $bgIcon))
+    $form.Controls.Add($panel)
+    $form.ResumeLayout($false)
+    $form.PerformLayout()
+    $form.Add_Shown({ $form.Activate() })
+    $form.Show()
+    $form.Refresh()
+    $form.Opacity = 1
+
+    return @{ Form = $form; Timer = $timer }
+}
+
+# VERIFICAÇÕES DO RCLONE
+# ====================================================
+function Test-RcloneConfig {
+    try {
+        Write-Log -Message "Verificando configuração do Rclone..." -Level Info
+        
+        if (-not (Test-Path $RclonePath)) {
+            throw "Arquivo do Rclone não encontrado: $RclonePath"
+        }
+
+        $remotes = & $RclonePath listremotes 2>&1
+        if ($remotes -is [System.Management.Automation.ErrorRecord]) {
+            throw $remotes.Exception.Message
+        }
+        if (-not ($remotes -match "^${CloudRemote}:")) {
+            throw "Remote '$CloudRemote' não configurado"
+        }
+
+        Write-Log -Message "Configuração do Rclone validada" -Level Info
+    }
+    catch {
+        Write-Log -Message "ERRO: Falha na verificação do Rclone - $_" -Level Error
+        Show-CustomNotification -Title "Erro de Configuração" -Message "Verifique as configurações do Rclone" -Type "error"
+        exit 1
+    }
+}
+
+# FUNÇÃO PRINCIPAL DO RCLONE (ATUALIZADA)
+# ====================================================
+function Invoke-RcloneCommand {
+    param(
+        [string]$Source,
+        [string]$Destination,
+        [hashtable]$Notification
+    )
+
+    $maxRetries = 3
+    $retryCount = 0
+    $success = $false
+    $startTime = Get-Date
+
+    do {
+        try {
+            Write-Log -Message "Tentativa $($retryCount+1)/${maxRetries}: $Source -> $Destination" -Level Info
+            
+            $arguments = @(
+                "copy",
+                "`"$Source`"",
+                "`"$Destination`"",
+                "--update",
+                "--create-empty-src-dirs"
+            )
+
+            $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $processInfo.FileName = $RclonePath
+            $processInfo.Arguments = $arguments
+            $processInfo.RedirectStandardError = $true
+            $processInfo.RedirectStandardOutput = $true
+            $processInfo.UseShellExecute = $false
+            $processInfo.CreateNoWindow = $true
+
+            $process = New-Object System.Diagnostics.Process
+            $process.StartInfo = $processInfo
+            $process.Start() | Out-Null
+
+            $completed = $process.WaitForExit(30000)
+
+            if (-not $completed) {
+                $process.Kill()
+                throw "Timeout: Rclone excedeu 30 segundos."
+            }
+
+            $output = $process.StandardOutput.ReadToEnd()
+            $errorOutput = $process.StandardError.ReadToEnd()
+
+            if ($process.ExitCode -ne 0) {
+                throw "Código de erro $($process.ExitCode)`nSaída: $($output + $errorOutput)"
+            }
+
+            $success = $true
+            Write-Log -Message "Sincronização bem-sucedida" -Level Info
+        }
+        catch {
+            $retryCount++
+            Write-Log -Message "Falha na tentativa ${retryCount}: $_" -Level Warning
+            Start-Sleep -Seconds 5
+        }
+    } while (-not $success -and $retryCount -lt $maxRetries)
+
+    # Fechar notificação se já passaram 5 segundos
+    $elapsed = (Get-Date) - $startTime
+    $remaining = [int](5000 - $elapsed.TotalMilliseconds)
+    
+    if ($remaining -gt 0) {
+        Start-Sleep -Milliseconds $remaining
+    }
+
+    if ($Notification -and $Notification.Form -and $Notification.Timer) {
+        $Notification.Form.Close()
+        $Notification.Timer.Stop()
+    }
+
+    if (-not $success) {
+        throw "Falha após $maxRetries tentativas: $Source -> $Destination"
+    }
+}
+
+# FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
+# ====================================================
+function Sync-Saves {
+    param([string]$Direction)
+
+    $notification = $null
+    try {
+        switch ($Direction) {
+            "down" {
+                $notification = Show-CustomNotification -Title "Chrono Sync" -Message "Sincronizando" -Direction "sync"
+                Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir -Notification $notification
+            }
+            "up" {
+                $notification = Show-CustomNotification -Title "Chrono Sync" -Message "Atualizando" -Direction "update"
+                Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/" -Notification $notification
+            }
+        }
+    }
+    catch {
+        if ($null -ne $notification) { 
+            $notification.Timer.Stop()
+            $notification.Form.Close()
+        }
+        Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
+        Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
+        exit 1
+    }
+}
+
+# EXECUÇÃO PRINCIPAL (ATUALIZADA)
+# ====================================================
+try {
+    Test-RcloneConfig
+
+    try {
+        & $RclonePath mkdir "$($CloudRemote):$($CloudDir)"
+        Write-Log -Message "Diretório remoto verificado/criado: $($CloudRemote):$($CloudDir)" -Level Info
+    }
+    catch {
+        Write-Log -Message "Falha ao criar diretório remoto: $_" -Level Error
+        throw
+    }
+
+    if (-not (Test-Path -Path $LocalDir)) {
+        try {
+            New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
+            Write-Log -Message "Diretório local criado: $LocalDir" -Level Info
+        }
+        catch {
+            Write-Log -Message "Falha ao criar diretório: $_" -Level Error
+            throw
+        }
+    }
+
+    Sync-Saves -Direction "down"
+
+    # Iniciar Launcher
+    $launcherProcess = Start-Process -FilePath $LauncherExePath -WindowStyle Hidden -PassThru
+    Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
+
+    # Aguardar processo do jogo
+    Write-Log -Message "Aguardando processo do jogo..." -Level Info
+    $timeout = 20
+    $startTime = Get-Date
+    $validatedGameProcess = $GameProcess
+    $gameProcess = $null
+
+    while (-not $gameProcess -and ((Get-Date) - $startTime).TotalSeconds -lt $timeout) {
+        try {
+            $gameProcess = Get-Process -Name $validatedGameProcess -ErrorAction SilentlyContinue
+        } catch {
+            Write-Log -Message "Erro ao buscar o processo '$validatedGameProcess': $_" -Level Warning
+        }
+        Start-Sleep -Seconds 5
+    }
+
+    if (-not $gameProcess) {
+        throw "Processo do jogo não iniciado após $timeout segundos"
+    }
+
+    # Monitorar jogo (NÃO BLOQUEANTE)
+    try {
+        Write-Log -Message "Iniciando monitoramento do processo (PID: $($gameProcess.Id))..." -Level Info
+        
+        while (-not $gameProcess.HasExited) {
+            Start-Sleep -Milliseconds 500
+            [System.Windows.Forms.Application]::DoEvents() # Manter UI responsiva
+        }
+
+        Write-Log -Message "Processo finalizado (PID: $($gameProcess.Id))" -Level Info
+    }
+    catch {
+        Write-Log -Message "Erro ao monitorar o processo: $_" -Level Error
+        throw "Falha no monitoramento"
+    }
+
+    Sync-Saves -Direction "up"
+}
+catch {
+    Write-Log -Message "ERRO FATAL: $($_.Exception.Message)" -Level Error
+    Write-Log -Message "Stack Trace: $($_.ScriptStackTrace)" -Level Error
+    Show-CustomNotification -Title "Erro Crítico" -Message "Consulte o arquivo de log" -Type "error"
+    exit 1
+}
+finally {
+    Write-Log -Message "=== Sessão finalizada ===`n" -Level Info
+}
