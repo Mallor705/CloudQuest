@@ -63,9 +63,6 @@ function Sync-Saves {
         # Tratamento seguro da notificação em caso de erro
         try {
             if ($null -ne $notification) { 
-                if ($notification.ContainsKey('Timer') -and $null -ne $notification.Timer) { 
-                    $notification.Timer.Stop() 
-                }
                 if ($notification.ContainsKey('Form') -and $null -ne $notification.Form -and -not $notification.Form.IsDisposed) { 
                     $notification.Form.Close() 
                 }
@@ -79,7 +76,13 @@ function Sync-Saves {
         
         # Tratamento seguro da notificação de erro
         try {
-            Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error" | Out-Null
+            $notification = Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
+
+            Start-Sleep -Milliseconds 5000
+            
+            if ($notification -and $notification.ContainsKey('Form') -and $null -ne $notification.Form -and -not $notification.Form.IsDisposed) {
+                $notification.Form.Close()
+            }
         }
         catch {
             Write-Log -Message "Falha ao exibir notificação de erro: $_" -Level Error

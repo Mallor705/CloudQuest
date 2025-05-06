@@ -106,10 +106,8 @@ function Invoke-RcloneCommand {
         }
 
         if ($Notification -and 
-            $Notification.ContainsKey('Form') -and $null -ne $Notification.Form -and -not $Notification.Form.IsDisposed -and
-            $Notification.ContainsKey('Timer') -and $null -ne $Notification.Timer) {
+            $Notification.ContainsKey('Form') -and $null -ne $Notification.Form -and -not $Notification.Form.IsDisposed) {
             $Notification.Form.Close()
-            $Notification.Timer.Stop()
         }
     }
     catch {

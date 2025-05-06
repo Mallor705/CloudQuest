@@ -200,17 +200,7 @@ function Show-CustomNotification {
         catch {
             Write-Log -Message "Erro ao carregar imagens: $_" -Level Error
         }
-
-        # Timer para fechar após 5 segundos
-        $timer = New-Object System.Windows.Forms.Timer
-        $timer.Interval = 5000
-        $timer.Enabled = $true
-        $timer.Add_Tick({ 
-            if ($null -ne $form -and -not $form.IsDisposed) {
-                $form.Close()
-            }
-            $timer.Stop() 
-        })
+  
 
         # Adicionar controles somente após todos os componentes estarem carregados
         $form.Opacity = 0
@@ -232,17 +222,6 @@ function Show-CustomNotification {
         $form.ResumeLayout($false)
         $form.PerformLayout()
         
-        # Modifica a lógica do Add_Shown para evitar erros de nulos
-        $form.Add_Shown({
-            try {
-                if (-not $form.IsDisposed) {
-                    $form.Activate()
-                }
-            }
-            catch {
-                Write-Log -Message "Erro no evento Shown: $_" -Level Error
-            }
-        })
         
         # Verifica se o formulário não foi descartado antes de exibi-lo
         if (-not $form.IsDisposed) {
@@ -251,7 +230,7 @@ function Show-CustomNotification {
             $form.Opacity = 1
         }
 
-        return @{ Form = $form; Timer = $timer }
+        return @{ Form = $form }
     }
     catch {
         Write-Log -Message "ERRO CRÍTICO na notificação: $_" -Level Error
