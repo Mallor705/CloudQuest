@@ -30,8 +30,6 @@ if (-not $ProfileName -or "") {
     throw "Erro: Nome do perfil ausente."
 }
 
-
-
 # Verifique o caminho gerado (para depuração):
 Write-Log -Message "Procurando perfil em: $configPath" -Level Info
 if (Test-Path $configPath) {
