@@ -53,4 +53,3 @@ if (Test-Path $configPath) {
 Export-ModuleMember -Function Write-Log
 # Adicionado: exportar variáveis de configuração para outros módulos
 Export-ModuleMember -Variable RclonePath, CloudRemote, CloudDir, LocalDir, GameProcess, GameName, LauncherExePath
- 

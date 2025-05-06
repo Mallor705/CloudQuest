@@ -126,7 +126,25 @@ if (-not (Test-Path -Path $configDir)) {
     Write-Host "Pasta 'config' criada em: $configDir"
 }
 
-# Cria/salva o arquivo UserConfig.json
+# Cria/salva o arquivo de perfil JSON
 $configFilePath = Join-Path -Path $configDir -ChildPath "$GameName.json"
 $config | ConvertTo-Json -Depth 3 | Out-File -FilePath $configFilePath -Encoding UTF8
 Write-Host "`nConfigurações salvas em: $configFilePath"
+
+# Criação do atalho na Área de Trabalho
+$desktopPath = [Environment]::GetFolderPath('Desktop')
+$shortcutPath = Join-Path -Path $desktopPath -ChildPath "$GameName.lnk"
+$batPath = Join-Path -Path $PSScriptRoot -ChildPath "CloudQuest.bat"
+
+if (Test-Path $batPath) {
+    $WScriptShell = New-Object -ComObject WScript.Shell
+    $shortcut = $WScriptShell.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath = $batPath
+    $shortcut.Arguments = "`"$GameName`""  # Adapte conforme sua necessidade
+    $shortcut.WorkingDirectory = $exeFolder
+    $shortcut.IconLocation = $ExecutablePath  # Opcional: ícone do jogo
+    $shortcut.Save()
+    Write-Host "Atalho criado em: $shortcutPath"
+} else {
+    Write-Warning "CloudQuest.bat não encontrado em $PSScriptRoot"
+}

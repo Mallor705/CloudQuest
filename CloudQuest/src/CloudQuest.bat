@@ -1,6 +1,7 @@
 ﻿@echo off
+
 set "psScript=%~dp0CloudQuest.ps1"
-set "ProfileName=ELDENRING"
+set "ProfileName=%~1"
 
 :: Grava o nome do perfil em um arquivo temporário
 echo %ProfileName% > "%temp%\CloudQuest_Profile.txt"
