@@ -1,4 +1,4 @@
-# NOTIFICAÇÕES PERSONALIZADAS (ATUALIZADA)
+﻿# NOTIFICAÇÕES PERSONALIZADAS (ATUALIZADA)
 # ====================================================
 function Show-CustomNotification {
     param(
@@ -136,9 +136,9 @@ function Show-CustomNotification {
     $bgIcon.Image = [System.Drawing.Image]::FromFile($bgPath)
     $bgIcon.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
-    # Timer para fechar após 5 segundos
+    # Timer para fechar após 6 segundos
     $timer = New-Object System.Windows.Forms.Timer
-    $timer.Interval = 5000
+    $timer.Interval = 6000
     $timer.Enabled = $true
     $timer.Add_Tick({ $form.Close(); $timer.Stop() })
 

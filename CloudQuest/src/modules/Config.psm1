@@ -1,4 +1,4 @@
-# CONFIGURAÇÃO DE LOG (UTF-8)
+﻿# CONFIGURAÇÃO DE LOG (UTF-8)
 # ====================================================
 $ScriptDir = $PSScriptRoot
 # Ajusta o caminho para o diretório raiz do projeto
@@ -20,9 +20,20 @@ function Write-Log {
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
 # CONFIGURAÇÕES DO USUÁRIO
-# ====================================================
-# Atualiza o caminho para buscar o arquivo de configuração em "..\config"
-$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\..\config") -ChildPath "UserConfig.json"
+$ProfileName = (Get-Content -Path "$env:temp\CloudQuest_Profile.txt" -ErrorAction Stop).Trim() 
+Write-Log -Message "Perfil recebido: '$ProfileName'"
+# $ProfileName = $args[0] # Captura a primeira tag passada como argumento
+$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\..\profiles") -ChildPath "$ProfileName.json"
+
+if (-not $ProfileName -or "") {
+    Write-Log -Message "Nenhum perfil foi especificado." -Level Error
+    throw "Erro: Nome do perfil ausente."
+}
+
+
+
+# Verifique o caminho gerado (para depuração):
+Write-Log -Message "Procurando perfil em: $configPath" -Level Info
 if (Test-Path $configPath) {
     $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
     $RclonePath = $userConfig.RclonePath

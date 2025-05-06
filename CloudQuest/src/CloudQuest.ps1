@@ -1,4 +1,4 @@
-# CloudQuest.ps1
+﻿# CloudQuest.ps1
 # INICIALIZAÇÃO DO SISTEMA
 # ====================================================
 
@@ -9,13 +9,14 @@ $runspace.Open()
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
+
 # Importa módulos necessários
 Import-Module (Join-Path $PSScriptRoot "modules\Config.psm1")
 Import-Module (Join-Path $PSScriptRoot "modules\Notifications.psm1")
 Import-Module (Join-Path $PSScriptRoot "modules\Rclone.psm1")
 
+
 # FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
-# ====================================================
 function Sync-Saves {
     param([string]$Direction)
 
@@ -43,8 +44,7 @@ function Sync-Saves {
     }
 }
 
-# EXECUÇÃO PRINCIPAL (ATUALIZADA)
-# ====================================================
+# EXECUÇÃO PRINCIPAL
 try {
     Test-RcloneConfig
 
