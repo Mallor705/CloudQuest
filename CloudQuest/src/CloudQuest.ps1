@@ -11,9 +11,9 @@ Add-Type -AssemblyName System.Drawing
 
 
 # Importa módulos necessários
+Import-Module (Join-Path $PSScriptRoot "modules\Rclone.psm1")
 Import-Module (Join-Path $PSScriptRoot "modules\Config.psm1")
 Import-Module (Join-Path $PSScriptRoot "modules\Notifications.psm1")
-Import-Module (Join-Path $PSScriptRoot "modules\Rclone.psm1")
 
 
 # FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
