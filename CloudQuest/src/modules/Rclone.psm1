@@ -20,12 +20,17 @@ function Test-RcloneConfig {
     }
     catch {
         Write-Log -Message "ERRO: Falha na verificação do Rclone - $_" -Level Error
-        Show-CustomNotification -Title "Erro de Configuração" -Message "Verifique as configurações do Rclone" -Type "error"
-        exit 1
+        
+        # Tratamento seguro da notificação de erro
+        try {
+            Show-CustomNotification -Title "Erro de Configuração" -Message "Verifique as configurações do Rclone" -Type "error" | Out-Null
+        }
+        catch {
+            Write-Log -Message "Falha ao exibir notificação de erro do Rclone: $_" -Level Error
+        }
+        throw $_
     }
 }
-
-# As funções Test-RcloneConfig e Invoke-RcloneCommand estão corretamente implementadas e integradas.
 
 # FUNÇÃO PRINCIPAL DO RCLONE (ATUALIZADA)
 # ====================================================
@@ -64,13 +69,14 @@ function Invoke-RcloneCommand {
             $process = New-Object System.Diagnostics.Process
             $process.StartInfo = $processInfo
             $process.Start() | Out-Null
-
-            # $completed = $process.WaitForExit(30000)
-
-            # if (-not $completed) {
-            #     $process.Kill()
-            #     throw "Timeout: Rclone excedeu 30 segundos."
-            # }
+            
+            # Aguarda com timeout para evitar bloqueio indefinido
+            $completed = $process.WaitForExit(120000)  # 2 minutos de timeout
+            
+            if (-not $completed) {
+                $process.Kill()
+                throw "Timeout: Rclone excedeu 2 minutos."
+            }
 
             $output = $process.StandardOutput.ReadToEnd()
             $errorOutput = $process.StandardError.ReadToEnd()
@@ -89,20 +95,31 @@ function Invoke-RcloneCommand {
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
 
-    # Fechar notificação se já passaram 5 segundos
-    $elapsed = (Get-Date) - $startTime
-    $remaining = [int](5000 - $elapsed.TotalMilliseconds)
-    
-    if ($remaining -gt 0) {
-        Start-Sleep -Milliseconds $remaining
-    }
+    # Fechar notificação de forma segura
+    try {
+        # Fechar notificação se já passaram 5 segundos
+        $elapsed = (Get-Date) - $startTime
+        $remaining = [int](5000 - $elapsed.TotalMilliseconds)
+        
+        if ($remaining -gt 0) {
+            Start-Sleep -Milliseconds $remaining
+        }
 
-    if ($Notification -and $Notification.Form -and $Notification.Timer) {
-        $Notification.Form.Close()
-        $Notification.Timer.Stop()
+        if ($Notification -and 
+            $Notification.ContainsKey('Form') -and $null -ne $Notification.Form -and -not $Notification.Form.IsDisposed -and
+            $Notification.ContainsKey('Timer') -and $null -ne $Notification.Timer) {
+            $Notification.Form.Close()
+            $Notification.Timer.Stop()
+        }
+    }
+    catch {
+        Write-Log -Message "Erro ao fechar notificação: $_" -Level Warning
     }
 
     if (-not $success) {
         throw "Falha após $maxRetries tentativas: $Source -> $Destination"
     }
 }
+
+# Exporta as funções para uso em outros módulos
+Export-ModuleMember -Function Test-RcloneConfig, Invoke-RcloneCommand
