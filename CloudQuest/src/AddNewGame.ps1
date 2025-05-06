@@ -81,9 +81,31 @@ if (Test-Path $rcloneConfPath) {
     Write-Warning "Arquivo rclone.conf não encontrado em $rcloneConfPath."
     $CloudRemote = Read-Host "Digite o nome do Cloud Remote (ex.: onedrive)"
 }
-$LocalDir = (Read-Host "Digite o diretório local (ex.: $env:APPDATA\EldenRing)").Trim('"')
-$CloudDir = (Read-Host "Digite o diretório no Cloud (ex.: SaveGames/EldenRing)").Trim('"')
+$LocalDirInput = (Read-Host "Digite o diretório local (ex.: $env:APPDATA\EldenRing)").Trim('"') # Diretório local padrão
 
+# Expandir variáveis de ambiente e normalizar o caminho
+$LocalDir = [System.Environment]::ExpandEnvironmentVariables($LocalDirInput)
+
+# Verificar se o caminho é relativo e converter para absoluto
+if (-not [System.IO.Path]::IsPathRooted($LocalDir)) {
+    $LocalDir = Join-Path -Path (Get-Location) -ChildPath $LocalDir
+}
+
+# Verificar existência do diretório
+if (-not (Test-Path $LocalDir)) {
+    Write-Warning "Diretório não encontrado: $LocalDir"
+    $choice = Read-Host "Deseja criar este diretório? (S/N)"
+    if ($choice -match '^[Ss]') {
+        New-Item -Path $LocalDir -ItemType Directory -Force | Out-Null
+        Write-Host "Diretório criado: $LocalDir"
+    } else {
+        Write-Host "Por favor, insira o caminho novamente."
+        $LocalDir = (Read-Host "Digite o diretório local").Trim('"')
+        $LocalDir = [System.Environment]::ExpandEnvironmentVariables($LocalDir)
+    }
+}
+
+$CloudDir = ("CloudQuest/" + (Split-Path $LocalDir -Leaf)).Trim('"')    # Diretório remoto padrão
 
 # Definir o nome do processo utilizando o nome do executável sem extensão
 $GameProcess = [System.IO.Path]::GetFileNameWithoutExtension($ExecutablePath)

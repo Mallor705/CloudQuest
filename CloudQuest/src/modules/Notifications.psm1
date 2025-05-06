@@ -118,7 +118,7 @@ function Show-CustomNotification {
     $lblApp.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
 
     $lblStatus = New-Object System.Windows.Forms.Label
-    $lblStatus.Text = if ($Direction -eq "sync") { "Sincronizando com a Nuvem..." } else { "Atualizando a Nuvem..." }
+    $lblStatus.Text = if ($Direction -eq "sync") { "Atualizando progresso..." } else { "Sincronizando a Nuvem..." }
     $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
     $lblStatus.AutoSize = $true  # Permite que o label se ajuste ao texto
     $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 7, [System.Drawing.FontStyle]::Regular)

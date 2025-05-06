@@ -25,55 +25,73 @@ function Sync-Saves {
         switch ($Direction) {
             "down" {
                 $notification = Show-CustomNotification -Title "CloudQuest" -Message "Sincronizando" -Direction "sync"
+                if ($null -eq $notification) { throw "Falha ao criar notificação" }
                 Invoke-RcloneCommand -Source "$($CloudRemote):$($CloudDir)/" -Destination $LocalDir -Notification $notification
             }
             "up" {
                 $notification = Show-CustomNotification -Title "CloudQuest" -Message "Atualizando" -Direction "update"
+                if ($null -eq $notification) { throw "Falha ao criar notificação" }
                 Invoke-RcloneCommand -Source $LocalDir -Destination "$($CloudRemote):$($CloudDir)/" -Notification $notification
             }
         }
     }
     catch {
         if ($null -ne $notification) { 
-            $notification.Timer.Stop()
-            $notification.Form.Close()
+            if ($notification.ContainsKey('Timer')) { $notification.Timer.Stop() }
+            if ($notification.ContainsKey('Form')) { $notification.Form.Close() }
         }
         Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
-        Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
-        exit 1
+        try {
+            Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error" | Out-Null
+        }
+        catch {
+            Write-Log -Message "Falha ao exibir notificação de erro: $_" -Level Error
+        }
     }
 }
 
 # EXECUÇÃO PRINCIPAL
 try {
-    Test-RcloneConfig
-
+    # Verificação do Rclone (não crítico)
+    try {
+        Test-RcloneConfig
+    }
+    catch {
+        Write-Log -Message "AVISO: Verificação do Rclone falhou. Continuando com execução..." -Level Warning
+    }
+    
+    # Criar diretório remoto (não crítico)
     try {
         & $RclonePath mkdir "$($CloudRemote):$($CloudDir)"
         Write-Log -Message "Diretório remoto verificado/criado: $($CloudRemote):$($CloudDir)" -Level Info
     }
     catch {
-        Write-Log -Message "Falha ao criar diretório remoto: $_" -Level Error
-        throw
+        Write-Log -Message "AVISO: Falha ao criar diretório remoto. Continuando..." -Level Error
     }
 
+    # Criar diretório local (crítico?)
     if (-not (Test-Path -Path $LocalDir)) {
         try {
             New-Item -ItemType Directory -Path $LocalDir -ErrorAction Stop | Out-Null
             Write-Log -Message "Diretório local criado: $LocalDir" -Level Info
         }
         catch {
-            Write-Log -Message "Falha ao criar diretório: $_" -Level Error
-            throw
+            Write-Log -Message "ERRO: Falha ao criar diretório local. O jogo pode não funcionar corretamente." -Level Error
+            # Não interrompe; o jogo pode criar o diretório
         }
     }
 
     Sync-Saves -Direction "down"
 
-    # Iniciar Launcher
-    $launcherProcess = Start-Process -FilePath $LauncherExePath -WindowStyle Hidden -PassThru
-    Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
-
+    # Iniciar Launcher (crítico)
+    try {
+        $launcherProcess = Start-Process -FilePath $LauncherExePath -WindowStyle Hidden -PassThru
+        Write-Log -Message "Launcher iniciado (PID: $($launcherProcess.Id))" -Level Info
+    }
+    catch {
+        Write-Log -Message "ERRO FATAL: Não foi possível iniciar o launcher." -Level Error
+        throw # Interrompe o script, pois sem o launcher, não há jogo.
+    }
     # Aguardar processo do jogo
     Write-Log -Message "Aguardando processo do jogo..." -Level Info
     $timeout = 60

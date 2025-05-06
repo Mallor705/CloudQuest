@@ -65,12 +65,12 @@ function Invoke-RcloneCommand {
             $process.StartInfo = $processInfo
             $process.Start() | Out-Null
 
-            $completed = $process.WaitForExit(30000)
+            # $completed = $process.WaitForExit(30000)
 
-            if (-not $completed) {
-                $process.Kill()
-                throw "Timeout: Rclone excedeu 30 segundos."
-            }
+            # if (-not $completed) {
+            #     $process.Kill()
+            #     throw "Timeout: Rclone excedeu 30 segundos."
+            # }
 
             $output = $process.StandardOutput.ReadToEnd()
             $errorOutput = $process.StandardError.ReadToEnd()
@@ -89,9 +89,9 @@ function Invoke-RcloneCommand {
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
 
-    # Fechar notificação se já passaram 6 segundos
-    $elapsed = (Get-Date) - $startTime
-    $remaining = [int](6000 - $elapsed.TotalMilliseconds)
+    # # Fechar notificação se já passaram 6 segundos
+    # $elapsed = (Get-Date) - $startTime
+    # $remaining = [int](6000 - $elapsed.TotalMilliseconds)
     
     if ($remaining -gt 0) {
         Start-Sleep -Milliseconds $remaining
