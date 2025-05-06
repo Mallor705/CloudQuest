@@ -134,10 +134,8 @@ function Show-CustomNotification {
         }
     }
 
-    $lblStatus.Text = $statusMessage
-
-    # Cor do texto para erros (opcional)
     if ($Type -eq "error") {
+        $lblStatus.Text = $statusMessage
         $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(220, 50, 50)  # Vermelho
     }
 
