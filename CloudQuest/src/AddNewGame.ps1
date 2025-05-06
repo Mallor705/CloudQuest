@@ -139,10 +139,10 @@ $batPath = Join-Path -Path $PSScriptRoot -ChildPath "CloudQuest.bat"
 if (Test-Path $batPath) {
     $WScriptShell = New-Object -ComObject WScript.Shell
     $shortcut = $WScriptShell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = $batPath
-    $shortcut.Arguments = "`"$GameName`""  # Adapte conforme sua necessidade
-    $shortcut.WorkingDirectory = $exeFolder
-    $shortcut.IconLocation = $ExecutablePath  # Opcional: ícone do jogo
+    $shortcut.TargetPath = $batPath             # Caminho do arquivo .bat
+    $shortcut.Arguments = "`"$GameName`""       # Adapte conforme sua necessidade
+    $shortcut.WorkingDirectory = $exeFolder     # Diretório de trabalho do jogo
+    $shortcut.IconLocation = $ExecutablePath    # Opcional: ícone do jogo
     $shortcut.Save()
     Write-Host "Atalho criado em: $shortcutPath"
 } else {
