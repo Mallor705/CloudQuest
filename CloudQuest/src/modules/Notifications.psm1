@@ -122,21 +122,28 @@ function Show-CustomNotification {
     $lblStatus.Location = New-Object System.Drawing.Point(75, 52)
     $lblStatus.AutoSize = $true  # Permite que o label se ajuste ao texto
     $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 7, [System.Drawing.FontStyle]::Regular)
-    $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
+    # $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
     $lblStatus.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+    
     # Mensagem de status para erros
+    # Define a mensagem de status combinando Type e Direction
     $statusMessage = switch ($Type) {
         "error" {
-            if ($Direction -eq "sync") { "Falha no Download!" } else { "Falha no Upload!" }
+            # Mensagem de erro específica para a direção
+            if ($Direction -eq "sync") { "Falha no download!" } else { "Falha no upload!" }
         }
         default {
-            if ($Direction -eq "sync") { "Atualizando seu progresso..." } else { "Sincronizando a Nuvem..." }
+            # Mensagem padrão baseada na direção
+            if ($Direction -eq "sync") { "Atualizando seu progresso..." } else { "Sincronizando a nuvem..." }
         }
     }
 
-    if ($Type -eq "error") {
-        $lblStatus.Text = $statusMessage
-        $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(220, 50, 50)  # Vermelho
+    # Aplica a mensagem e cor (independentemente do Type)
+    $lblStatus.Text = $statusMessage
+    $lblStatus.ForeColor = if ($Type -eq "error") { 
+        [System.Drawing.Color]::FromArgb(220, 50, 50)  # Vermelho para erros
+    } else { 
+        [System.Drawing.Color]::FromArgb(140, 145, 151)  # Cinza para info
     }
 
     $picIcon = New-Object System.Windows.Forms.PictureBox
