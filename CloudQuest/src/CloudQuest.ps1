@@ -76,7 +76,7 @@ try {
 
     # Aguardar processo do jogo
     Write-Log -Message "Aguardando processo do jogo..." -Level Info
-    $timeout = 20
+    $timeout = 60
     $startTime = Get-Date
     $validatedGameProcess = $GameProcess
     $gameProcess = $null

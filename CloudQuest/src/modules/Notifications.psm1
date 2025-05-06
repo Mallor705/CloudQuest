@@ -9,7 +9,7 @@ function Show-CustomNotification {
     )
 
     Write-Log -Message "$Title - $Message" -Level $(if ($Type -eq "error") { "Error" } else { "Info" })
-    
+
     # Configurações da fonte (Montserrat - requer instalação)
     $montserratBold = [System.Drawing.FontFamily]::new("Montserrat")
     $montserratRegular = if ($null -ne $montserratBold) { $montserratBold } else { "Segoe UI" }
@@ -85,16 +85,19 @@ function Show-CustomNotification {
     # Ícones (ajuste os caminhos conforme necessário)
     # Atualiza o caminho dos assets para subir dois níveis e acessar "assets"
     $assetsPath = Join-Path -Path (Split-Path -Parent (Split-Path $PSScriptRoot)) -ChildPath "assets"
+    $iconBaseName = if ($Type -eq "error") { "error_" } else { "" }
+    $bgBaseName = if ($Type -eq "error") { "error_" } else { "" }
+
     $iconPath = if ($Direction -eq "sync") { 
-        Join-Path -Path $assetsPath -ChildPath "down.png"
+        Join-Path -Path $assetsPath -ChildPath "${iconBaseName}down.png"
     } else { 
-        Join-Path -Path $assetsPath -ChildPath "up.png" 
+        Join-Path -Path $assetsPath -ChildPath "${iconBaseName}up.png" 
     }
     
     $bgPath = if ($Direction -eq "sync") {
-        Join-Path -Path $assetsPath -ChildPath "down_background.png"
+        Join-Path -Path $assetsPath -ChildPath "${bgBaseName}down_background.png"
     } else {
-        Join-Path -Path $assetsPath -ChildPath "up_background.png"
+        Join-Path -Path $assetsPath -ChildPath "${bgBaseName}up_background.png"
     }
 
     # Controles
@@ -121,6 +124,22 @@ function Show-CustomNotification {
     $lblStatus.Font = New-Object System.Drawing.Font($montserratRegular, 7, [System.Drawing.FontStyle]::Regular)
     $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(140, 145, 151)
     $lblStatus.BackColor = [System.Drawing.Color]::Transparent  # Cor de fundo do formulário
+    # Mensagem de status para erros
+    $statusMessage = switch ($Type) {
+        "error" {
+            if ($Direction -eq "sync") { "Falha no Download!" } else { "Falha no Upload!" }
+        }
+        default {
+            if ($Direction -eq "sync") { "Atualizando seu progresso..." } else { "Sincronizando a Nuvem..." }
+        }
+    }
+
+    $lblStatus.Text = $statusMessage
+
+    # Cor do texto para erros (opcional)
+    if ($Type -eq "error") {
+        $lblStatus.ForeColor = [System.Drawing.Color]::FromArgb(220, 50, 50)  # Vermelho
+    }
 
     $picIcon = New-Object System.Windows.Forms.PictureBox
     $picIcon.Location = New-Object System.Drawing.Point(10, 15)
