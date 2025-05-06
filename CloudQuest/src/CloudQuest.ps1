@@ -1,11 +1,8 @@
 # CloudQuest.ps1
 # INICIALIZAÇÃO DO SISTEMA
 # ====================================================
-param(
-    [Parameter(Mandatory=$false)]
-    [string]$GameProfileName
-)
 
+# INICIALIZAÇÃO DO SISTEMA - Adicionado runspace padrão para threads não associadas à UI
 $runspace = [runspacefactory]::CreateRunspace()
 $runspace.Open()
 [runspacefactory]::DefaultRunspace = $runspace
@@ -13,16 +10,12 @@ $runspace.Open()
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Define o diretório raiz do projeto
-$ScriptRoot = $PSScriptRoot
-$CloudQuestRoot = Split-Path -Parent $ScriptRoot
-
 # Importa módulos necessários
 Import-Module (Join-Path $PSScriptRoot "modules\Config.psm1")
 Import-Module (Join-Path $PSScriptRoot "modules\Notifications.psm1")
 Import-Module (Join-Path $PSScriptRoot "modules\Rclone.psm1")
 
-# FLUXO DE SINCRONIZAÇÃO
+# FLUXO DE SINCRONIZAÇÃO (ATUALIZADO)
 # ====================================================
 function Sync-Saves {
     param([string]$Direction)
@@ -51,46 +44,9 @@ function Sync-Saves {
     }
 }
 
-# EXECUÇÃO PRINCIPAL
+# EXECUÇÃO PRINCIPAL (ATUALIZADA)
 # ====================================================
 try {
-    # Inicializa o sistema de logs
-    Initialize-LogSystem -RootPath $CloudQuestRoot
-    Write-Log -Message "=== Iniciando CloudQuest ===" -Level Info
-
-    # Define o diretório de perfis
-    $profilesDir = Join-Path -Path $CloudQuestRoot -ChildPath "profiles"
-    
-    # Verifica se foi fornecido um perfil de jogo
-    if ([string]::IsNullOrEmpty($GameProfileName)) {
-        # Lista perfis disponíveis se nenhum foi especificado
-        $availableProfiles = Get-AvailableProfiles -ProfilesDir $profilesDir
-        
-        if ($availableProfiles.Count -eq 0) {
-            Write-Log -Message "Nenhum perfil de jogo encontrado." -Level Error
-            Write-Host "Nenhum perfil de jogo encontrado no diretório: $profilesDir"
-            exit 1
-        }
-        
-        Write-Host "Perfis disponíveis:"
-        for ($i = 0; $i -lt $availableProfiles.Count; $i++) {
-            Write-Host "[$i] $($availableProfiles[$i])"
-        }
-        
-        $selection = Read-Host "Selecione o número do perfil ou digite o nome completo"
-        
-        if ([int]::TryParse($selection, [ref]$null) -and [int]$selection -ge 0 -and [int]$selection -lt $availableProfiles.Count) {
-            $GameProfileName = $availableProfiles[[int]$selection]
-        } else {
-            $GameProfileName = $selection
-        }
-    }
-    
-    Write-Log -Message "Carregando perfil: $GameProfileName" -Level Info
-    
-    # Carrega o perfil do jogo usando a função do módulo Config
-    Load-GameProfile -ProfileName $GameProfileName -ProfilesDir $profilesDir
-    
     Test-RcloneConfig
 
     try {
@@ -166,3 +122,5 @@ catch {
 finally {
     Write-Log -Message "=== Sessão finalizada ===`n" -Level Info
 }
+
+# As chamadas a Test-RcloneConfig, Invoke-RcloneCommand e Show-CustomNotification estão integradas corretamente.
