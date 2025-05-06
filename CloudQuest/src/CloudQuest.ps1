@@ -40,7 +40,7 @@ function Sync-Saves {
         }
         Write-Log -Message "ERRO: Falha na sincronização - $_" -Level Error
         Show-CustomNotification -Title "Erro" -Message "Falha na sincronização" -Type "error"
-        # exit 1
+        exit 1
     }
 }
 
