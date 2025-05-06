@@ -39,9 +39,9 @@ function Show-CustomNotification {
     $screen = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
     $rightPosition = $screen.Right - 300
     if ($Direction -eq "sync") {
-        $form.Location = New-Object System.Drawing.Point($rightPosition, 982)
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     } else {
-        $form.Location = New-Object System.Drawing.Point($rightPosition, 982)
+        $form.Location = New-Object System.Drawing.Point($rightPosition, 980)
     }
 
     # Painel com gradiente
@@ -138,7 +138,7 @@ function Show-CustomNotification {
 
     # Timer para fechar após 5 segundos
     $timer = New-Object System.Windows.Forms.Timer
-    $timer.Interval = 6000
+    $timer.Interval = 5000
     $timer.Enabled = $true
     $timer.Add_Tick({ $form.Close(); $timer.Stop() })
 
