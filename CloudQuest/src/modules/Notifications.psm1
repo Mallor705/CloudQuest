@@ -8,8 +8,8 @@ function Show-CustomNotification {
         [string]$Direction = "sync"  # Novo parâmetro para direção (sync/update)
     )
 
-    Write-Log -Message "$Title - $Message" -Level "Info"
-
+    Write-Log -Message "$Title - $Message" -Level $(if ($Type -eq "error") { "Error" } else { "Info" })
+    
     # Configurações da fonte (Montserrat - requer instalação)
     $montserratBold = [System.Drawing.FontFamily]::new("Montserrat")
     $montserratRegular = if ($null -ne $montserratBold) { $montserratBold } else { "Segoe UI" }
