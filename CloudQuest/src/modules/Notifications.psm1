@@ -84,7 +84,7 @@ function Show-CustomNotification {
 
     # Ícones (ajuste os caminhos conforme necessário)
     # Atualiza o caminho dos assets para subir dois níveis e acessar "assets"
-    $assetsPath = Join-Path -Path (Split-Path -Parent (Split-Path $PSScriptRoot)) -ChildPath "assets"
+    $assetsPath = Join-Path -Path (Split-Path -Parent (Split-Path $PSScriptRoot)) -ChildPath "assets\icons"
     $iconBaseName = if ($Type -eq "error") { "error_" } else { "" }
     $bgBaseName = if ($Type -eq "error") { "error_" } else { "" }
 

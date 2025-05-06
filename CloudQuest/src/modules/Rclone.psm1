@@ -89,9 +89,9 @@ function Invoke-RcloneCommand {
         }
     } while (-not $success -and $retryCount -lt $maxRetries)
 
-    # # Fechar notificação se já passaram 6 segundos
-    # $elapsed = (Get-Date) - $startTime
-    # $remaining = [int](6000 - $elapsed.TotalMilliseconds)
+    # Fechar notificação se já passaram 6 segundos
+    $elapsed = (Get-Date) - $startTime
+    $remaining = [int](6000 - $elapsed.TotalMilliseconds)
     
     if ($remaining -gt 0) {
         Start-Sleep -Milliseconds $remaining

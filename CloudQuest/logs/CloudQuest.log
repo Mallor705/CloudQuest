@@ -1,22 +1,21 @@
-﻿=== [ 2025-05-06 15:32:10 ] Sessão iniciada ===
+﻿=== [ 2025-05-06 15:51:43 ] Sessão iniciada ===
 
-[2025-05-06 15:32:10] [Info] Perfil recebido: 'ELDEN RING'
-[2025-05-06 15:32:10] [Info] Procurando perfil em: D:\messi\Documents\GitHub\Sync-Save\CloudQuest\profiles\ELDEN RING.json
-[2025-05-06 15:32:10] [Info] Verificando configuração do Rclone...
-[2025-05-06 15:32:10] [Info] Configuração do Rclone validada
-[2025-05-06 15:32:12] [Info] Diretório remoto verificado/criado: onedrive:CloudQuest/EldenRing
-[2025-05-06 15:32:12] [Info] Diretório local criado: %APPDATA%\EldenRing
-[2025-05-06 15:32:12] [Info] CloudQuest - Sincronizando
-[2025-05-06 15:32:12] [Info] Usando fonte Montserrat
-[2025-05-06 15:32:12] [Info] Tentativa 1/3: onedrive:CloudQuest/EldenRing/ -> %APPDATA%\EldenRing
-[2025-05-06 15:32:27] [Info] Sincronização bem-sucedida
-[2025-05-06 15:32:28] [Info] Launcher iniciado (PID: 19976)
-[2025-05-06 15:32:28] [Info] Aguardando processo do jogo...
-[2025-05-06 15:32:38] [Info] Iniciando monitoramento do processo (PID: 16092)...
-[2025-05-06 15:32:53] [Info] Processo finalizado (PID: 16092)
-[2025-05-06 15:32:53] [Info] CloudQuest - Atualizando
-[2025-05-06 15:32:53] [Info] Usando fonte Montserrat
-[2025-05-06 15:32:53] [Info] Tentativa 1/3: %APPDATA%\EldenRing -> onedrive:CloudQuest/EldenRing/
-[2025-05-06 15:32:55] [Info] Sincronização bem-sucedida
-[2025-05-06 15:32:55] [Info] === Sessão finalizada ===
+[2025-05-06 15:51:43] [Info] Perfil recebido: 'ELDEN RING'
+[2025-05-06 15:51:43] [Info] Procurando perfil em: D:\messi\Documents\GitHub\Sync-Save\CloudQuest\profiles\ELDEN RING.json
+[2025-05-06 15:51:43] [Info] Verificando configuração do Rclone...
+[2025-05-06 15:51:43] [Info] Configuração do Rclone validada
+[2025-05-06 15:51:44] [Info] Diretório remoto verificado/criado: onedrive:CloudQuest/EldenRing
+[2025-05-06 15:51:44] [Info] CloudQuest - Sincronizando
+[2025-05-06 15:51:44] [Info] Usando fonte Montserrat
+[2025-05-06 15:51:44] [Info] Tentativa 1/3: onedrive:CloudQuest/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
+[2025-05-06 15:51:45] [Info] Sincronização bem-sucedida
+[2025-05-06 15:51:50] [Info] Launcher iniciado (PID: 19088)
+[2025-05-06 15:51:50] [Info] Aguardando processo do jogo...
+[2025-05-06 15:52:00] [Info] Iniciando monitoramento do processo (PID: 1748)...
+[2025-05-06 15:52:07] [Info] Processo finalizado (PID: 1748)
+[2025-05-06 15:52:07] [Info] CloudQuest - Atualizando
+[2025-05-06 15:52:07] [Info] Usando fonte Montserrat
+[2025-05-06 15:52:07] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:CloudQuest/EldenRing/
+[2025-05-06 15:52:08] [Info] Sincronização bem-sucedida
+[2025-05-06 15:52:13] [Info] === Sessão finalizada ===
 
