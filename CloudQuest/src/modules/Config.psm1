@@ -1,21 +1,9 @@
 # CONFIGURAÇÃO DE LOG (UTF-8)
 # ====================================================
 $ScriptDir = $PSScriptRoot
-
-function Initialize-LogSystem {
-    param(
-        [string]$RootPath
-    )
-    
-    $LogDir = Join-Path -Path $RootPath -ChildPath "logs"
-    
-    if (-not (Test-Path -Path $LogDir)) {
-        New-Item -Path $LogDir -ItemType Directory -Force | Out-Null
-    }
-    
-    $Script:LogPath = Join-Path -Path $LogDir -ChildPath "CloudQuest.log"
-    Set-Content -Path $Script:LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
-}
+# Ajusta o caminho para o diretório raiz do projeto
+$CloudQuestRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$LogPath = Join-Path -Path (Join-Path -Path $CloudQuestRoot -ChildPath "logs") -ChildPath "CloudQuest.log"
 
 function Write-Log {
     param(
@@ -26,61 +14,32 @@ function Write-Log {
     
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logEntry = "[$timestamp] [$Level] $Message"
-    $logEntry | Out-File -FilePath $Script:LogPath -Append -Encoding UTF8 -Force
+    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8 -Force
 }
+
+Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
 # CONFIGURAÇÕES DO USUÁRIO
 # ====================================================
-function Load-GameProfile {
-    param(
-        [string]$ProfileName,
-        [string]$ProfilesDir
-    )
-
-    $profileFile = Join-Path -Path $ProfilesDir -ChildPath "$ProfileName.json"
-
-    # Verifica se o perfil existe
-    if (-not (Test-Path $profileFile)) {
-        Write-Log -Message "ERRO: Perfil '$ProfileName' não encontrado em: $profileFile" -Level Error
-        throw "Perfil de jogo não encontrado: $ProfileName"
-    }
-
-    try {
-        $userConfig = Get-Content -Path $profileFile -Raw | ConvertFrom-Json
-        
-        # Configura variáveis globais
-        $Script:RclonePath = $userConfig.RclonePath
-        $Script:CloudRemote = $userConfig.CloudRemote
-        $Script:CloudDir = $userConfig.CloudDir
-        $Script:LocalDir = $userConfig.LocalDir
-        $Script:GameProcess = $userConfig.GameProcess
-        $Script:GameName = $userConfig.GameName
-        $Script:LauncherExePath = $userConfig.ExecutablePath
-        
-        Write-Log -Message "Perfil de jogo '$ProfileName' carregado com sucesso" -Level Info
-        
-        return $userConfig
-    }
-    catch {
-        Write-Log -Message "ERRO: Falha ao carregar perfil - $_" -Level Error
-        throw "Falha ao carregar perfil do jogo: $_"
-    }
+# Atualiza o caminho para buscar o arquivo de configuração em "..\config"
+$configPath = Join-Path -Path (Resolve-Path "$PSScriptRoot\..\..\config") -ChildPath "UserConfig.json"
+if (Test-Path $configPath) {
+    $userConfig = Get-Content -Path $configPath -Raw | ConvertFrom-Json
+    $RclonePath = $userConfig.RclonePath
+    $CloudRemote = $userConfig.CloudRemote
+    $CloudDir = $userConfig.CloudDir
+    $LocalDir = $userConfig.LocalDir
+    $GameProcess = $userConfig.GameProcess
+    $GameName = $userConfig.GameName
+    $LauncherExePath = $userConfig.ExecutablePath
+    # As variáveis (RclonePath, CloudRemote, CloudDir, LocalDir, etc.) estão corretamente definidas.
+} else {
+    Write-Log -Message "Arquivo de configuração do usuário não encontrado." -Level Warning
+    throw "Arquivo de configuração do usuário não encontrado."
 }
 
-function Get-AvailableProfiles {
-    param(
-        [string]$ProfilesDir
-    )
-    
-    if (-not (Test-Path $ProfilesDir)) {
-        Write-Log -Message "Diretório de perfis não encontrado: $ProfilesDir" -Level Warning
-        return @()
-    }
-    
-    $profiles = Get-ChildItem -Path $ProfilesDir -Filter "*.json" | ForEach-Object { $_.BaseName }
-    return $profiles
-}
-
-# Exporta funções e variáveis
-Export-ModuleMember -Function Write-Log, Initialize-LogSystem, Load-GameProfile, Get-AvailableProfiles
+# Exporta a função Write-Log para uso externo
+Export-ModuleMember -Function Write-Log
+# Adicionado: exportar variáveis de configuração para outros módulos
 Export-ModuleMember -Variable RclonePath, CloudRemote, CloudDir, LocalDir, GameProcess, GameName, LauncherExePath
+ 
