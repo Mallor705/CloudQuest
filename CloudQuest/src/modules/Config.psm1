@@ -38,7 +38,6 @@ function Load-GameProfile {
     )
 
     $profileFile = Join-Path -Path $ProfilesDir -ChildPath "$ProfileName.json"
-    Write-Log -Message "Tentando carregar perfil: $profileFile" -Level Info
 
     # Verifica se o perfil existe
     if (-not (Test-Path $profileFile)) {
@@ -47,41 +46,16 @@ function Load-GameProfile {
     }
 
     try {
-        $userConfig = Get-Content -Path $profileFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $userConfig = Get-Content -Path $profileFile -Raw | ConvertFrom-Json
         
-        # Verificar se os campos obrigatórios existem
-        $requiredFields = @("RclonePath", "CloudRemote", "CloudDir", "LocalDir", "GameProcess", "GameName", "ExecutablePath")
-        $missingFields = @()
-        
-        foreach ($field in $requiredFields) {
-            if (-not (Get-Member -InputObject $userConfig -Name $field -MemberType Properties)) {
-                $missingFields += $field
-            } elseif ([string]::IsNullOrEmpty($userConfig.$field)) {
-                $missingFields += "$field (vazio)"
-            }
-        }
-        
-        if ($missingFields.Count -gt 0) {
-            throw "Campos obrigatórios ausentes ou vazios no perfil: $($missingFields -join ', ')"
-        }
-        
-        # Definir variáveis globais com escopo global explícito
-        $global:RclonePath = $userConfig.RclonePath
-        $global:CloudRemote = $userConfig.CloudRemote
-        $global:CloudDir = $userConfig.CloudDir
-        $global:LocalDir = $userConfig.LocalDir
-        $global:GameProcess = $userConfig.GameProcess
-        $global:GameName = $userConfig.GameName
-        $global:LauncherExePath = $userConfig.ExecutablePath
-        
-        # Log das variáveis definidas para facilitar debug
-        Write-Log -Message "RclonePath definido como: $global:RclonePath" -Level Info
-        Write-Log -Message "CloudRemote definido como: $global:CloudRemote" -Level Info
-        Write-Log -Message "CloudDir definido como: $global:CloudDir" -Level Info
-        Write-Log -Message "LocalDir definido como: $global:LocalDir" -Level Info
-        Write-Log -Message "GameProcess definido como: $global:GameProcess" -Level Info
-        Write-Log -Message "GameName definido como: $global:GameName" -Level Info
-        Write-Log -Message "LauncherExePath definido como: $global:LauncherExePath" -Level Info
+        # Configura variáveis globais
+        $Script:RclonePath = $userConfig.RclonePath
+        $Script:CloudRemote = $userConfig.CloudRemote
+        $Script:CloudDir = $userConfig.CloudDir
+        $Script:LocalDir = $userConfig.LocalDir
+        $Script:GameProcess = $userConfig.GameProcess
+        $Script:GameName = $userConfig.GameName
+        $Script:LauncherExePath = $userConfig.ExecutablePath
         
         Write-Log -Message "Perfil de jogo '$ProfileName' carregado com sucesso" -Level Info
         
