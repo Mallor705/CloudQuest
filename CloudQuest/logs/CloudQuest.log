@@ -1,8 +1,11 @@
-﻿=== [ 2025-05-05 14:50:26 ] SessÃ£o iniciada ===
+﻿=== [ 2025-05-05 22:11:56 ] SessÃ£o iniciada ===
 
-[2025-05-05 14:50:26] [Info] Verificando configuraÃ§Ã£o do Rclone...
-[2025-05-05 14:50:26] [Error] ERRO: Falha na verificaÃ§Ã£o do Rclone - Não é possível associar o argumento ao parâmetro 'Path' porque ele é nulo.
-[2025-05-05 14:50:26] [Info] Erro de ConfiguraÃ§Ã£o - Verifique as configuraÃ§Ãµes do Rclone
-[2025-05-05 14:50:26] [Info] Usando fonte Montserrat
-[2025-05-05 14:50:26] [Info] === SessÃ£o finalizada ===
+[2025-05-05 22:11:56] [Info] === Iniciando CloudQuest ===
+[2025-05-05 22:11:56] [Info] Carregando perfil: ELDEN RING
+[2025-05-05 22:11:57] [Info] Perfil de jogo 'ELDEN RING' carregado com sucesso
+[2025-05-05 22:11:57] [Info] Verificando configuraÃ§Ã£o do Rclone...
+[2025-05-05 22:11:57] [Error] ERRO: Falha na verificaÃ§Ã£o do Rclone - Não é possível associar o argumento ao parâmetro 'Path' porque ele é nulo.
+[2025-05-05 22:11:57] [Info] Erro de ConfiguraÃ§Ã£o - Verifique as configuraÃ§Ãµes do Rclone
+[2025-05-05 22:11:57] [Info] Usando fonte Montserrat
+[2025-05-05 22:11:57] [Info] === SessÃ£o finalizada ===
 

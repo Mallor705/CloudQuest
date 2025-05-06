@@ -10,7 +10,7 @@ if (-not (Test-Path $ExecutablePath)) {
 $exeFolder = Split-Path -Parent $ExecutablePath
 
 # Passo 2: Buscar o arquivo steam_appid.txt na pasta do executável
-$steamAppIdPath = Join-Path $exeFolder "steam_appid.txt"
+$steamAppIdPath = Join-Path $exeFolder "steam_appid.txt" #
 if (Test-Path $steamAppIdPath) {
     # Lê todo o conteúdo do arquivo, remove caracteres não numéricos e pega a primeira sequência de dígitos
     $rawContent = Get-Content $steamAppIdPath -Raw
