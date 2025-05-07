@@ -1,4 +1,4 @@
-﻿# modules/notifications.py
+# modules/notifications.py
 # NOTIFICAÇÕES PERSONALIZADAS
 # ====================================================
 import os

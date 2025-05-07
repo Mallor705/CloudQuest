@@ -1,4 +1,4 @@
-﻿# modules/rclone.py
+# modules/rclone.py
 # VERIFICAÇÕES DO RCLONE
 # ====================================================
 import os

@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # CloudQuest.py - Script principal
 # ====================================================
 
@@ -223,4 +223,6 @@ def main():
 if __name__ == "__main__":
     # Carregar configuração
     config = load_config()
+    from modules.rclone import set_config  # Adicione esta linha
+    set_config(config)  # Adicione esta linha
     main()
