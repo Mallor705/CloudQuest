@@ -68,8 +68,19 @@ function Test-ValidPath {
     return $true
 }
 
-# Obter diretório atual do script
-$ScriptDir = $PSScriptRoot
+# Função para remover acentos de uma string
+function Remove-Acentos {
+    param([string]$inputString)
+    $normalized = $inputString.Normalize([Text.NormalizationForm]::FormD)
+    $stringBuilder = New-Object System.Text.StringBuilder
+    foreach ($c in $normalized.ToCharArray()) {
+        if ([System.Globalization.CharUnicodeInfo]::GetUnicodeCategory($c) -ne [System.Globalization.UnicodeCategory]::NonSpacingMark) {
+            $stringBuilder.Append($c) | Out-Null
+        }
+    }
+    return $stringBuilder.ToString()
+}
+
 
 Show-Header
 
@@ -138,7 +149,7 @@ try {
         $response = Invoke-RestMethod -Uri $apiUrl -UserAgent "CloudQuest/2.0" -TimeoutSec 10
         
         if ($response.$appID.success -eq $true -and $response.$appID.data) {
-            $GameName = $response.$appID.data.name
+            $GameNameInput = $response.$appID.data.name
             Write-Log -Message "Nome oficial detectado: $GameName" -Level INFO
             Write-Host "[+] Nome oficial detectado: $GameName" -ForegroundColor Green
         }
@@ -152,10 +163,15 @@ try {
         Write-Log -Message "Falha na consulta à API Steam: $($_.Exception.Message)" -Level ERROR
         Write-Warning "Falha na consulta à API Steam: $($_.Exception.Message)"
         do {
-            $GameName = Read-Host "Digite o nome do jogo"
-        } while ([string]::IsNullOrWhiteSpace($GameName))
-        Write-Log -Message "Nome manual inserido: $GameName" -Level INFO
+            $GameNameInput = Read-Host "Digite o nome do jogo"
+        } while ([string]::IsNullOrWhiteSpace($GameNameInput))
+        Write-Log -Message "Nome manual inserido: $GameNameInput" -Level INFO
     }
+
+    $GameName = Remove-Acentos($GameNameInput)  # Remover acentos do nome
+    $GameName = $GameName -replace '[^\w\s-]', '_'  # Remover caracteres especiais
+    $GameName = $GameName -replace '\s+', '_'  # Substituir espaços por underline
+    Write-Log -Message "Nome oficial processado: $GameName" -Level INFO
 
     # Passo 4: Configurações do Rclone
     Write-Log -Message "Iniciando etapa 4: Configuração do Rclone" -Level INFO
@@ -241,7 +257,8 @@ try {
         break
     } while ($true)
 
-    $CloudDir = "CloudQuest/$($GameName -replace '[^\w-]','_')"  # Sanitizar nome
+    $CloudDirLeaf = (Split-Path -Leaf $LocalDir)
+    $CloudDir = "CloudQuest/$CloudDirLeaf"
     Write-Log -Message "Diretório cloud definido: $CloudDir" -Level INFO
 
     # Passo 6: Detecção do processo
@@ -269,7 +286,7 @@ try {
         ExecutablePath = $ExecutablePath
         ExeFolder      = $exeFolder
         AppID          = $appID
-        GameName       = $GameName
+        GameName       = $GameNameInput
         RclonePath     = $RclonePath
         CloudRemote    = $CloudRemote
         CloudDir       = $CloudDir
@@ -284,7 +301,7 @@ try {
         Write-Log -Message "Diretório de configurações criado: $configDir" -Level INFO
     }
 
-    $configFile = Join-Path $configDir "$($GameName -replace '[^\w]','_').json"
+    $configFile = Join-Path $configDir "$($GameName).json"
     $config | ConvertTo-Json -Depth 3 | Out-File -FilePath $configFile -Encoding utf8
     Write-Log -Message "Configurações salvas em: $configFile" -Level INFO
     Write-Host "`n[✓] Configurações salvas em: $configFile" -ForegroundColor Green
@@ -292,7 +309,7 @@ try {
     # Passo 8: Criar atalho
     Write-Log -Message "Iniciando etapa 8: Criação de atalho" -Level INFO
     $desktopPath = [Environment]::GetFolderPath('Desktop')
-    $shortcutPath = Join-Path $desktopPath "$($GameName).lnk"
+    $shortcutPath = Join-Path $desktopPath "$($GameNameInput).lnk"
     $batPath = Join-Path $ScriptDir "CloudQuest.bat"
 
     if (Test-ValidPath -Path $batPath -Type 'File') {
