@@ -19,5 +19,6 @@ __all__ = [
     'show_custom_notification',
     'test_rclone_config',
     'invoke_rclone_command',
-    'set_config'
+    'set_config',
+    'notification_queue'  # <--- Adicione esta linha
 ]

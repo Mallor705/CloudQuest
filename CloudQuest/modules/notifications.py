@@ -9,6 +9,8 @@ from PIL import Image, ImageTk
 import threading
 from pathlib import Path
 from .config import write_log
+import queue
+notification_queue = queue.Queue()
 
 class NotificationWindow:
     """Classe para gerenciar janelas de notificação"""
@@ -72,7 +74,8 @@ class NotificationWindow:
             icon_base_name = "error_" if type_ == "error" else ""
             bg_base_name = "error_" if type_ == "error" else ""
             
-            icon_file = f"{icon_base_name}{'down' if direction == 'sync' else 'up'}.png"
+            # Verificar se os nomes dos ícones correspondem:
+            icon_file = f"{'error_' if type_ == 'error' else ''}{'down' if direction == 'sync' else 'up'}.png"
             bg_file = f"{bg_base_name}{'down' if direction == 'sync' else 'up'}_background.png"
             
             icon_path = assets_path / icon_file
@@ -142,35 +145,30 @@ class NotificationWindow:
         except Exception as e:
             write_log(f"Erro ao fechar notificação: {str(e)}", "Error")
 
+def _show_notification(title, message, type_, direction, game_name):
+    """Função interna para criar a notificação na thread principal"""
+    try:
+        notification = NotificationWindow(title, message, type_, direction, game_name)
+        return notification
+    except Exception as e:
+        write_log(f"Erro ao criar notificação: {str(e)}", "Error")
+        return None
+
 def show_custom_notification(title, message, type_="info", direction="sync"):
-    """
-    Exibe uma notificação personalizada
-    :param title: Título da notificação
-    :param message: Mensagem da notificação
-    :param type_: Tipo de notificação ('info', 'error')
-    :param direction: Direção da sincronização ('sync', 'update')
-    :return: Objeto de notificação ou None em caso de erro
-    """
-    
+    """Encaminha a criação da notificação para a thread principal"""
     write_log(f"{title} - {message}", "Error" if type_ == "error" else "Info")
     
     try:
-        # Tenta carregar o nome do jogo da configuração
+        from .config import config
+        game_name = config.get('game_name', None) if config else None
+    except:
         game_name = None
-        try:
-            # O módulo de configuração já deve estar carregado
-            from . import config
-            if hasattr(config, 'config') and config.config and 'game_name' in config.config:
-                game_name = config.config['game_name']
-        except:
-            pass
-        
-        # Cria a notificação em uma thread separada para não bloquear
-        notification = NotificationWindow(title, message, type_, direction, game_name)
-        
-        # Retorna o objeto de notificação para que possa ser fechado posteriormente
-        return notification
     
-    except Exception as e:
-        write_log(f"ERRO CRÍTICO na notificação: {str(e)}", "Error")
-        return None
+    # Envia a solicitação para a fila
+    notification_queue.put(('show', (title, message, type_, direction, game_name)))
+    
+    # Retorna um objeto "fake" para compatibilidade
+    class DummyNotification:
+        def close(self):
+            notification_queue.put(('close', None))
+    return DummyNotification()

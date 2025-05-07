@@ -10,12 +10,14 @@ import threading
 import tempfile
 import json
 import psutil
+import tkinter as tk
 from pathlib import Path
 
 # Importando os módulos personalizados
 from modules.config import load_config, write_log
 from modules.rclone import test_rclone_config, invoke_rclone_command
 from modules.notifications import show_custom_notification
+from modules.notifications import notification_queue
 
 def sync_saves(direction):
     """
@@ -30,36 +32,40 @@ def sync_saves(direction):
                 notification = show_custom_notification(
                     title="CloudQuest", 
                     message="Sincronizando", 
-                    direction="sync"
+                    direction="sync" if direction == "down" else "up"  # Direções mapeadas
                 )
                 if notification is None:
                     write_log("Aviso: Notificação não foi criada", "Warning")
             except Exception as e:
                 write_log(f"Erro ao criar notificação: {str(e)}", "Error")
-            
+
             # Continua com a sincronização mesmo se a notificação falhar
             invoke_rclone_command(
                 source=f"{config['cloud_remote']}:{config['cloud_dir']}/",
                 destination=config['local_dir'],
                 notification=notification
             )
+            process_notifications()  # Forçar atualização
+
         elif direction == "up":
             try:
                 notification = show_custom_notification(
                     title="CloudQuest", 
                     message="Atualizando", 
-                    direction="update"
+                    direction="up"
                 )
                 if notification is None:
                     write_log("Aviso: Notificação não foi criada", "Warning")
             except Exception as e:
                 write_log(f"Erro ao criar notificação: {str(e)}", "Error")
-            
+
+            # Continua com a sincronização mesmo se a notificação falhar
             invoke_rclone_command(
                 source=config['local_dir'],
                 destination=f"{config['cloud_remote']}:{config['cloud_dir']}/",
                 notification=notification
             )
+            process_notifications()  # Forçar atualização
     except Exception as e:
         # Tratamento seguro da notificação em caso de erro
         try:
@@ -85,6 +91,8 @@ def sync_saves(direction):
 
 def main():
     global config
+    root = tk.Tk()  # Janela Tkinter oculta
+    root.withdraw()
     
     try:
         # Verificação do Rclone (não crítico)
@@ -135,7 +143,8 @@ def main():
             if launcher_process is None or launcher_process.poll() is not None:
                 raise RuntimeError("Falha ao iniciar launcher")
             
-            write_log(f"Launcher iniciado (PID: {launcher_process.pid})", "Info")
+            # Após iniciar o launcher:
+            write_log(f"Launcher iniciado. PID: {launcher_process.pid}, Comando: {config['launcher_exe_path']}", "Info")
         except Exception as e:
             write_log(f"ERRO FATAL: Não foi possível iniciar o launcher: {str(e)}", "Error")
             # Tentar exibir uma notificação de erro final antes de encerrar
@@ -149,28 +158,52 @@ def main():
                 pass
             raise  # Interrompe o script, pois sem o launcher, não há jogo
         
-        # Aguardar processo do jogo
+        game_process_name = config['game_process']  # Define ANTES de usar
+        write_log(f"Procurando por processos com nome: '{game_process_name}'", "Info")
+
+        # Loop principal de monitoramento (código existente, mas ajustado)
         write_log("Aguardando processo do jogo...", "Info")
+        timeout = 120  # Aumente o timeout aqui também
+        start_time = time.time()
+        game_process = None
+
+        # Função para processar notificações na thread principal
+        def process_notifications():
+            while True:
+                try:
+                    cmd, args = notification_queue.get_nowait()
+                    if cmd == 'show':
+                        title, message, type_, direction, game_name = args
+                        notification = _show_notification(title, message, type_, direction, game_name)
+                    elif cmd == 'close':
+                        if notification and hasattr(notification, 'close'):
+                            notification.close()
+                except queue.Empty:
+                    break
+
+        # Aguardar processo do jogo
+        write_log(f"Procurando por processos com nome: '{game_process_name}'", "Info")
         timeout = 60
         start_time = time.time()
         game_process_name = config['game_process']
+        # Substitua o loop de espera pelo seguinte código:
         game_process = None
+        launcher_pid = launcher_process.pid
 
-        while not game_process and (time.time() - start_time) < timeout:
+        while (time.time() - start_time) < timeout:
             try:
-                # Procura pelo processo do jogo
-                for process in psutil.process_iter(['pid', 'name']):
-                    if game_process_name.lower() in process.info['name'].lower():
-                        game_process = process
+                launcher = psutil.Process(launcher_pid)
+                # Verifica processos filhos do launcher
+                children = launcher.children(recursive=True)
+                for child in children:
+                    if game_process_name.lower() in child.name().lower():
+                        game_process = child
                         break
-            except Exception as e:
-                write_log(f"Erro ao buscar o processo '{game_process_name}': {str(e)}", "Warning")
-            
-            if not game_process:
-                time.sleep(5)
-
-        if not game_process:
-            raise TimeoutError(f"Processo do jogo não iniciado após {timeout} segundos")
+                if game_process:
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            time.sleep(5)
 
         # Monitorar jogo (NÃO BLOQUEANTE)
         try:
@@ -191,6 +224,10 @@ def main():
                     write_log(f"Erro ao verificar processo: {str(e)}", "Warning")
                     break
                 
+                # Processa notificações e atualiza a interface
+                process_notifications()
+                root.update_idletasks()
+                root.update()
                 time.sleep(0.5)
 
             write_log(f"Processo finalizado (PID: {game_process.pid})", "Info")
@@ -208,16 +245,14 @@ def main():
         
         # Tratamento seguro da notificação final de erro
         try:
-            show_custom_notification(
-                title="Erro Crítico", 
-                message="Consulte o arquivo de log", 
-                type_="error"
-            )
+            # Envia a notificação de erro via fila
+            notification_queue.put(('show', ("Erro Crítico", "Consulte o arquivo de log", "error", "sync", None)))
         except Exception as e:
             write_log(f"Não foi possível mostrar notificação final: {str(e)}", "Error")
         sys.exit(1)
     
     finally:
+        root.destroy()  # Fecha a janela Tkinter
         write_log("=== Sessão finalizada ===\n", "Info")
 
 if __name__ == "__main__":
