@@ -12,6 +12,10 @@ from .config import write_log
 import queue
 notification_queue = queue.Queue()
 
+# Mantenha uma única instância root
+root = tk.Tk()
+root.withdraw()
+
 class NotificationWindow:
     """Classe para gerenciar janelas de notificação"""
     
@@ -20,7 +24,7 @@ class NotificationWindow:
         self.root.withdraw()  # Esconde a janela principal
         
         # Configurações da janela
-        self.window = tk.Toplevel(self.root)
+        self.window = tk.Toplevel(root)
         self.window.title("")
         self.window.overrideredirect(True)  # Remove a borda da janela
         
@@ -139,7 +143,7 @@ class NotificationWindow:
         try:
             # Verifica se a janela ainda existe antes de fechar
             if self.window.winfo_exists():
-                self.window.destroy()
+                self.window.after(0, self.window.destroy)
             if self.root.winfo_exists():    
                 self.root.destroy()
         except Exception as e:
@@ -172,3 +176,18 @@ def show_custom_notification(title, message, type_="info", direction="sync"):
         def close(self):
             notification_queue.put(('close', None))
     return DummyNotification()
+
+def process_notifications():
+    """Processa todas as notificações pendentes na fila"""
+    while True:
+        try:
+            cmd, args = notification_queue.get_nowait()
+            if cmd == 'show':
+                title, message, type_, direction, game_name = args
+                _show_notification(title, message, type_, direction, game_name)
+            elif cmd == 'close':
+                notification = args
+                if notification and hasattr(notification, 'close'):
+                    notification.close()
+        except queue.Empty:
+            break

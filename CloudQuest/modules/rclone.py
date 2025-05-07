@@ -105,18 +105,16 @@ def invoke_rclone_command(source, destination, notification=None):
                 time.sleep(5)
         
     finally:
-        # Fechar notificação de forma segura
+            # Fechar notificação de forma segura
         try:
-            # Fechar notificação se já passaram 5 segundos
-            elapsed = time.time() - start_time
-            remaining = int(5000 - (elapsed * 1000))
-            
-            if remaining > 0:
-                time.sleep(remaining / 1000)
-            
-            if notification and hasattr(notification, 'close'):
-                notification.close()
-            process_notifications()
+            # Fechar notificação via fila
+            if notification:
+                notification_queue.put(('close', notification))
+                
+            # Processar imediatamente
+            from .notifications import process_notifications as pn
+            pn()  # Garante o fechamento
+
         except Exception as e:
             write_log(f"Erro ao fechar notificação: {str(e)}", "Warning")
     

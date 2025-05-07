@@ -18,22 +18,10 @@ from queue import Empty
 from modules.config import load_config, write_log
 from modules.rclone import test_rclone_config, invoke_rclone_command, set_config
 from modules.notifications import show_custom_notification, notification_queue, _show_notification
+from modules.notifications import process_notifications
 
 # Variável global para configuração
 config = None
-
-def process_notifications():
-    """Processa todas as notificações pendentes na fila"""
-    while True:
-        try:
-            cmd, args = notification_queue.get_nowait()
-            if cmd == 'show':
-                title, message, type_, direction, game_name = args
-                _show_notification(title, message, type_, direction, game_name)
-            elif cmd == 'close':
-                pass  # Implementação opcional para fechamento explícito
-        except Empty:
-            break
 
 def find_game_process(process_name):
     """Busca o processo do jogo em toda a lista de processos"""
