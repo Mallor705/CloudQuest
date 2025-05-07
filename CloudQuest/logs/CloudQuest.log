@@ -1,0 +1,21 @@
+﻿=== [ 2025-05-06 19:35:05 ] Sessão iniciada ===
+
+[2025-05-06 19:35:05] [Info] Perfil recebido: 'ELDEN RING'
+[2025-05-06 19:35:05] [Info] Procurando perfil em: D:\messi\Documents\GitHub\Sync-Save\CloudQuest\profiles\ELDEN RING.json
+[2025-05-06 19:35:05] [Info] Verificando configuração do Rclone...
+[2025-05-06 19:35:05] [Info] Configuração do Rclone validada
+[2025-05-06 19:35:06] [Info] Diretório remoto verificado/criado: onedrive:CloudQuest/EldenRing
+[2025-05-06 19:35:06] [Info] CloudQuest - Sincronizando
+[2025-05-06 19:35:06] [Info] Usando fonte Montserrat
+[2025-05-06 19:35:06] [Info] Tentativa 1/3: onedrive:CloudQuest/EldenRing/ -> C:\Users\messi\AppData\Roaming\EldenRing
+[2025-05-06 19:35:08] [Info] Sincronização bem-sucedida
+[2025-05-06 19:35:11] [Info] Launcher iniciado (PID: 13560)
+[2025-05-06 19:35:11] [Info] Aguardando processo do jogo...
+[2025-05-06 19:35:21] [Info] Iniciando monitoramento do processo (PID: 14460)...
+[2025-05-06 19:35:36] [Info] Processo finalizado (PID: 14460)
+[2025-05-06 19:35:36] [Info] CloudQuest - Atualizando
+[2025-05-06 19:35:36] [Info] Usando fonte Montserrat
+[2025-05-06 19:35:36] [Info] Tentativa 1/3: C:\Users\messi\AppData\Roaming\EldenRing -> onedrive:CloudQuest/EldenRing/
+[2025-05-06 19:35:38] [Info] Sincronização bem-sucedida
+[2025-05-06 19:35:41] [Info] === Sessão finalizada ===
+
