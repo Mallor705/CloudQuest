@@ -1,0 +1,12 @@
+{
+    "ExecutablePath":  "F:\\messi\\Games\\Steam\\steamapps\\common\\ELDEN RING\\Game\\ersc_launcher.exe",
+    "ExeFolder":  "F:\\messi\\Games\\Steam\\steamapps\\common\\ELDEN RING\\Game",
+    "AppID":  "1245620",
+    "GameName":  "ELDEN RING",
+    "RclonePath":  "D:\\messi\\Documents\\rclone\\rclone.exe",
+    "CloudRemote":  "onedrive",
+    "CloudDir":  "CloudQuest/EldenRing",
+    "LocalDir":  "C:\\Users\\messi\\AppData\\Roaming\\EldenRing",
+    "GameProcess":  "eldenring",
+    "LastModified":  "2025-05-07T12:31:13.5248429-03:00"
+}
