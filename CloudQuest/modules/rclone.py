@@ -116,6 +116,7 @@ def invoke_rclone_command(source, destination, notification=None):
             
             if notification and hasattr(notification, 'close'):
                 notification.close()
+            process_notifications()
         except Exception as e:
             write_log(f"Erro ao fechar notificação: {str(e)}", "Warning")
     
