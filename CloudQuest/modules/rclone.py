@@ -107,14 +107,8 @@ def invoke_rclone_command(source, destination, notification=None):
     finally:
             # Fechar notificação de forma segura
         try:
-            # Fechar notificação via fila
             if notification:
-                notification_queue.put(('close', notification))
-                
-            # Processar imediatamente
-            from .notifications import process_notifications as pn
-            pn()  # Garante o fechamento
-
+                notification.close() # Fecha diretamente a notificação
         except Exception as e:
             write_log(f"Erro ao fechar notificação: {str(e)}", "Warning")
     

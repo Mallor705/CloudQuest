@@ -1,5 +1,5 @@
 # modules/notifications.py
-# NOTIFICAÇÕES PERSONALIZADAS
+# NOTIFICAÇÕES PERSONALIZADAS - VERSÃO FINAL
 # ====================================================
 import os
 import sys
@@ -7,26 +7,32 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import threading
+import time
 from pathlib import Path
 from .config import write_log
 import queue
+
 notification_queue = queue.Queue()
+active_notifications = {}
 
 # Mantenha uma única instância root
 root = tk.Tk()
 root.withdraw()
 
 class NotificationWindow:
-    """Classe para gerenciar janelas de notificação"""
+    """Classe para gerenciar janelas de notificação com controle de tempo"""
     
-    def __init__(self, title, message, type_="info", direction="sync", game_name=None):
+    def __init__(self, title, message, type_="info", direction="down", game_name=None, notification_id=None):
+        self.notification_id = notification_id
         self.root = tk.Tk()
-        self.root.withdraw()  # Esconde a janela principal
+        self.root.withdraw()
+        self._closed = False
         
         # Configurações da janela
         self.window = tk.Toplevel(root)
         self.window.title("")
-        self.window.overrideredirect(True)  # Remove a borda da janela
+        self.window.overrideredirect(True)
+        self.window.notification_id = notification_id
         
         # Dimensões e posição
         form_width = 300
@@ -37,12 +43,9 @@ class NotificationWindow:
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
         right_position = screen_width - 300
-        bottom_position = screen_height - 150  # 100px do fundo
+        bottom_position = screen_height - 150
         
-        if direction == "sync":
-            self.window.geometry(f"+{right_position}+{bottom_position}")
-        else:
-            self.window.geometry(f"+{right_position}+{bottom_position}")
+        self.window.geometry(f"+{right_position}+{bottom_position}")
         
         # Propriedades da janela
         self.window.attributes("-topmost", True)
@@ -59,7 +62,6 @@ class NotificationWindow:
         
         # Desenha retângulos com cores gradientes
         for i in range(20):
-            # Calcula cores para o gradiente
             r = int(17 + (28-17) * i/20)
             g = int(23 + (32-23) * i/20)
             b = int(30 + (39-30) * i/20)
@@ -71,16 +73,11 @@ class NotificationWindow:
         
         # Carrega ícones
         try:
-            # Determina o caminho dos ícones
             script_dir = Path(__file__).parent
             assets_path = script_dir.parent / "assets" / "icons"
             
-            icon_base_name = "error_" if type_ == "error" else ""
-            bg_base_name = "error_" if type_ == "error" else ""
-            
-            # Verificar se os nomes dos ícones correspondem:
-            icon_file = f"{'error_' if type_ == 'error' else ''}{'down' if direction == 'sync' else 'up'}.png"
-            bg_file = f"{bg_base_name}{'down' if direction == 'sync' else 'up'}_background.png"
+            icon_file = f"{'error_' if type_ == 'error' else ''}{direction}.png"
+            bg_file = f"{'error_' if type_ == 'error' else ''}{direction}_background.png"
             
             icon_path = assets_path / icon_file
             bg_path = assets_path / bg_file
@@ -92,8 +89,6 @@ class NotificationWindow:
                 
                 self.icon_label = tk.Label(self.frame, image=self.icon_photo, bg="#1C2027")
                 self.icon_label.place(x=10, y=15)
-            else:
-                write_log(f"AVISO: Ícone não encontrado: {icon_path}", "Warning")
             
             if bg_path.exists():
                 self.bg_img = Image.open(bg_path)
@@ -102,8 +97,6 @@ class NotificationWindow:
                 
                 self.bg_label = tk.Label(self.frame, image=self.bg_photo, bg="#1C2027")
                 self.bg_label.place(x=201, y=-4)
-            else:
-                write_log(f"AVISO: Background não encontrado: {bg_path}", "Warning")
         
         except Exception as e:
             write_log(f"Erro ao carregar imagens: {str(e)}", "Error")
@@ -119,75 +112,102 @@ class NotificationWindow:
                                  fg="white", bg="#1C2027")
         self.app_label.place(x=75, y=30)
         
-        # Define a mensagem de status combinando type_ e direction
+        # Mensagem de status
         if type_ == "error":
-            status_message = "Falha no download!" if direction == "sync" else "Falha no upload!"
-            status_color = "#DC3232"  # Vermelho para erros
+            status_message = "Falha no download!" if direction == "down" else "Falha no upload!"
+            status_color = "#DC3232"
         else:
-            status_message = "Atualizando seu progresso..." if direction == "sync" else "Sincronizando a nuvem..."
-            status_color = "#8C9197"  # Cinza para info
+            status_message = "Sincronizando a nuvem..." if direction == "down" else "Atualizando seu progresso..."
+            status_color = "#8C9197"
         
         self.status_label = tk.Label(self.frame, text=status_message,
                                     font=("Segoe UI", 7, "normal"),
                                     fg=status_color, bg="#1C2027")
         self.status_label.place(x=75, y=52)
         
-        # Configura auto-fechamento após alguns segundos
+        # Configura timer apenas para notificações de sucesso
         if type_ != "error":
-            self.auto_close_timer = threading.Timer(5.0, self.close)
+            self.auto_close_timer = threading.Timer(5.0, self.safe_close)
             self.auto_close_timer.daemon = True
             self.auto_close_timer.start()
-    
-    def close(self):
-        """Fecha a janela de notificação com segurança"""
-        try:
-            # Verifica se a janela ainda existe antes de fechar
-            if self.window.winfo_exists():
-                self.window.after(0, self.window.destroy)
-            if self.root.winfo_exists():    
-                self.root.destroy()
-        except Exception as e:
-            write_log(f"Erro ao fechar notificação: {str(e)}", "Error")
+            active_notifications[notification_id] = self
 
-def _show_notification(title, message, type_, direction, game_name):
+    def safe_close(self):
+        """Fecha a notificação de forma segura"""
+        if not self._closed:
+            self._closed = True
+            try:
+                if self.window.winfo_exists():
+                    self.window.after(0, self.window.destroy)
+                if self.root.winfo_exists():    
+                    self.root.after(0, self.root.destroy)
+                if self.notification_id in active_notifications:
+                    del active_notifications[self.notification_id]
+            except Exception as e:
+                write_log(f"Erro ao fechar notificação: {str(e)}", "Error")
+
+def _show_notification(title, message, type_, direction, game_name, notification_id):
     """Função interna para criar a notificação na thread principal"""
     try:
-        notification = NotificationWindow(title, message, type_, direction, game_name)
+        notification = NotificationWindow(
+            title=title,
+            message=message,
+            type_=type_,
+            direction=direction,
+            game_name=game_name,
+            notification_id=notification_id
+        )
         return notification
     except Exception as e:
         write_log(f"Erro ao criar notificação: {str(e)}", "Error")
         return None
 
-def show_custom_notification(title, message, type_="info", direction="sync"):
-    """Encaminha a criação da notificação para a thread principal"""
+def show_custom_notification(title, message, type_="info", direction="down"):
+    """Cria uma nova notificação com tempo controlado"""
     write_log(f"{title} - {message}", "Error" if type_ == "error" else "Info")
     
     try:
         from .config import config
-        game_name = config.get('game_name', None) if config else None
+        game_name = config.get('game_name', None)
     except:
         game_name = None
     
-    # Envia a solicitação para a fila
-    notification_queue.put(('show', (title, message, type_, direction, game_name)))
-    
-    # Retorna um objeto "fake" para compatibilidade
-    class DummyNotification:
-        def close(self):
-            notification_queue.put(('close', None))
-    return DummyNotification()
+    notification_id = f"{direction}_{time.time()}"
+    notification_queue.put(('show', (title, message, type_, direction, game_name, notification_id)))
+    return ManagedNotification(notification_id)
+
+class ManagedNotification:
+    """Classe wrapper para gerenciar o ciclo de vida da notificação"""
+    def __init__(self, notification_id):
+        self.notification_id = notification_id
+        
+    def close(self):
+        """Fecha a notificação manualmente"""
+        if self.notification_id in active_notifications:
+            notification = active_notifications[self.notification_id]
+            if hasattr(notification, 'auto_close_timer'):
+                notification.auto_close_timer.cancel()
+            notification.safe_close()
+            notification_queue.put(('force_close', self.notification_id))
 
 def process_notifications():
     """Processa todas as notificações pendentes na fila"""
     while True:
         try:
             cmd, args = notification_queue.get_nowait()
+            
             if cmd == 'show':
-                title, message, type_, direction, game_name = args
-                _show_notification(title, message, type_, direction, game_name)
-            elif cmd == 'close':
-                notification = args
-                if notification and hasattr(notification, 'close'):
-                    notification.close()
+                title, message, type_, direction, game_name, notification_id = args
+                _show_notification(title, message, type_, direction, game_name, notification_id)
+                
+            elif cmd == 'force_close':
+                notification_id = args
+                if notification_id in active_notifications:
+                    active_notifications[notification_id].safe_close()
+                    
+            root.update()
+            
         except queue.Empty:
             break
+        except Exception as e:
+            write_log(f"Erro ao processar notificação: {str(e)}", "Error")

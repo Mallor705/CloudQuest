@@ -164,10 +164,13 @@ def main():
 
     finally:
         try:
+            # Mantenha a aplicação rodando até que todas as notificações sejam processadas
+            while not notification_queue.empty():
+                process_notifications()
+                time.sleep(0.1)
             root.destroy()
         except:
             pass
-        write_log("=== Sessão finalizada ===\n", "Info")
 
 if __name__ == "__main__":
     main()
