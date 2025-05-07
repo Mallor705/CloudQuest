@@ -1,172 +1,327 @@
-﻿# Obter diretório atual do script
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+﻿# Requer versão do PowerShell 5.1 ou superior
+#Requires -Version 5.1
 
-# Passo 1: Solicitar o caminho do executável do jogo
-$ExecutablePath = (Read-Host "Digite o caminho completo do executável do jogo (ex.: D:\Games\Steam\steamapps\common\Jogo\jogo.exe)").Trim('"')
-if (-not (Test-Path $ExecutablePath)) {
-    Write-Host "Executável não encontrado. Finalizando..."
-    exit 1
+<#
+.SYNOPSIS
+Script para adicionar novos jogos à configuração do CloudQuest
+
+.DESCRIPTION
+Coleta informações sobre o jogo, verifica dados na Steam, configura sincronização com Rclone
+e cria perfil de configuração com atalho na área de trabalho.
+#>
+
+# Configurações iniciais
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+# Configuração de logs
+$ScriptDir = $PSScriptRoot
+# Ajusta o caminho para o diretório raiz do projeto
+$CloudQuestRoot = Split-Path -Parent $PSScriptRoot
+$LogPath = Join-Path -Path (Join-Path -Path $CloudQuestRoot -ChildPath "logs") -ChildPath "AddNewGame.log"
+
+# Cria o diretório de logs se não existir
+$logDirectory = Split-Path -Path $LogPath -Parent
+if (-not (Test-Path -Path $logDirectory)) {
+    New-Item -Path $logDirectory -ItemType Directory -Force | Out-Null
+    Write-Host "Diretório de logs criado: $logDirectory"
 }
-$exeFolder = Split-Path -Parent $ExecutablePath
 
-# Passo 2: Buscar o arquivo steam_appid.txt na pasta do executável
-$steamAppIdPath = Join-Path $exeFolder "steam_appid.txt"
-if (Test-Path $steamAppIdPath) {
-    # Lê todo o conteúdo do arquivo, remove caracteres não numéricos e pega a primeira sequência de dígitos
-    $rawContent = Get-Content $steamAppIdPath -Raw
-    $appID = [regex]::Match($rawContent, '\d+').Value
+function Write-Log {
+    param(
+        [string]$Message,
+        [ValidateSet('Info','Warning','Error')]
+        [string]$Level = 'Info'
+    )
     
-    if (-not [string]::IsNullOrEmpty($appID)) {
-        Write-Host "AppID lido do steam_appid.txt: $appID"
-    } else {
-        Write-Warning "Nenhum AppID válido encontrado em $steamAppIdPath"
-        $appID = Read-Host "Digite manualmente o AppID do jogo"
-    }
-} else {
-    Write-Warning "Arquivo steam_appid.txt não encontrado em $exeFolder"
-    $appID = Read-Host "Digite manualmente o AppID do jogo"
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $logEntry = "[$timestamp] [$Level] $Message"
+    $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8 -Force
 }
 
-# Passo 3: Consultar a API Steam (apenas para AppIDs válidos)
+# Função para exibir cabeçalho estilizado
+function Show-Header {
+    Write-Host "`n=== CloudQuest Game Configurator ===" -ForegroundColor Cyan
+    Write-Host "Versão 2.0 | $(Get-Date -Format 'dd/MM/yyyy HH:mm')`n" -ForegroundColor DarkCyan
+    Write-Log -Message "Início da execução do CloudQuest Game Configurator v2.0" -Level INFO
+}
+
+# Função para validação de caminhos
+function Test-ValidPath {
+    param(
+        [string]$Path,
+        [string]$Type = 'File'
+    )
+    
+    if (-not (Test-Path -Path $Path)) {
+        Write-Log -Message "$Type não encontrado: $Path" -Level WARNING
+        Write-Warning "$Type não encontrado: $Path"
+        return $false
+    }
+    
+    if ($Type -eq 'File' -and -not (Test-Path -Path $Path -PathType Leaf)) {
+        Write-Log -Message "O caminho especificado não é um arquivo: $Path" -Level WARNING
+        Write-Warning "O caminho especificado não é um arquivo: $Path"
+        return $false
+    }
+    
+    return $true
+}
+
+# Obter diretório atual do script
+$ScriptDir = $PSScriptRoot
+
+Show-Header
+
 try {
-    $apiUrl = "https://store.steampowered.com/api/appdetails?appids=$appID"
-    $response = Invoke-RestMethod -Uri $apiUrl -ErrorAction Stop
+    # Passo 1: Solicitar o caminho do executável do jogo
+    Write-Log -Message "Iniciando etapa 1: Coleta do executável" -Level INFO
+    do {
+        $ExecutablePath = (Read-Host "Digite o caminho completo do executável do jogo (ex.: D:\Games\Steam\steamapps\common\Jogo\jogo.exe)").Trim('"')
+        
+        if (-not $ExecutablePath.EndsWith('.exe')) {
+            Write-Log -Message "Arquivo inválido (não é .exe): $ExecutablePath" -Level WARNING
+            Write-Warning "O arquivo deve ser um executável (.exe)"
+            continue
+        }
+        
+        if (Test-ValidPath -Path $ExecutablePath -Type 'File') {
+            $exeFolder = Split-Path -Parent $ExecutablePath
+            Write-Log -Message "Executável válido encontrado: $ExecutablePath" -Level INFO
+            break
+        }
+    } while ($true)
 
-    if ($response.$appID.success -eq $true) {
-        $data = $response.$appID.data
-        $GameName = $data.name
-        Write-Host "Nome do jogo obtido da API: $GameName"
-    } else {
-        Write-Warning "AppID $appID não encontrado na Steam. Insira o nome manualmente."
-        $GameName = Read-Host "Digite o nome do jogo"
-    }
-} catch {
-    Write-Warning "Erro na API Steam: $($_.Exception.Message)"
-    $GameName = Read-Host "Digite o nome do jogo manualmente"
-}
+    # Passo 2: Buscar o AppID do jogo
+    Write-Log -Message "Iniciando etapa 2: Busca do AppID" -Level INFO
+    $steamAppIdPath = Join-Path $exeFolder "steam_appid.txt"
+    $appID = $null
 
-# Passo 4: Solicitar as demais configurações do usuário
-$RclonePath = (Read-Host "Digite o caminho do Rclone (ex.: D:\messi\Documents\rclone\rclone.exe)").Trim('"')
-# Nova lógica para determinar o Cloud Remote automaticamente via rclone.conf
-$rcloneConfPath = Join-Path $env:APPDATA "rclone\rclone.conf"
-if (Test-Path $rcloneConfPath) {
-    $confContent = Get-Content $rcloneConfPath
-    $remotes = @()
-    foreach ($line in $confContent) {
-        if ($line -match '^\[(.+)\]') {
-            $remotes += $Matches[1]
+    if (Test-ValidPath -Path $steamAppIdPath -Type 'File') {
+        try {
+            $rawContent = Get-Content $steamAppIdPath -Raw -ErrorAction Stop
+            $appID = [regex]::Match($rawContent, '\d{4,}').Value
+            
+            if ($appID -and $appID -match '^\d+$') {
+                Write-Log -Message "AppID detectado: $appID" -Level INFO
+                Write-Host "[+] AppID detectado: $appID" -ForegroundColor Green
+            }
+            else {
+                Write-Log -Message "Arquivo steam_appid.txt sem AppID válido" -Level WARNING
+                Write-Warning "Nenhum AppID válido encontrado no arquivo"
+                throw
+            }
+        }
+        catch {
+            Write-Log -Message "Falha ao ler steam_appid.txt: $($_.Exception.Message)" -Level ERROR
+            Write-Warning "Falha ao ler steam_appid.txt"
+            $appID = $null
         }
     }
-    if ($remotes.Count -eq 0) {
-        Write-Warning "Nenhum remote encontrado no rclone.conf."
-        $CloudRemote = Read-Host "Digite o nome do Cloud Remote (ex.: onedrive)"
-    } elseif ($remotes.Count -eq 1) {
-        $CloudRemote = $remotes[0]
-        Write-Host "Cloud Remote encontrado automaticamente: $CloudRemote"
-    } else {
-        Write-Host "Remotes encontrados:"
-        for ($i = 0; $i -lt $remotes.Count; $i++) {
-            Write-Host "${i}: $($remotes[$i])"
+
+    if (-not $appID) {
+        Write-Log -Message "Solicitando AppID manualmente" -Level INFO
+        do {
+            $appID = Read-Host "Digite manualmente o AppID do jogo (somente números)"
+        } while (-not ($appID -match '^\d+$'))
+        Write-Log -Message "AppID manual inserido: $appID" -Level INFO
+    }
+
+    # Passo 3: Consultar a API Steam
+    Write-Log -Message "Iniciando etapa 3: Consulta à API Steam" -Level INFO
+    $GameName = $null
+    $apiUrl = "https://store.steampowered.com/api/appdetails?appids=$appID&l=portuguese"
+
+    try {
+        Write-Host "`nConsultando API Steam..." -ForegroundColor DarkGray
+        Write-Log -Message "Consultando API Steam em: $apiUrl" -Level INFO
+        $response = Invoke-RestMethod -Uri $apiUrl -UserAgent "CloudQuest/2.0" -TimeoutSec 10
+        
+        if ($response.$appID.success -eq $true -and $response.$appID.data) {
+            $GameName = $response.$appID.data.name
+            Write-Log -Message "Nome oficial detectado: $GameName" -Level INFO
+            Write-Host "[+] Nome oficial detectado: $GameName" -ForegroundColor Green
         }
-        $indexInput = Read-Host "Digite o índice do remote desejado"
-        $indexParsed = 0
-        if ([int]::TryParse($indexInput, [ref]$indexParsed) -and $indexParsed -ge 0 -and $indexParsed -lt $remotes.Count) {
-            $CloudRemote = $remotes[$indexParsed]
-        } else {
-            Write-Warning "Índice inválido. Solicitando entrada manual."
+        else {
+            Write-Log -Message "AppID $appID não encontrado ou dados incompletos" -Level WARNING
+            Write-Warning "AppID $appID não encontrado ou dados incompletos"
+            throw
+        }
+    }
+    catch {
+        Write-Log -Message "Falha na consulta à API Steam: $($_.Exception.Message)" -Level ERROR
+        Write-Warning "Falha na consulta à API Steam: $($_.Exception.Message)"
+        do {
+            $GameName = Read-Host "Digite o nome do jogo"
+        } while ([string]::IsNullOrWhiteSpace($GameName))
+        Write-Log -Message "Nome manual inserido: $GameName" -Level INFO
+    }
+
+    # Passo 4: Configurações do Rclone
+    Write-Log -Message "Iniciando etapa 4: Configuração do Rclone" -Level INFO
+    $RclonePath = $null
+    $defaultRclonePath = Join-Path ${env:ProgramFiles} "Rclone\rclone.exe"
+
+    do {
+        $inputPath = (Read-Host "Digite o caminho do Rclone [Enter para padrão: $defaultRclonePath]").Trim('"')
+        $RclonePath = if ([string]::IsNullOrWhiteSpace($inputPath)) { $defaultRclonePath } else { $inputPath }
+        Write-Log -Message "Verificando Rclone em: $RclonePath" -Level INFO
+    } while (-not (Test-ValidPath -Path $RclonePath -Type 'File'))
+
+    # Detecção automática de remotes
+    $rcloneConfPath = Join-Path $env:APPDATA "rclone\rclone.conf"
+    $remotes = @()  # Inicialização garantida como array
+
+    if (Test-ValidPath -Path $rcloneConfPath -Type 'File') {
+        try {
+            $confContent = Get-Content $rcloneConfPath -ErrorAction Stop
+            # Força o resultado a ser um array mesmo com 0 ou 1 elemento
+            $remotes = @($confContent | Where-Object { $_ -match '^\s*\[([^\]]+)\]' } | ForEach-Object { $Matches[1] })
+            Write-Log -Message "Remotes detectados: $($remotes -join ', ')" -Level INFO
+        }
+        catch {
+            Write-Log -Message "Falha ao ler rclone.conf: $($_.Exception.Message)" -Level ERROR
+        }
+    }
+
+    if ($remotes.Count -gt 0) {
+        Write-Host "`nRemotes disponíveis:" -ForegroundColor Cyan
+        $remotes | ForEach-Object { Write-Host "  → $_" }
+        
+        do {
+            $CloudRemote = Read-Host "Digite o nome do remote desejado"
+            Write-Log -Message "Tentativa de remote: $CloudRemote" -Level INFO
+        } while (-not ($remotes -contains $CloudRemote))
+    }
+    else {
+        Write-Log -Message "Nenhum remote configurado encontrado" -Level WARNING
+        Write-Warning "Nenhum remote configurado encontrado"
+        do {
             $CloudRemote = Read-Host "Digite o nome do Cloud Remote (ex.: onedrive)"
+        } while ([string]::IsNullOrWhiteSpace($CloudRemote))
+        Write-Log -Message "Remote manual inserido: $CloudRemote" -Level INFO
+    }
+
+    # Passo 5: Configuração de diretórios
+    Write-Log -Message "Iniciando etapa 5: Configuração de diretórios" -Level INFO
+    $LocalDir = $null
+    $defaultLocalDir = Join-Path $env:APPDATA (Split-Path $exeFolder -Leaf)
+
+    do {
+        $inputDir = (Read-Host "Digite o diretório local [Enter para padrão: $defaultLocalDir]").Trim('"')
+        $LocalDir = if ([string]::IsNullOrWhiteSpace($inputDir)) { $defaultLocalDir } else { $inputDir }
+        $LocalDir = [Environment]::ExpandEnvironmentVariables($LocalDir)
+        
+        if (-not [IO.Path]::IsPathRooted($LocalDir)) {
+            $LocalDir = Join-Path (Get-Location).Path $LocalDir
+        }
+        
+        Write-Log -Message "Validando diretório local: $LocalDir" -Level INFO
+        
+        if (-not (Test-Path $LocalDir)) {
+            $choice = Read-Host "Diretório não existe. Criar? (S/N)"
+            if ($choice -match '^[Ss]') {
+                try {
+                    New-Item -Path $LocalDir -ItemType Directory -Force | Out-Null
+                    Write-Log -Message "Diretório criado: $LocalDir" -Level INFO
+                    Write-Host "Diretório criado: $LocalDir" -ForegroundColor Green
+                }
+                catch {
+                    Write-Log -Message "Falha ao criar diretório: $_" -Level ERROR
+                    Write-Warning "Falha ao criar diretório: $_"
+                    continue
+                }
+            }
+            else {
+                Write-Log -Message "Usuário optou por não criar diretório" -Level INFO
+                Write-Host "Por favor, insira um novo caminho"
+                continue
+            }
+        }
+        break
+    } while ($true)
+
+    $CloudDir = "CloudQuest/$($GameName -replace '[^\w-]','_')"  # Sanitizar nome
+    Write-Log -Message "Diretório cloud definido: $CloudDir" -Level INFO
+
+    # Passo 6: Detecção do processo
+    Write-Log -Message "Iniciando etapa 6: Detecção do processo" -Level INFO
+    $GameProcess = [IO.Path]::GetFileNameWithoutExtension($ExecutablePath)
+    Write-Host "`nProcesso detectado: $GameProcess" -ForegroundColor Cyan
+    Write-Log -Message "Processo detectado: $GameProcess" -Level INFO
+
+    do {
+        $confirm = Read-Host "Confirmar nome do processo? (S/N)"
+        if ($confirm -match '^[Nn]') {
+            do {
+                $GameProcess = Read-Host "Digite o nome correto do processo"
+            } while ([string]::IsNullOrWhiteSpace($GameProcess))
+            Write-Log -Message "Processo manual inserido: $GameProcess" -Level INFO
+        }
+        else {
+            break
+        }
+    } while ($true)
+
+    # Passo 7: Salvar configurações
+    Write-Log -Message "Iniciando etapa 7: Salvar configurações" -Level INFO
+    $config = [ordered]@{
+        ExecutablePath = $ExecutablePath
+        ExeFolder      = $exeFolder
+        AppID          = $appID
+        GameName       = $GameName
+        RclonePath     = $RclonePath
+        CloudRemote    = $CloudRemote
+        CloudDir       = $CloudDir
+        LocalDir       = $LocalDir
+        GameProcess    = $GameProcess
+        LastModified   = (Get-Date -Format 'o')
+    }
+
+    $configDir = Join-Path $ScriptDir "..\profiles"
+    if (-not (Test-Path $configDir)) {
+        New-Item -Path $configDir -ItemType Directory | Out-Null
+        Write-Log -Message "Diretório de configurações criado: $configDir" -Level INFO
+    }
+
+    $configFile = Join-Path $configDir "$($GameName -replace '[^\w]','_').json"
+    $config | ConvertTo-Json -Depth 3 | Out-File -FilePath $configFile -Encoding utf8
+    Write-Log -Message "Configurações salvas em: $configFile" -Level INFO
+    Write-Host "`n[✓] Configurações salvas em: $configFile" -ForegroundColor Green
+
+    # Passo 8: Criar atalho
+    Write-Log -Message "Iniciando etapa 8: Criação de atalho" -Level INFO
+    $desktopPath = [Environment]::GetFolderPath('Desktop')
+    $shortcutPath = Join-Path $desktopPath "$($GameName).lnk"
+    $batPath = Join-Path $ScriptDir "CloudQuest.bat"
+
+    if (Test-ValidPath -Path $batPath -Type 'File') {
+        try {
+            $shell = New-Object -ComObject WScript.Shell
+            $shortcut = $shell.CreateShortcut($shortcutPath)
+            $shortcut.TargetPath = 'cmd.exe'
+            $shortcut.Arguments = "/c `"$batPath`" `"$GameName`""
+            $shortcut.WorkingDirectory = $exeFolder
+            $shortcut.IconLocation = "$ExecutablePath,0"
+            $shortcut.Save()
+            Write-Log -Message "Atalho criado: $shortcutPath" -Level INFO
+            Write-Host "[✓] Atalho criado: $shortcutPath" -ForegroundColor Green
+        }
+        catch {
+            Write-Log -Message "Erro ao criar atalho: $_" -Level ERROR
+            Write-Warning "Erro ao criar atalho: $_"
         }
     }
-} else {
-    Write-Warning "Arquivo rclone.conf não encontrado em $rcloneConfPath."
-    $CloudRemote = Read-Host "Digite o nome do Cloud Remote (ex.: onedrive)"
-}
-$LocalDirInput = (Read-Host "Digite o diretório local (ex.: $env:APPDATA\EldenRing)").Trim('"') # Diretório local padrão
-
-# Expandir variáveis de ambiente e normalizar o caminho
-$LocalDir = [System.Environment]::ExpandEnvironmentVariables($LocalDirInput)
-
-# Verificar se o caminho é relativo e converter para absoluto
-if (-not [System.IO.Path]::IsPathRooted($LocalDir)) {
-    $LocalDir = Join-Path -Path (Get-Location) -ChildPath $LocalDir
-}
-
-# Verificar existência do diretório
-if (-not (Test-Path $LocalDir)) {
-    Write-Warning "Diretório não encontrado: $LocalDir"
-    $choice = Read-Host "Deseja criar este diretório? (S/N)"
-    if ($choice -match '^[Ss]') {
-        New-Item -Path $LocalDir -ItemType Directory -Force | Out-Null
-        Write-Host "Diretório criado: $LocalDir"
-    } else {
-        Write-Host "Por favor, insira o caminho novamente."
-        $LocalDir = (Read-Host "Digite o diretório local").Trim('"')
-        $LocalDir = [System.Environment]::ExpandEnvironmentVariables($LocalDir)
+    else {
+        Write-Log -Message "Arquivo CloudQuest.bat não encontrado em: $batPath" -Level ERROR
+        Write-Warning "Arquivo CloudQuest.bat não encontrado!"
     }
+
+    Write-Log -Message "Configuração concluída com sucesso" -Level INFO
+    Write-Host "`nConfiguração concluída com sucesso!`n" -ForegroundColor Cyan
 }
-
-$CloudDir = ("CloudQuest/" + (Split-Path $LocalDir -Leaf)).Trim('"')    # Diretório remoto padrão
-
-# Definir o nome do processo utilizando o nome do executável sem extensão
-$GameProcess = [System.IO.Path]::GetFileNameWithoutExtension($ExecutablePath)
-# Perguntar se o nome do processo está correto
-$confirm = Read-Host "O nome do processo detectado é '$GameProcess'. Está correto? (S/N)"
-if ($confirm -notmatch '^[Ss]') {
-    $GameProcess = Read-Host "Digite o nome correto do processo do jogo"
-}
-
-# Passo 5: Exibir as configurações e salvar em um arquivo JSON na pasta config
-Write-Host "`nConfigurações:"
-Write-Host "Executável: $ExecutablePath"
-Write-Host "Pasta do Executável: $exeFolder"
-Write-Host "AppID: $appID"
-Write-Host "GameName: $GameName"
-Write-Host "RclonePath: $RclonePath"
-Write-Host "CloudRemote: $CloudRemote"
-Write-Host "CloudDir: $CloudDir"
-Write-Host "LocalDir: $LocalDir"
-Write-Host "GameProcess: $GameProcess"
-
-$config = @{
-    ExecutablePath = $ExecutablePath;
-    ExeFolder      = $exeFolder;
-    AppID          = $appID;
-    GameName       = $GameName;
-    RclonePath     = $RclonePath;
-    CloudRemote    = $CloudRemote;
-    CloudDir       = $CloudDir;
-    LocalDir       = $LocalDir;
-    GameProcess    = $GameProcess
-}
-
-# Caminho para a pasta "config" (na raiz do projeto, ao lado de "src" e "assets")
-$configDir = Join-Path -Path (Resolve-Path "$PSScriptRoot\..") -ChildPath "profiles"
-
-# Cria a pasta "config" se ela não existir
-if (-not (Test-Path -Path $configDir)) {
-    New-Item -Path $configDir -ItemType Directory -Force | Out-Null
-    Write-Host "Pasta 'config' criada em: $configDir"
-}
-
-# Cria/salva o arquivo de perfil JSON
-$configFilePath = Join-Path -Path $configDir -ChildPath "$GameName.json"
-$config | ConvertTo-Json -Depth 3 | Out-File -FilePath $configFilePath -Encoding UTF8
-Write-Host "`nConfigurações salvas em: $configFilePath"
-
-# Criação do atalho na Área de Trabalho
-$desktopPath = [Environment]::GetFolderPath('Desktop')
-$shortcutPath = Join-Path -Path $desktopPath -ChildPath "$GameName.lnk"
-$batPath = Join-Path -Path $PSScriptRoot -ChildPath "CloudQuest.bat"
-
-if (Test-Path $batPath) {
-    $WScriptShell = New-Object -ComObject WScript.Shell
-    $shortcut = $WScriptShell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = $batPath             # Caminho do arquivo .bat
-    $shortcut.Arguments = "`"$GameName`""       # Adapte conforme sua necessidade
-    $shortcut.WorkingDirectory = $exeFolder     # Diretório de trabalho do jogo
-    $shortcut.IconLocation = $ExecutablePath    # Opcional: ícone do jogo
-    $shortcut.Save()
-    Write-Host "Atalho criado em: $shortcutPath"
-} else {
-    Write-Warning "CloudQuest.bat não encontrado em $PSScriptRoot"
+catch {
+    Write-Log -Message "Erro fatal: $($_.Exception.Message)" -Level ERROR
+    Write-Host "`n[!] Erro durante a execução: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 }

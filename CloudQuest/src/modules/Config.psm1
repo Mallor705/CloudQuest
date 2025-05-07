@@ -5,6 +5,13 @@ $ScriptDir = $PSScriptRoot
 $CloudQuestRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $LogPath = Join-Path -Path (Join-Path -Path $CloudQuestRoot -ChildPath "logs") -ChildPath "CloudQuest.log"
 
+# Cria o diretório de logs se não existir
+$logDirectory = Split-Path -Path $LogPath -Parent
+if (-not (Test-Path -Path $logDirectory)) {
+    New-Item -Path $logDirectory -ItemType Directory -Force | Out-Null
+    Write-Host "Diretório de logs criado: $logDirectory"
+}
+
 function Write-Log {
     param(
         [string]$Message,
@@ -17,6 +24,7 @@ function Write-Log {
     $logEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8 -Force
 }
 
+# Inicializa o arquivo de log (cria ou sobrescreve)
 Set-Content -Path $LogPath -Value "=== [ $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ] Sessão iniciada ===`n" -Encoding UTF8
 
 # CONFIGURAÇÕES DO USUÁRIO
