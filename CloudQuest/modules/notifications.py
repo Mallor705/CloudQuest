@@ -67,7 +67,7 @@ class NotificationWindow:
         try:
             # Determina o caminho dos ícones
             script_dir = Path(__file__).parent
-            assets_path = script_dir.parent.parent / "assets" / "icons"
+            assets_path = script_dir.parent / "assets" / "icons"
             
             icon_base_name = "error_" if type_ == "error" else ""
             bg_base_name = "error_" if type_ == "error" else ""
