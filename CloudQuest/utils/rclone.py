@@ -23,7 +23,9 @@ def test_rclone_config(rclone_path, cloud_remote):
             [rclone_path, "listremotes"],
             capture_output=True, 
             text=True, 
-            check=True
+            check=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,  # Adicione esta linha
+            shell=False
         )
         
         remotes = result.stdout.splitlines()
@@ -48,7 +50,9 @@ def create_remote_dir(rclone_path, cloud_remote, cloud_dir):
         subprocess.run(
             [rclone_path, "mkdir", f"{cloud_remote}:{cloud_dir}"],
             capture_output=True,
-            check=True
+            check=True,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,  # Adicione esta linha
+            shell=False
         )
         log.info(f"Diretório remoto verificado/criado: {cloud_remote}:{cloud_dir}")
         return True
@@ -88,7 +92,10 @@ def execute_rclone_sync(rclone_path, source, destination):
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,  # Adicione esta linha
+                shell=False
+                
             )
             
             # Aguardar com timeout
