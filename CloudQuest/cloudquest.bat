@@ -3,7 +3,7 @@
 set "ProfileName=%~1"
 
 :: Salva o nome do perfil em um arquivo temporário
-echo %ProfileName% > "%temp%\CloudQuest_Profile.txt"
+echo %ProfileName% > "%temp%\cloudquest_profile.txt"
 
 :: Executa o script Python oculto
 echo Set WshShell = CreateObject("WScript.Shell") > "%temp%\RunHidden.vbs"

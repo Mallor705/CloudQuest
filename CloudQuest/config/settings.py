@@ -20,10 +20,10 @@ ASSETS_DIR.mkdir(exist_ok=True)
 ICONS_DIR.mkdir(exist_ok=True)
 
 # Arquivo de log
-LOG_FILE = LOGS_DIR / "CloudQuest.log"
+LOG_FILE = LOGS_DIR / "cloudquest.log"
 
 # Arquivo temporário para perfil (usado pelo launcher .bat)
-TEMP_PROFILE_FILE = os.path.join(tempfile.gettempdir(), "CloudQuest_Profile.txt")
+TEMP_PROFILE_FILE = os.path.join(tempfile.gettempdir(), "cloudquest_profile.txt")
 
 # Configurações do Rclone
 RCLONE_TIMEOUT = 120  # segundos
@@ -36,7 +36,7 @@ NOTIFICATION_WIDTH = 300
 NOTIFICATION_HEIGHT = 75
 
 # Configurações padrão (podem ser sobrescritas pelos perfis)
-DEFAULT_FONT = "Segoe UI"  # Fallback se Montserrat não estiver disponível
+DEFAULT_FONT = "Segoe UI"
 
 # Cores da UI
 COLORS = {

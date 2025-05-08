@@ -140,7 +140,7 @@ class NotificationWindow:
         game_label = tk.Label(
             self.frame, 
             text=game_name,
-            font=("Segoe UI", 10, "bold"),
+            font=("Segoe UI", 11, "bold"),
             fg=self._rgb_to_hex(COLORS["text_primary"]),
             bg=self._rgb_to_hex(COLORS["background"])
         )
