@@ -118,7 +118,6 @@ def sync_saves(direction, profile_name):
         if error_notification:
             error_notification.close()
             
-        raise
     finally:
         # Garantir que a notificação seja fechada
         if notification:
