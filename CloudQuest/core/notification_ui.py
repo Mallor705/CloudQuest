@@ -73,8 +73,8 @@ class NotificationWindow:
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         
-        x_position = screen_width - NOTIFICATION_WIDTH - 10
-        y_position = screen_height - NOTIFICATION_HEIGHT - 40  # 40px acima da barra de tarefas
+        x_position = screen_width - NOTIFICATION_WIDTH - 00 # 0px de margem
+        y_position = screen_height - NOTIFICATION_HEIGHT - 48  # 48px de altura
         
         self.root.geometry(f"+{x_position}+{y_position}")
     
