@@ -6,21 +6,24 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Determinar diretórios da aplicação com base no modo de execução
+if getattr(sys, 'frozen', False):
+    # Executando como executável empacotado (PyInstaller)
+    BASE_DIR = Path(sys._MEIPASS)  # Diretório temporário do PyInstaller
+    APP_DIR = Path(os.path.dirname(sys.executable))  # Diretório do executável
+else:
+    # Executando como script Python normal
+    BASE_DIR = Path(__file__).resolve().parent.parent  # cloudquest/
+    APP_DIR = BASE_DIR
+
 # Diretórios do projeto
-BASE_DIR = Path(__file__).resolve().parent.parent  # cloudquest/
-LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR = APP_DIR / "logs"
 PROFILES_DIR = BASE_DIR / "config" / "profiles"
 ASSETS_DIR = BASE_DIR / "assets"
 ICONS_DIR = ASSETS_DIR / "icons"
 
-# Criação de diretórios necessários
+# Criação de diretórios necessários que devem persistir (apenas no diretório APP)
 LOGS_DIR.mkdir(exist_ok=True)
-PROFILES_DIR.mkdir(exist_ok=True)
-ASSETS_DIR.mkdir(exist_ok=True)
-ICONS_DIR.mkdir(exist_ok=True)
-
-# Arquivo de log
-LOG_FILE = LOGS_DIR / "cloudquest.log"
 
 # Arquivo temporário para perfil (usado pelo launcher .bat)
 TEMP_PROFILE_FILE = os.path.join(tempfile.gettempdir(), "cloudquest_profile.txt")
