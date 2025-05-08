@@ -150,8 +150,14 @@ class NotificationWindow:
         
         # Adicionar mensagem de status
         # Determinar mensagem de status com base no tipo e direção
+        # Corrigir a lógica de mensagem de erro
         if notification_type == "error":
-            status_message = "Falha no download!" if direction == "sync" else "Falha no upload!"
+            if direction == "sync":
+                status_message = "Falha no download!"
+            elif direction == "update":
+                status_message = "Falha no upload!"
+            else:
+                status_message = "Erro na sincronização!"  # Fallback
             status_color = self._rgb_to_hex(COLORS["error"])
         else:
             status_message = "Atualizando seu progresso..." if direction == "sync" else "Sincronizando a nuvem..."
