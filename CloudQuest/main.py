@@ -30,8 +30,33 @@ from core.sync_manager import sync_saves, load_profile
 from core.game_launcher import launch_game, wait_for_game
 from utils.logger import setup_logger, log
 
+def should_launch_newgame():
+    """Verifica se deve abrir o newgame (execução sem parâmetros)"""
+    return len(sys.argv) == 1 and not is_silent_mode()
+
+def launch_newgame():
+    """Executa o newgame.py de acordo com o modo de execução"""
+    try:
+        if getattr(sys, 'frozen', False):
+            # Modo executável: usar o próprio executável com parâmetro especial
+            subprocess.run([sys.executable, "--newgame"], check=True)
+        else:
+            # Modo script: executar o arquivo newgame.py diretamente
+            newgame_path = str(BASE_DIR / "utils" / "newgame.py")  # <--- Alteração principal
+            subprocess.run([sys.executable, newgame_path], check=True)
+    except subprocess.CalledProcessError as e:
+        log.error(f"Falha ao executar newgame: {e}")
+        show_error_message("Falha ao iniciar o assistente de configuração")
+    except Exception as e:
+        log.error(f"Erro inesperado ao executar newgame: {e}")
+        show_error_message("Erro ao iniciar o assistente de configuração")
+
 def main():
     """Função principal que coordena o fluxo da aplicação."""
+    # Verificar se deve abrir o newgame
+    if should_launch_newgame():
+        launch_newgame()
+        sys.exit(0)
     # Configurar o logger
     # Ajusta o caminho do log para funcionar tanto em modo script quanto em modo executável
     setup_logger(log_dir=APP_DIR / "logs")
@@ -111,6 +136,7 @@ def get_profile_and_path():
     parser = argparse.ArgumentParser(description='CloudQuest - Sincronizador de saves de jogos')
     parser.add_argument('profile', nargs='?', help='Nome do perfil a ser utilizado')
     parser.add_argument('--game-path', '-g', help='Caminho do diretório do jogo')
+    parser.add_argument('--newgame', action='store_true', help=argparse.SUPPRESS)  # Parâmetro oculto
     parser.add_argument('--silent', '-s', action='store_true', help='Modo silencioso (sem diálogos)')
     
     # Suporte para uso com o Steam (através do atalho)
@@ -122,6 +148,11 @@ def get_profile_and_path():
         # Se falhar na análise dos argumentos (por exemplo, com --help), 
         # deixar o argparse lidar com isso normalmente
         raise
+
+    # Se o parâmetro --newgame foi passado, abrir o assistente
+    if args.newgame:
+        launch_newgame()
+        sys.exit(0)
     
     profile_name = args.profile
     game_path = args.game_path
@@ -171,8 +202,13 @@ def is_silent_mode():
         return True
     
     # Se estiver sendo executado como um executável sem console, assume modo silencioso
-    if getattr(sys, 'frozen', False) and not sys.stdout.isatty():
-        return True
+    if getattr(sys, 'frozen', False):
+        try:
+            # Verifica se stdout existe e se é um terminal
+            return sys.stdout is None or not sys.stdout.isatty()
+        except (AttributeError, ValueError):
+            # Se houver qualquer erro ao verificar o stdout, assume que é modo silencioso
+            return True
     
     return False
 

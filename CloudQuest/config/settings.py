@@ -18,7 +18,12 @@ else:
 
 # Diretórios do projeto
 LOGS_DIR = APP_DIR / "logs"
-PROFILES_DIR = BASE_DIR / "config" / "profiles"
+
+if getattr(sys, 'frozen', False):
+    PROFILES_DIR = APP_DIR / "profiles"  # Pasta ao lado do executável
+else:
+    PROFILES_DIR = BASE_DIR / "config" / "profiles"  # Modo de desenvolvimento
+    
 ASSETS_DIR = BASE_DIR / "assets"
 ICONS_DIR = ASSETS_DIR / "icons"
 
