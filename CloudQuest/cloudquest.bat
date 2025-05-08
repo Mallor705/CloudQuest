@@ -7,6 +7,6 @@ echo %ProfileName% > "%temp%\CloudQuest_Profile.txt"
 
 :: Executa o script Python oculto
 echo Set WshShell = CreateObject("WScript.Shell") > "%temp%\RunHidden.vbs"
-echo WshShell.Run "pythonw.exe ""%~dp0cloudquest.py""", 0, False >> "%temp%\RunHidden.vbs"
+echo WshShell.Run "pythonw.exe ""%~dp0main.py""", 0, False >> "%temp%\RunHidden.vbs"
 wscript "%temp%\RunHidden.vbs"
 exit
