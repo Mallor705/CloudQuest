@@ -1,3 +1,5 @@
 profiles/
 logs/
 __pycache__/
+cloudquest_builder.py
+cloudquest.exe
