@@ -59,10 +59,8 @@ class NotificationWindow:
         self.closed = False
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         
-        # Iniciar loop principal em thread separada
-        self.thread = threading.Thread(target=self._start_event_loop)
-        self.thread.daemon = True
-        self.thread.start()
+        # Iniciar loop de eventos de forma assíncrona
+        self.root.after(100, self._update_loop)  # Novo método
     
     def _rgb_to_hex(self, rgb):
         """Converte RGB para formato hexadecimal."""
@@ -184,10 +182,12 @@ class NotificationWindow:
             self.root.update()
             time.sleep(0.02)
     
-    def _start_event_loop(self):
-        """Inicia o loop de eventos Tkinter em uma thread separada."""
+    def _update_loop(self):
+        """Atualiza a janela periodicamente sem bloquear a thread principal."""
         try:
-            self.root.mainloop()
+            if not self.closed:
+                self.root.update()
+                self.root.after(100, self._update_loop)  # Reagendar
         except Exception as e:
             log.error(f"Erro no loop de eventos da notificação: {e}")
     
