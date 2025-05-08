@@ -1,2 +1,3 @@
 CloudQuest/config/profiles/*
 CloudQuest/logs/*
+CloudQuest/*/__pycache__/*
