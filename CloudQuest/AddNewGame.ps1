@@ -310,7 +310,7 @@ try {
     Write-Log -Message "Iniciando etapa 8: Criação de atalho" -Level INFO
     $desktopPath = [Environment]::GetFolderPath('Desktop')
     $shortcutPath = Join-Path $desktopPath "$($GameNameInput).lnk"
-    $batPath = Join-Path $ScriptDir "CloudQuest.bat"
+    $batPath = Join-Path $ScriptDir "cloudquest.bat"
 
     if (Test-ValidPath -Path $batPath -Type 'File') {
         try {
