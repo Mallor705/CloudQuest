@@ -76,7 +76,7 @@ def sync_saves(direction, profile_name):
                 title="CloudQuest",
                 message="Sincronizando",
                 game_name=profile['GameName'],
-                direction="sync"
+                direction="down"
             )
             source = f"{profile['CloudRemote']}:{profile['CloudDir']}/"
             destination = profile['LocalDir']
@@ -86,7 +86,7 @@ def sync_saves(direction, profile_name):
                 title="CloudQuest",
                 message="Atualizando",
                 game_name=profile['GameName'],
-                direction="update"
+                direction="up"
             )
             source = profile['LocalDir']
             destination = f"{profile['CloudRemote']}:{profile['CloudDir']}/"
@@ -103,15 +103,13 @@ def sync_saves(direction, profile_name):
         # Fechar notificação anterior se existir
         if notification:
             notification.close()
-            
-        # Corrigir a direção para o padrão esperado pela notificação
-        error_direction = "sync" if direction == "down" else "update"  
+
         # Mostrar notificação de erro
         error_notification = show_notification(
             title="Erro",
             message="Falha na sincronização",
             game_name=profile.get('GameName', 'Erro'),
-            direction=error_direction,
+            direction=direction,
             notification_type="error"
         )
         

@@ -16,7 +16,7 @@ from utils.logger import log
 class NotificationWindow:
     """Janela de notificação personalizada."""
     
-    def __init__(self, title, message, game_name, direction="sync", notification_type="info"):
+    def __init__(self, title, message, game_name, direction="down", notification_type="info"):
         """
         Inicializa a janela de notificação.
         
@@ -24,7 +24,7 @@ class NotificationWindow:
             title (str): Título da notificação
             message (str): Mensagem da notificação
             game_name (str): Nome do jogo
-            direction (str): Direção da sincronização ('sync' ou 'update')
+            direction (str): Direção da sincronização ('down' ou 'up')
             notification_type (str): Tipo da notificação ('info' ou 'error')
         """
         self.root = tk.Tk()
@@ -87,8 +87,8 @@ class NotificationWindow:
         
         # Determinar ícones baseado no tipo e direção
         icon_prefix = "error_" if notification_type == "error" else ""
-        icon_name = f"{icon_prefix}{'down' if direction == 'sync' else 'up'}.png"
-        bg_name = f"{icon_prefix}{'down' if direction == 'sync' else 'up'}_background.png"
+        icon_name = f"{icon_prefix}{'down' if direction == 'down' else 'up'}.png"
+        bg_name = f"{icon_prefix}{'down' if direction == 'down' else 'up'}_background.png"
         
         icon_path = ICONS_DIR / icon_name
         bg_path = ICONS_DIR / bg_name
@@ -150,17 +150,11 @@ class NotificationWindow:
         
         # Adicionar mensagem de status
         # Determinar mensagem de status com base no tipo e direção
-        # Corrigir a lógica de mensagem de erro
         if notification_type == "error":
-            if direction == "sync":
-                status_message = "Falha no download!"
-            elif direction == "update":
-                status_message = "Falha no upload!"
-            else:
-                status_message = "Erro na sincronização!"  # Fallback
+            status_message = "Falha no download!" if direction == "down" else "Falha no upload!"
             status_color = self._rgb_to_hex(COLORS["error"])
         else:
-            status_message = "Atualizando seu progresso..." if direction == "sync" else "Sincronizando a nuvem..."
+            status_message = "Atualizando seu progresso..." if direction == "down" else "Sincronizando a nuvem..."
             status_color = self._rgb_to_hex(COLORS["text_secondary"])
         
         status_label = tk.Label(
@@ -214,7 +208,7 @@ class NotificationWindow:
                 self.closed = True
 
 
-def show_notification(title, message, game_name, direction="sync", notification_type="info"):
+def show_notification(title, message, game_name, direction="down", notification_type="info"):
     """
     Mostra uma notificação personalizada ao usuário.
     
@@ -222,7 +216,7 @@ def show_notification(title, message, game_name, direction="sync", notification_
         title (str): Título da notificação
         message (str): Mensagem da notificação
         game_name (str): Nome do jogo
-        direction (str): Direção da sincronização ('sync' para download, 'update' para upload)
+        direction (str): Direção da sincronização ('down' para download, 'up' para upload)
         notification_type (str): Tipo da notificação ('info' ou 'error')
         
     Returns:
