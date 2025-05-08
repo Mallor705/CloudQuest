@@ -119,4 +119,118 @@ class NotificationWindow:
         if bg_path:
             try:
                 bg_img = Image.open(bg_path)
-                bg
+                bg_img = bg_img.resize((103, 83), Image.LANCZOS)
+                bg_photo = ImageTk.PhotoImage(bg_img)
+                
+                bg_label = tk.Label(self.frame, image=bg_photo, bg=self._rgb_to_hex(COLORS["background"]))
+                bg_label.image = bg_photo  # Manter referência
+                bg_label.place(x=201, y=-4)
+            except Exception as e:
+                log.error(f"Erro ao carregar background: {e}")
+        
+        # Adicionar título
+        title_label = tk.Label(
+            self.frame, 
+            text="CloudQuest",
+            font=("Segoe UI", 7, "bold"),
+            fg=self._rgb_to_hex(COLORS["text_secondary"]),
+            bg=self._rgb_to_hex(COLORS["background"])
+        )
+        title_label.place(x=75, y=15)
+        
+        # Adicionar nome do jogo
+        game_label = tk.Label(
+            self.frame, 
+            text=game_name,
+            font=("Segoe UI", 10, "bold"),
+            fg=self._rgb_to_hex(COLORS["text_primary"]),
+            bg=self._rgb_to_hex(COLORS["background"])
+        )
+        game_label.place(x=75, y=30)
+        
+        # Adicionar mensagem de status
+        # Determinar mensagem de status com base no tipo e direção
+        if notification_type == "error":
+            status_message = "Falha no download!" if direction == "sync" else "Falha no upload!"
+            status_color = self._rgb_to_hex(COLORS["error"])
+        else:
+            status_message = "Atualizando seu progresso..." if direction == "sync" else "Sincronizando a nuvem..."
+            status_color = self._rgb_to_hex(COLORS["text_secondary"])
+        
+        status_label = tk.Label(
+            self.frame, 
+            text=status_message,
+            font=("Segoe UI", 7),
+            fg=status_color,
+            bg=self._rgb_to_hex(COLORS["background"])
+        )
+        status_label.place(x=75, y=52)
+    
+    def _fade_in(self):
+        """Anima a janela com efeito de fade-in."""
+        opacity = 0.0
+        while opacity < 1.0:
+            opacity += 0.1
+            self.root.attributes("-alpha", opacity)
+            self.root.update()
+            time.sleep(0.02)
+    
+    def _fade_out(self):
+        """Anima a janela com efeito de fade-out."""
+        opacity = 1.0
+        while opacity > 0.0:
+            opacity -= 0.1
+            self.root.attributes("-alpha", opacity)
+            self.root.update()
+            time.sleep(0.02)
+    
+    def _start_event_loop(self):
+        """Inicia o loop de eventos Tkinter em uma thread separada."""
+        try:
+            self.root.mainloop()
+        except Exception as e:
+            log.error(f"Erro no loop de eventos da notificação: {e}")
+    
+    def close(self):
+        """Fecha a janela de notificação."""
+        if not self.closed:
+            try:
+                self._fade_out()
+                self.root.destroy()
+                self.closed = True
+            except Exception as e:
+                log.error(f"Erro ao fechar notificação: {e}")
+                # Tentar destruir diretamente em caso de erro
+                try:
+                    self.root.destroy()
+                except:
+                    pass
+                self.closed = True
+
+
+def show_notification(title, message, game_name, direction="sync", notification_type="info"):
+    """
+    Mostra uma notificação personalizada ao usuário.
+    
+    Args:
+        title (str): Título da notificação
+        message (str): Mensagem da notificação
+        game_name (str): Nome do jogo
+        direction (str): Direção da sincronização ('sync' para download, 'update' para upload)
+        notification_type (str): Tipo da notificação ('info' ou 'error')
+        
+    Returns:
+        NotificationWindow: Objeto da janela de notificação ou None em caso de erro
+    """
+    try:
+        notification = NotificationWindow(
+            title=title,
+            message=message,
+            game_name=game_name,
+            direction=direction,
+            notification_type=notification_type
+        )
+        return notification
+    except Exception as e:
+        log.error(f"Erro ao criar notificação: {e}", exc_info=True)
+        return None
