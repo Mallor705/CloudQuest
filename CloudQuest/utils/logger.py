@@ -34,13 +34,13 @@ def setup_logger(log_dir=None):
     
     # Definir arquivo de log com timestamp para evitar conflitos
     timestamp = datetime.now().strftime("%Y%m%d")
-    log_file = log_dir / f"cloudquest_{timestamp}.log"
+    log_file = log_dir / f"cloudquest.log"
     
     # Configuração do logger
     log.setLevel(logging.DEBUG)
     
     # Handler para arquivo
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
     file_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', 
                                        datefmt='%Y-%m-%d %H:%M:%S')
     file_handler.setFormatter(file_formatter)

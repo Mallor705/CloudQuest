@@ -9,6 +9,7 @@ import argparse
 import tempfile
 import subprocess
 from pathlib import Path
+from config.settings import TEMP_PROFILE_PATH
 
 # Determinar corretamente o diretório base da aplicação
 # Isso é crucial para quando o código é convertido em executável
@@ -130,6 +131,14 @@ def main():
     finally:
         log.info("=== Sessão finalizada ===\n")
 
+        # Novo código para apagar o arquivo temporário
+        try:
+            if TEMP_PROFILE_PATH.exists():
+                TEMP_PROFILE_PATH.unlink()
+                log.info("Arquivo temporário do perfil removido com sucesso")
+        except Exception as e:
+            log.error(f"Falha ao remover arquivo temporário: {str(e)}")
+
 def get_profile_and_path():
     """Obtém o nome do perfil e caminho do jogo."""
     # Configurar parser de argumentos
@@ -169,29 +178,18 @@ def get_profile_and_path():
                 log.error(f"Erro ao ler arquivo de perfil: {e}")
     
     # Se não fornecido como argumento, tentar obter o diretório atual
-    if not game_path:
-        game_path = os.getcwd()
+    # if not game_path:
+    #     game_path = os.getcwd()
     
     # Se o profile_name ainda não foi definido, tentar extrair do nome do jogo
     # Isso é útil para integração com a Steam quando o usuário não especifica o perfil
-    if not profile_name and game_path:
-        try:
-            # Tenta deduzir o perfil com base no caminho do jogo
-            game_dir = Path(game_path).name.upper()
+    # if not profile_name and game_path:
+    #     try:
+    #         # Tenta deduzir o perfil com base no caminho do jogo
+    #         game_dir = Path(game_path).name.upper()
             
-            # Mapeamento comum de diretórios de jogos para perfis
-            mappings = {
-                "ELDEN RING": "ELDEN_RING",
-                "DARK SOULS III": "DS3",
-                "SEKIRO": "SEKIRO",
-                # Adicione mais mapeamentos conforme necessário
-            }
-            
-            if game_dir in mappings:
-                profile_name = mappings[game_dir]
-                log.info(f"Perfil deduzido do diretório do jogo: {profile_name}")
-        except Exception as e:
-            log.debug(f"Não foi possível deduzir o perfil a partir do diretório: {e}")
+    #     except Exception as e:
+    #         log.debug(f"Não foi possível deduzir o perfil a partir do diretório: {e}")
     
     return profile_name, game_path
 

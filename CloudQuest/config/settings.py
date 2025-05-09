@@ -54,3 +54,6 @@ COLORS = {
     "text_secondary": (140, 145, 151),
     "error": (220, 50, 50),
 }
+
+# Adicione no final do settings.py
+TEMP_PROFILE_PATH = Path(TEMP_PROFILE_FILE)
