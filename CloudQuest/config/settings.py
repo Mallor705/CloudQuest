@@ -30,7 +30,7 @@ ICONS_DIR = ASSETS_DIR / "icons"
 # Criação de diretórios necessários que devem persistir (apenas no diretório APP)
 LOGS_DIR.mkdir(exist_ok=True)
 
-# Arquivo temporário para perfil (usado pelo launcher .bat)
+# Arquivo temporário para perfil
 TEMP_PROFILE_FILE = os.path.join(tempfile.gettempdir(), "cloudquest_profile.txt")
 
 # Configurações do Rclone

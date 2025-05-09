@@ -31,61 +31,8 @@ from core.sync_manager import sync_saves, load_profile
 from core.game_launcher import launch_game, wait_for_game
 from utils.logger import setup_logger, log
 
-def should_launch_newgame():
-    """Verifica se deve abrir o newgame (execução sem parâmetros)"""
-    # Configurar o logger primeiro para garantir que podemos registrar os dados
-    setup_logger(log_dir=APP_DIR / "logs")
-    
-    # Adicionar logs detalhados para diagnóstico
-    log.debug(f"sys.argv: {sys.argv}")
-    log.debug(f"is_silent_mode: {is_silent_mode()}")
-    
-    # CORREÇÃO: Alterado o comportamento para iniciar o newgame quando não há argumentos
-    # mesmo se estiver em modo silencioso (importante para execução do EXE diretamente)
-    should_launch = len(sys.argv) == 1
-    log.debug(f"should_launch_newgame: {should_launch}")
-    
-    return should_launch
-
-def launch_newgame():
-    """Executa o newgame de acordo com o modo de execução"""
-    log.info("Tentando iniciar o assistente de configuração (newgame)")
-    try:
-        if getattr(sys, 'frozen', False):
-            # Modo executável - executar o próprio EXE com --newgame
-            log.debug("Modo executável detectado, chamando o próprio EXE com --newgame")
-            executable_path = sys.executable
-            log.debug(f"Caminho do executável: {executable_path}")
-            
-            # Execute em um processo separado e não aguarde
-            subprocess.Popen([executable_path, "--newgame"], 
-                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0)
-            log.info("Processo do assistente iniciado com sucesso")
-        else:
-            # Modo script - executar normalmente
-            log.debug("Modo script detectado, executando newgame.py diretamente")
-            newgame_path = str(BASE_DIR / "utils" / "newgame.py")
-            log.debug(f"Caminho do newgame.py: {newgame_path}")
-            
-            subprocess.Popen([sys.executable, newgame_path],
-                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0)
-            log.info("Processo do assistente iniciado com sucesso")
-    except Exception as e:
-        log.error(f"Falha ao executar newgame: {e}", exc_info=True)
-        show_error_message("Falha ao iniciar o assistente de configuração")
-
 def main():
     """Função principal que coordena o fluxo da aplicação."""
-    # Verificar se deve abrir o newgame
-    if should_launch_newgame():
-        # Iniciar logger antes para fazer o logging adequado
-        setup_logger(log_dir=APP_DIR / "logs")
-        log.info("=== Sessão iniciada ===")
-        log.info("Iniciando assistente de configuração")
-        
-        launch_newgame()
-        log.info("=== Sessão finalizada ===\n")
-        sys.exit(0)
         
     # Configurar o logger se ainda não foi configurado
     setup_logger(log_dir=APP_DIR / "logs")
@@ -173,7 +120,6 @@ def get_profile_and_path():
     parser = argparse.ArgumentParser(description='CloudQuest - Sincronizador de saves de jogos')
     parser.add_argument('profile', nargs='?', help='Nome do perfil a ser utilizado')
     parser.add_argument('--game-path', '-g', help='Caminho do diretório do jogo')
-    parser.add_argument('--newgame', action='store_true', help=argparse.SUPPRESS)  # Parâmetro oculto
     parser.add_argument('--silent', '-s', action='store_true', help='Modo silencioso (sem diálogos)')
     
     # Suporte para uso com o Steam (através do atalho)
@@ -185,33 +131,6 @@ def get_profile_and_path():
         # Se falhar na análise dos argumentos (por exemplo, com --help), 
         # deixar o argparse lidar com isso normalmente
         raise
-
-    # Se o parâmetro --newgame foi passado, abrir o assistente
-    if args.newgame:
-        # Usar o caminho para newgame.py dentro do executável ou no sistema de arquivos
-        if getattr(sys, 'frozen', False):
-            # Estamos em um executável compilado
-            try:
-                # Importar diretamente e executar o módulo newgame
-                log.info("Importando e executando newgame.py no modo executável")
-                import utils.newgame
-                utils.newgame.main()
-                sys.exit(0)
-            except Exception as e:
-                log.error(f"Erro ao importar newgame: {e}", exc_info=True)
-                show_error_message(f"Erro ao iniciar o assistente: {e}")
-                sys.exit(1)
-        else:
-            # Estamos em modo de desenvolvimento
-            try:
-                newgame_path = str(BASE_DIR / "utils" / "newgame.py")
-                log.info(f"Executando {newgame_path} no modo desenvolvimento")
-                subprocess.run([sys.executable, newgame_path], check=True)
-                sys.exit(0)
-            except Exception as e:
-                log.error(f"Erro ao executar newgame.py: {e}", exc_info=True)
-                show_error_message(f"Erro ao iniciar o assistente: {e}")
-                sys.exit(1)
     
     profile_name = args.profile
     game_path = args.game_path
@@ -238,7 +157,6 @@ def is_silent_mode():
     # CORREÇÃO: Modificada a lógica para ser menos restritiva quando executado como EXE
     if getattr(sys, 'frozen', False):
         # Se for executado diretamente, não considerar como modo silencioso
-        # se não tiver argumentos específicos, permitindo que o newgame seja iniciado
         if len(sys.argv) == 1:
             return False
         
