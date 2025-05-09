@@ -35,7 +35,8 @@ def setup_logger(log_dir):
         level=logging.DEBUG,
         format='[%(asctime)s] [%(levelname)s] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
-        encoding='utf-8'
+        encoding='utf-8',
+        filemode='w'  # Modo 'write' para resetar o log a cada execução
     )
     
     # Criar logger global
