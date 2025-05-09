@@ -14,13 +14,13 @@ from pathlib import Path
 from .logger import write_log
 from .path_utils import validate_path, get_desktop_path    
 
-def create_game_shortcut(game_config, bat_path):
+def create_game_shortcut(game_config, exe_path):
     """
     Cria um atalho para o jogo na área de trabalho
     
     Args:
         game_config (dict): Configuração do jogo
-        bat_path (Path): Caminho para o script batch que lança o jogo
+        exe_path (Path): Caminho para o script batch que lança o jogo
     
     Returns:
         bool: True se o atalho foi criado com sucesso, False caso contrário
@@ -38,11 +38,11 @@ def create_game_shortcut(game_config, bat_path):
         desktop_path = get_desktop_path()
         shortcut_path = desktop_path / f"{safe_name}.lnk"
 
-        if validate_path(bat_path, 'File'):
+        if validate_path(exe_path, 'File'):
             shell = win32com.client.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortcut(str(shortcut_path))
-            shortcut.TargetPath = 'cmd.exe'
-            shortcut.Arguments = f'/c "{bat_path}" "{game_name_internal}"'
+            shortcut.TargetPath = f'"{str(exe_path)}"'  # Aponta diretamente para o .exe
+            shortcut.Arguments = f'"{game_name_internal}"'
             shortcut.WorkingDirectory = str(Path(executable_path).parent)
             
             # Definir ícone do jogo
@@ -54,7 +54,7 @@ def create_game_shortcut(game_config, bat_path):
             write_log(f"Atalho criado: {shortcut_path}")
             return True
         else:
-            write_log(f"Arquivo de script não encontrado: {bat_path}", level='WARNING')
+            write_log(f"Arquivo de script não encontrado: {exe_path}", level='WARNING')
             return False
     except Exception as e:
         write_log(f"Erro ao criar atalho: {str(e)}", level='ERROR')
