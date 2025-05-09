@@ -20,8 +20,8 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 - .NET Framework 4.8 (já incluído na maioria das instalações do Windows)
 
 ## 📥 Instalação
-1. Baixe os arquivos `cloudquest.exe` e `questconfig.exe`
-2. Coloque-os em um diretório permanente (ex: `C:\CloudQuest`)
+1. Baixe os arquivos 
+2. Extraia em um diretório permanente (ex: `C:\CloudQuest`)
 3. Execute `questconfig.exe` para começar a configurar seus jogos
 
 ## 🕹 Como Usar
