@@ -25,7 +25,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 3. Execute `questconfig.exe` para começar a configurar seus jogos
 
 ## 🕹 Como Usar
-### Configuração Inicial (`questconfig.exe`)
+### Configuração Inicial
 1. Execute `questconfig.exe`
 2. Na aba **1. Executável e AppID**:
    - Selecione o executável do jogo
@@ -37,7 +37,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
    - Revise o resumo
    - Salve a configuração
 
-### Sincronização (`cloudquest.exe`)
+### Sincronização
 - Execute o atalho criado na área de trabalho para iniciar o jogo com sincronização automática
 - A sincronização ocorrerá:
   - Antes de iniciar o jogo (download da nuvem)
@@ -45,9 +45,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 
 ## 🛠 Notas Técnicas
 - Os perfis de configuração são armazenados em `config/profiles/`
-- Logs são gerados em `logs/questconfig.log`
 - Formatos suportados de nuvem: Qualquer serviço configurável no rclone (Google Drive, Dropbox, OneDrive, etc)
-- Diretório padrão de saves locais: `Documents/CloudQuest/[Nome do Jogo]`
 
 ## ❓ Suporte
 Reporte problemas no [GitHub Issues](https://github.com/Mallor705/CloudQuest/issues)
