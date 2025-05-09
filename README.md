@@ -2,7 +2,6 @@
 
 Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um diretório local e um armazenamento em nuvem, utilizando o **rclone**.
 
-![CloudQuest Logo](assets/icons/icon.ico)  
 *Sincronize seus saves de jogos com a nuvem de forma transparente*
 
 ---
@@ -51,7 +50,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 - Diretório padrão de saves locais: `Documents/CloudQuest/[Nome do Jogo]`
 
 ## ❓ Suporte
-Reporte problemas no [GitHub Issues](https://github.com/seuusuario/CloudQuest/issues)
+Reporte problemas no [GitHub Issues](https://github.com/Mallor705/CloudQuest/issues)
 
 ---
 
