@@ -5,5 +5,5 @@ cloudquest_builder.py
 cloudquest.exe
 build_cloudquest.py
 create_steam_shortcut.py
-gameconfig_builder.py
-gameconfig.exe
+questconfig_builder.py
+questconfig.exe
