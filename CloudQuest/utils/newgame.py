@@ -31,6 +31,17 @@ import win32com.client
 import ctypes
 import threading
 
+# Determinar diretórios da aplicação com base no modo de execução
+# Isso é crucial para quando o código é convertido em executável
+if getattr(sys, 'frozen', False):
+    # Modo executável
+    script_dir = Path(sys._MEIPASS)
+    cloudquest_root = Path(sys.executable).parent
+else:
+    # Modo script normal
+    script_dir = Path(__file__).resolve().parent
+    cloudquest_root = script_dir.parent.parent  # Assume que newgame.py está em utils/
+
 # Configurações iniciais
 script_dir = Path(__file__).resolve().parent
 cloudquest_root = script_dir.parent
@@ -86,6 +97,14 @@ def is_admin():
 
 class CloudQuestGUI:
     def __init__(self, root):
+        
+        """Inicializa a interface gráfica"""        
+
+        if getattr(sys, 'frozen', False):
+            icon_path = Path(sys.executable).parent / "assets" / "icons" / "icon.ico"
+        else:
+            icon_path = script_dir.parent / "assets" / "icons" / "icon.ico"
+
         self.root = root
         self.root.title("CloudQuest Game Configurator")
         self.root.geometry("800x700")

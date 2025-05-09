@@ -33,33 +33,61 @@ from utils.logger import setup_logger, log
 
 def should_launch_newgame():
     """Verifica se deve abrir o newgame (execução sem parâmetros)"""
-    return len(sys.argv) == 1 and not is_silent_mode()
+    # Configurar o logger primeiro para garantir que podemos registrar os dados
+    setup_logger(log_dir=APP_DIR / "logs")
+    
+    # Adicionar logs detalhados para diagnóstico
+    log.debug(f"sys.argv: {sys.argv}")
+    log.debug(f"is_silent_mode: {is_silent_mode()}")
+    
+    # CORREÇÃO: Alterado o comportamento para iniciar o newgame quando não há argumentos
+    # mesmo se estiver em modo silencioso (importante para execução do EXE diretamente)
+    should_launch = len(sys.argv) == 1
+    log.debug(f"should_launch_newgame: {should_launch}")
+    
+    return should_launch
 
 def launch_newgame():
-    """Executa o newgame.py de acordo com o modo de execução"""
+    """Executa o newgame de acordo com o modo de execução"""
+    log.info("Tentando iniciar o assistente de configuração (newgame)")
     try:
         if getattr(sys, 'frozen', False):
-            # Modo executável: usar o próprio executável com parâmetro especial
-            subprocess.run([sys.executable, "--newgame"], check=True)
+            # Modo executável - executar o próprio EXE com --newgame
+            log.debug("Modo executável detectado, chamando o próprio EXE com --newgame")
+            executable_path = sys.executable
+            log.debug(f"Caminho do executável: {executable_path}")
+            
+            # Execute em um processo separado e não aguarde
+            subprocess.Popen([executable_path, "--newgame"], 
+                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0)
+            log.info("Processo do assistente iniciado com sucesso")
         else:
-            # Modo script: executar o arquivo newgame.py diretamente
-            newgame_path = str(BASE_DIR / "utils" / "newgame.py")  # <--- Alteração principal
-            subprocess.run([sys.executable, newgame_path], check=True)
-    except subprocess.CalledProcessError as e:
-        log.error(f"Falha ao executar newgame: {e}")
-        show_error_message("Falha ao iniciar o assistente de configuração")
+            # Modo script - executar normalmente
+            log.debug("Modo script detectado, executando newgame.py diretamente")
+            newgame_path = str(BASE_DIR / "utils" / "newgame.py")
+            log.debug(f"Caminho do newgame.py: {newgame_path}")
+            
+            subprocess.Popen([sys.executable, newgame_path],
+                            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0)
+            log.info("Processo do assistente iniciado com sucesso")
     except Exception as e:
-        log.error(f"Erro inesperado ao executar newgame: {e}")
-        show_error_message("Erro ao iniciar o assistente de configuração")
+        log.error(f"Falha ao executar newgame: {e}", exc_info=True)
+        show_error_message("Falha ao iniciar o assistente de configuração")
 
 def main():
     """Função principal que coordena o fluxo da aplicação."""
     # Verificar se deve abrir o newgame
     if should_launch_newgame():
+        # Iniciar logger antes para fazer o logging adequado
+        setup_logger(log_dir=APP_DIR / "logs")
+        log.info("=== Sessão iniciada ===")
+        log.info("Iniciando assistente de configuração")
+        
         launch_newgame()
+        log.info("=== Sessão finalizada ===\n")
         sys.exit(0)
-    # Configurar o logger
-    # Ajusta o caminho do log para funcionar tanto em modo script quanto em modo executável
+        
+    # Configurar o logger se ainda não foi configurado
     setup_logger(log_dir=APP_DIR / "logs")
     log.info("=== Sessão iniciada ===")
     log.info(f"Executando a partir de: {APP_DIR}")
@@ -160,8 +188,30 @@ def get_profile_and_path():
 
     # Se o parâmetro --newgame foi passado, abrir o assistente
     if args.newgame:
-        launch_newgame()
-        sys.exit(0)
+        # Usar o caminho para newgame.py dentro do executável ou no sistema de arquivos
+        if getattr(sys, 'frozen', False):
+            # Estamos em um executável compilado
+            try:
+                # Importar diretamente e executar o módulo newgame
+                log.info("Importando e executando newgame.py no modo executável")
+                import utils.newgame
+                utils.newgame.main()
+                sys.exit(0)
+            except Exception as e:
+                log.error(f"Erro ao importar newgame: {e}", exc_info=True)
+                show_error_message(f"Erro ao iniciar o assistente: {e}")
+                sys.exit(1)
+        else:
+            # Estamos em modo de desenvolvimento
+            try:
+                newgame_path = str(BASE_DIR / "utils" / "newgame.py")
+                log.info(f"Executando {newgame_path} no modo desenvolvimento")
+                subprocess.run([sys.executable, newgame_path], check=True)
+                sys.exit(0)
+            except Exception as e:
+                log.error(f"Erro ao executar newgame.py: {e}", exc_info=True)
+                show_error_message(f"Erro ao iniciar o assistente: {e}")
+                sys.exit(1)
     
     profile_name = args.profile
     game_path = args.game_path
@@ -177,20 +227,6 @@ def get_profile_and_path():
             except Exception as e:
                 log.error(f"Erro ao ler arquivo de perfil: {e}")
     
-    # Se não fornecido como argumento, tentar obter o diretório atual
-    # if not game_path:
-    #     game_path = os.getcwd()
-    
-    # Se o profile_name ainda não foi definido, tentar extrair do nome do jogo
-    # Isso é útil para integração com a Steam quando o usuário não especifica o perfil
-    # if not profile_name and game_path:
-    #     try:
-    #         # Tenta deduzir o perfil com base no caminho do jogo
-    #         game_dir = Path(game_path).name.upper()
-            
-    #     except Exception as e:
-    #         log.debug(f"Não foi possível deduzir o perfil a partir do diretório: {e}")
-    
     return profile_name, game_path
 
 def is_silent_mode():
@@ -199,14 +235,15 @@ def is_silent_mode():
     if '--silent' in sys.argv or '-s' in sys.argv:
         return True
     
-    # Se estiver sendo executado como um executável sem console, assume modo silencioso
+    # CORREÇÃO: Modificada a lógica para ser menos restritiva quando executado como EXE
     if getattr(sys, 'frozen', False):
-        try:
-            # Verifica se stdout existe e se é um terminal
-            return sys.stdout is None or not sys.stdout.isatty()
-        except (AttributeError, ValueError):
-            # Se houver qualquer erro ao verificar o stdout, assume que é modo silencioso
-            return True
+        # Se for executado diretamente, não considerar como modo silencioso
+        # se não tiver argumentos específicos, permitindo que o newgame seja iniciado
+        if len(sys.argv) == 1:
+            return False
+        
+        # Verificar apenas se tem flags específicas que indicam modo silencioso
+        return any(arg in sys.argv for arg in ['--silent', '-s'])
     
     return False
 
