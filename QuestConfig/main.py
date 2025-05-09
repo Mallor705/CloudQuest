@@ -24,13 +24,6 @@ from utils.gui import QuestConfigGUI
 from utils.logger import setup_logger, write_log
 from utils.path_utils import get_app_paths
 
-def is_admin():
-    """Verifica se o script está sendo executado como administrador"""
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin() != 0
-    except:
-        return False
-
 def main():
     """Função principal da aplicação"""
     # Configurar diretórios da aplicação
@@ -55,9 +48,4 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
-    # Verificar se executando com privilégios de administrador se necessário
-    if is_admin():
         main()
-    else:
-        # Re-executa o script com privilégios de administrador
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
