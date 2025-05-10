@@ -31,6 +31,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
    - Selecione o executável do jogo
    - Detecte/insira o AppID da Steam
 3. Na aba **2. Configuração Rclone**:
+   - Indique a localização de instalação do Rclone.
    - Selecione o remote configurado
    - Defina diretórios local e na nuvem
 4. Na aba **3. Finalizar**:
