@@ -6,13 +6,23 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 
 ---
 
-## 📦 Funcionalidades
-- **Sincronização bidirecional** entre diretório local e nuvem
-- Interface gráfica para configuração de jogos (`questconfig.exe`)
-- Detecção automática de AppID da Steam
+## 🌟 Recursos Principais
+### 🔄 Sincronização Bidirecional
+- Upload automático após fechar o jogo
+- Download pré-execução dos saves mais recentes
+- Suporte a qualquer serviço de nuvem via [Rclone](https://rclone.org/)
+
+### 🖥 Interface Inteligente
+- Configurador gráfico (`questconfig.exe`)
+- Notificações animadas com status de sincronização
+- Auto-detecção de AppID Steam
+- Gerenciamento de múltiplos perfis de jogos
 - Criação de atalhos personalizados na área de trabalho
-- Suporte a múltiplos provedores de nuvem (via rclone)
-- Logs detalhados de operações
+
+### ⚙️ Núcleo Avançado
+- Monitoramento preciso de processos
+- 3 tentativas de sincronização com backoff exponencial
+- Sistema de logging detalhado com rotação automática
 
 ## ⚙️ Pré-requisitos
 - [Rclone](https://rclone.org/) instalado e configurado com pelo menos 1 remote
@@ -20,7 +30,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 - .NET Framework 4.8 (já incluído na maioria das instalações do Windows)
 
 ## 📥 Instalação
-1. Baixe os arquivos 
+1. Baixe os arquivo `.zip`
 2. Extraia em um diretório permanente (ex: `C:\CloudQuest`)
 3. Execute `questconfig.exe` para começar a configurar seus jogos
 
