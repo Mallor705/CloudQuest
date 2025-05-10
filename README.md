@@ -66,7 +66,7 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 #### 🛠️ Como Resolver
 1. **Adicione uma Exceção**:
    - **Windows Defender**:  
-     `Configurações → Segurança do Windows → Proteção contra vírus → Exceções → Adicionar pasta do CloudQuest`
+     `Configurações → Privacidade e Segurança → Segurança do Windows → Proteção contra vírus e ameaças → Gerenciar configurações → Exclusões → Adicionar ou remover exclusões → Adicionar uma exclusão → Escolha o diretorio do CloudQuest`
    - **Outros Antivírus**:  
      Consulte a documentação do seu software para adicionar exclusões de arquivo/pasta.
 
