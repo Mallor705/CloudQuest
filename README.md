@@ -70,11 +70,12 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
    - **Outros Antivírus**:  
      Consulte a documentação do seu software para adicionar exclusões de arquivo/pasta.
 
-#### Baixe de Fontes Confiáveis:
-**Sempre obtenha o software diretamente do repositório oficial.**
+### Baixe de Fontes Confiáveis:
+Sempre obtenha o software diretamente do repositório oficial.
 
-#### ❗ Importante
+### ❗ Importante
 **Nunca desative completamente seu antivírus – apenas adicione exceções específicas.**
+
 Se ainda desconfiar, inspecione o código-fonte ou compile você mesmo.
 
 ## ❓ Suporte
