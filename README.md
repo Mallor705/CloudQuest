@@ -58,10 +58,22 @@ Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um
 - Os perfis de configuração são armazenados em `config/profiles/`
 - Formatos suportados de nuvem: Qualquer serviço configurável no rclone (Google Drive, Dropbox, OneDrive, etc)
 
+### 🛡️ Em caso de Falsos Positivos em Antivírus
+
+#### ⚠️ Por que isso acontece?
+- **Falta de Assinatura Digital**: Executáveis não assinados comercialmente podem ser sinalizados, mesmo sendo seguros.
+
+#### 🛠️ Como Resolver
+1. **Adicione uma Exceção**:
+   - **Windows Defender**:  
+     `Configurações → Segurança do Windows → Proteção contra vírus → Exceções → Adicionar pasta do CloudQuest`
+   - **Outros Antivírus**:  
+     Consulte a documentação do seu software para adicionar exclusões de arquivo/pasta.
+
 ## ❓ Suporte
 Reporte problemas no [GitHub Issues](https://github.com/Mallor705/CloudQuest/issues)
 
 ---
 
-**📄 Licença**  
+**📜 Licença**  
  GNU GENERAL PUBLIC LICENSE - Consulte o arquivo [LICENSE](LICENSE) para detalhes
