@@ -194,6 +194,13 @@ def extract_save_game_locations(wikitext):
     for os_name in results["save_locations"]:
         processed_paths = []
         for path in results["save_locations"][os_name]:
+            # Substituir templates conhecidos
+            path = re.sub(r'\{\{p\|appdata\}\}', '%APPDATA%', path, flags=re.IGNORECASE)
+            path = re.sub(r'\{\{p\|localappdata\}\}', '%LOCALAPPDATA%', path, flags=re.IGNORECASE)
+            path = re.sub(r'\{\{p\|userprofile\}\}', '%USERPROFILE%', path, flags=re.IGNORECASE)
+            path = re.sub(r'\{\{p\|documents\}\}', r'%USERPROFILE%\\Documents', path, flags=re.IGNORECASE)
+            path = re.sub(r'\{\{p\|saved games\}\}', r'%USERPROFILE%\\Saved Games', path, flags=re.IGNORECASE)
+            path = re.sub(r'\{\{p\|programdata\}\}', '%PROGRAMDATA%', path, flags=re.IGNORECASE)
             # Corrigir templates malformados comuns
             path = re.sub(r'\{\{p\|appdata\b', '%APPDATA%', path, flags=re.IGNORECASE)
             path = re.sub(r'\{\{p\|localappdata\b', '%LOCALAPPDATA%', path, flags=re.IGNORECASE)
@@ -201,23 +208,15 @@ def extract_save_game_locations(wikitext):
             path = re.sub(r'\{\{p\|documents\b', r'%USERPROFILE%\\Documents', path, flags=re.IGNORECASE)
             path = re.sub(r'\{\{p\|saved games\b', r'%USERPROFILE%\\Saved Games', path, flags=re.IGNORECASE)
             path = re.sub(r'\{\{p\|programdata\b', '%PROGRAMDATA%', path, flags=re.IGNORECASE)
-
-            # Substituir templates completos
-            path = re.sub(r'\{\{p\|appdata\}\}', '%APPDATA%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|localappdata\}\}', '%LOCALAPPDATA%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|userprofile\}\}', '%USERPROFILE%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|documents\}\}', r'%USERPROFILE%\\Documents', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|saved games\}\}', r'%USERPROFILE%\\Saved Games', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|programdata\}\}', '%PROGRAMDATA%', path, flags=re.IGNORECASE)
-            
-            # Limpar outros templates restantes
-            path = re.sub(r'\{\{.*?\}\}', '', path)
-            
+            # Substituir outros templates {{p|uid}} por <uid>
+            path = re.sub(r'\{\{p\|uid\}\}', '<uid>', path, flags=re.IGNORECASE)
+            path = re.sub(r'\{\{p\|steamid\}\}', '<steamid>', path, flags=re.IGNORECASE)
+            # Se sobrar algum template desconhecido, substitua por vazio ou por <var>
+            # path = re.sub(r'\{\{[^\}]+\}\}', '<var>', path)
             # Limpar e normalizar o caminho
             path = path.strip()
             if path and path not in processed_paths:
                 processed_paths.append(path)
-        
         results["save_locations"][os_name] = processed_paths
     
     write_log(f"PCGamingWiki: Encontrados {len(results['save_locations']['Windows'])} locais para Windows, "
