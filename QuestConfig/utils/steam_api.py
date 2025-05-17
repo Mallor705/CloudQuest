@@ -7,10 +7,13 @@ Fornece funções para consulta de informações de jogos.
 """
 
 import re
+import os
 import requests
 from pathlib import Path
+from bs4 import BeautifulSoup
 from .logger import write_log
 from .text_utils import remove_accents
+from .steam_savegame_finder import find_save_locations
 
 def detect_appid_from_file(executable_path):
     """
@@ -46,6 +49,33 @@ def detect_appid_from_file(executable_path):
         write_log(f"Falha ao ler steam_appid.txt: {str(e)}", level='ERROR')
         return None
 
+def get_save_location_for_appid(app_id):
+    """
+    Obtém o local de saves para um jogo usando a API integrada PCGamingWiki
+    
+    Args:
+        app_id (str): Steam AppID do jogo
+    
+    Returns:
+        str: Caminho para o local de saves ou None se não encontrado
+    """
+    try:
+        # Usar o novo módulo para buscar locais de save
+        save_info = find_save_locations(app_id)
+        
+        if save_info and save_info.get("existing_paths"):
+            # Se encontrou caminhos que existem, retorna o primeiro
+            return save_info["existing_paths"][0]
+        elif save_info and save_info.get("expanded_paths"):
+            # Se não encontrou caminhos existentes, retorna o primeiro expandido
+            return save_info["expanded_paths"][0]
+        else:
+            write_log(f"Nenhum local de save encontrado para AppID {app_id}", level='WARNING')
+            return None
+    except Exception as e:
+        write_log(f"Erro ao buscar local de save: {str(e)}", level='ERROR')
+        return None
+
 def fetch_game_info(app_id):
     """
     Consulta a API da Steam para obter informações do jogo
@@ -65,11 +95,14 @@ def fetch_game_info(app_id):
     try:
         write_log(f"Consultando API Steam para AppID: {app_id}")
         headers = {'User-Agent': 'QuestConfig/1.0'}
-        response = requests.get(api_url, headers=headers, timeout=10)
+        response = requests.get(api_url, headers=headers, timeout=15)
         data = response.json()
         
         if data[app_id]['success'] and data[app_id]['data']:
             game_name = data[app_id]['data']['name']
+            
+            # Buscar local de save usando o novo módulo
+            save_location = get_save_location_for_appid(app_id)
             
             # Processa o nome para uso interno
             processed_name = remove_accents(game_name)
@@ -79,7 +112,8 @@ def fetch_game_info(app_id):
             result = {
                 'name': game_name,
                 'internal_name': processed_name,
-                'app_id': app_id
+                'app_id': app_id,
+                'save_location': save_location
             }
             
             write_log(f"Dados obtidos com sucesso para {game_name}")

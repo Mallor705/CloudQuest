@@ -97,7 +97,7 @@ class QuestConfigGUI:
 
         # Adicionar trace para sanitizar o processo de entrada
         self.game_process.trace_add("write", lambda *_: self.sanitize_process_input())
-        
+
         # Adicionar trace para atualizar o diretório cloud quando o local mudar
         self.local_dir.trace_add("write", lambda *_: self.update_cloud_dir())
 
@@ -187,7 +187,7 @@ class QuestConfigGUI:
         ttk.Button(local_dir_frame, text="Procurar...", command=self.browse_local_dir).pack(side=tk.RIGHT, padx=(5, 0))
         detect_button = ttk.Button(local_dir_frame, text="Detectar Auto", command=self.detect_save_location)
         detect_button.pack(side=tk.RIGHT, padx=(5, 0))
-        ToolTip(detect_button, "Executa o jogo brevemente e tenta detectar\nonde os saves estão sendo armazenados")
+        ToolTip(detect_button, "Primeiro tenta buscar online via Steam/PCGamingWiki\nDepois executa o jogo para detecção automática")
 
         # Cloud Dir
         ttk.Label(tab2, text="Diretório Cloud:").grid(row=4, column=0, sticky="w", pady=2)
@@ -307,6 +307,17 @@ class QuestConfigGUI:
             self.add_log_message(f"Rclone selecionado: {filename}")
     
     def detect_save_location(self):
+         # Primeiro verifica se já temos um caminho da web
+        current_path = Path(self.local_dir.get())
+        
+        if current_path.exists() and current_path.is_dir():
+            resposta = messagebox.askyesno(
+                "Confirmação",
+                f"Foi encontrado um caminho pré-definido:\n{current_path}\nDeseja validar com detecção automática?"
+            )
+            if not resposta:
+                return
+
         if not validate_path(self.executable_path.get(), 'File'):
             messagebox.showerror("Erro", "Selecione um executável válido primeiro!")
             return
@@ -478,9 +489,23 @@ class QuestConfigGUI:
             self.game_name.set(game_info['name'])
             self.game_name_internal = game_info['internal_name']
             
+            # Novo: Tentar usar o save location da web
+            web_save_path = game_info.get('save_location')
+
             # Atualizar diretórios
-            if not self.local_dir.get():
+            if web_save_path:
+                # Validar e formatar o caminho
+                resolved_path = Path(web_save_path)
+                if resolved_path.exists() and resolved_path.is_dir():
+                    self.local_dir.set(str(resolved_path))
+                    self.add_log_message(f"Diretório de save detectado via web: {resolved_path}")
+                else:
+                    self.setup_default_local_dir(self.game_name_internal)
+                    self.add_log_message("Caminho da web inválido, usando padrão", level='WARNING')
+            else:
+                # Fallback para detecção automática
                 self.setup_default_local_dir(self.game_name_internal)
+                self.add_log_message("Nenhum caminho de save encontrado via web")
             
             self.update_cloud_dir()
             
