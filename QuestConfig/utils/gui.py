@@ -307,7 +307,7 @@ class QuestConfigGUI:
         if not validate_path(self.executable_path.get(), 'File'):
             messagebox.showerror("Erro", "Selecione um executável válido primeiro!")
             return
-        
+
         resposta = messagebox.askyesno(
             "Aviso", 
             "O jogo será executado temporariamente. Feche-o manualmente após criar um save.\nContinuar?"
@@ -315,18 +315,90 @@ class QuestConfigGUI:
         if not resposta:
             return
 
-        self.status_var.set("Iniciando detecção de saves...")
-        self.add_log_message("Iniciando detecção automática de local de saves")
+        self.status_var.set("Detectando locais de save...")
+        self.add_log_message("Iniciando detecção de locais de save")
 
         def run_detection():
             detector = SaveGameDetector(self.executable_path.get())
-            save_path = detector.detect_save_location()
+            save_paths = detector.detect_save_location()
             
-            self.root.after(0, lambda: self.update_save_location(save_path))
+            self.root.after(0, lambda: self.show_save_paths(save_paths))
         
-        self.detect_thread = threading.Thread(target=run_detection)
-        self.detect_thread.start()
-    
+        threading.Thread(target=run_detection).start()
+
+    def show_save_paths(self, paths):
+        if not paths:
+            messagebox.showinfo("Resultado", "Nenhuma pasta modificada foi detectada durante a execução.")
+            return
+
+        # Criar janela de seleção
+        selection_window = tk.Toplevel(self.root)
+        selection_window.title("Selecione a pasta de save")
+        selection_window.geometry("600x400")
+
+        # Frame principal
+        main_frame = ttk.Frame(selection_window)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # Lista de paths
+        ttk.Label(main_frame, text="Pastas modificadas detectadas:").pack(anchor=tk.W)
+        listbox = tk.Listbox(main_frame, selectmode=tk.SINGLE)
+        scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=listbox.yview)
+        listbox.configure(yscrollcommand=scrollbar.set)
+
+        for path in paths:
+            listbox.insert(tk.END, path)
+
+        # Layout
+        listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Preview label
+        preview_label = ttk.Label(main_frame)
+        preview_label.pack()
+
+        # Função para mostrar preview dos arquivos na pasta selecionada
+        def show_file_preview(event):
+            selected = listbox.curselection()
+            if selected:
+                path = Path(listbox.get(selected[0]))
+                if path.is_dir():
+                    files = "\n".join([f.name for f in list(path.glob('*'))[:5]])  # Mostrar primeiros 5 arquivos
+                    preview_label.config(text=f"Arquivos na pasta:\n{files}")
+                else:
+                    preview_label.config(text="Não é uma pasta válida.")
+
+        listbox.bind('<<ListboxSelect>>', show_file_preview)
+
+        # Botões
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X, pady=5)
+
+        def select_path():
+            selected = listbox.curselection()
+            if selected:
+                self.local_dir.set(listbox.get(selected[0]))
+                selection_window.destroy()
+                self.add_log_message(f"Pasta selecionada: {listbox.get(selected[0])}")
+                messagebox.showinfo("Sucesso", "Pasta de save configurada com sucesso!")
+
+        ttk.Button(button_frame, text="Selecionar", command=select_path).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancelar", command=selection_window.destroy).pack(side=tk.RIGHT, padx=5)
+
+        # Centralizar janela
+        selection_window.transient(self.root)
+        selection_window.grab_set()
+        self.root.wait_window(selection_window)
+
+        # def run_detection():
+        #     detector = SaveGameDetector(self.executable_path.get())
+        #     save_path = detector.detect_save_location()
+            
+        #     self.root.after(0, lambda: self.update_save_location(save_path))
+        
+        # self.detect_thread = threading.Thread(target=run_detection)
+        # self.detect_thread.start()
+
     def update_save_location(self, save_path):
         if save_path:
             self.local_dir.set(str(save_path))
