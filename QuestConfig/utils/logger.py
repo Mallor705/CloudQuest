@@ -9,6 +9,7 @@ Fornece funções para configuração e escrita de logs.
 import logging
 from pathlib import Path
 import datetime
+from logging.handlers import RotatingFileHandler
 
 # Variável global para armazenar logger
 logger = None
@@ -29,14 +30,19 @@ def setup_logger(log_dir):
     # Define o arquivo de log
     log_file = log_dir / "questconfig.log"
     
+    handler = RotatingFileHandler(
+        log_file,
+        maxBytes=1_000_000,  # 1MB
+        backupCount=5,
+        encoding='utf-8'
+    )
+
     # Configuração de logs
     logging.basicConfig(
-        filename=log_file,
+        handlers=[handler],
         level=logging.DEBUG,
         format='[%(asctime)s] [%(levelname)s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-        encoding='utf-8',
-        filemode='w'  # Modo 'write' para resetar o log a cada execução
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
     
     # Criar logger global
