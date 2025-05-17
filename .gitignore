@@ -1,9 +1,7 @@
 profiles/
 logs/
 __pycache__/
-cloudquest_builder.py
 cloudquest.exe
-build_cloudquest.py
 create_steam_shortcut.py
 questconfig.exe
 *.log
