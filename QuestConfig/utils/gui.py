@@ -97,6 +97,9 @@ class QuestConfigGUI:
 
         # Adicionar trace para sanitizar o processo de entrada
         self.game_process.trace_add("write", lambda *_: self.sanitize_process_input())
+        
+        # Adicionar trace para atualizar o diretório cloud quando o local mudar
+        self.local_dir.trace_add("write", lambda *_: self.update_cloud_dir())
 
         write_log("GUI iniciada")
         
@@ -378,9 +381,9 @@ class QuestConfigGUI:
             selected = listbox.curselection()
             if selected:
                 self.local_dir.set(listbox.get(selected[0]))
-                selection_window.destroy()
                 self.add_log_message(f"Pasta selecionada: {listbox.get(selected[0])}")
                 messagebox.showinfo("Sucesso", "Pasta de save configurada com sucesso!")
+                selection_window.destroy()
 
         ttk.Button(button_frame, text="Selecionar", command=select_path).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Cancelar", command=selection_window.destroy).pack(side=tk.RIGHT, padx=5)

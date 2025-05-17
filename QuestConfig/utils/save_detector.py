@@ -59,7 +59,39 @@ class SaveGameDetector:
             str(Path(os.environ['TEMP'])),
             str(Path(os.environ['SYSTEMROOT']))
         }
-        return [p for p in paths if not any(sp in p for sp in system_paths)]
+        # Diretórios extras a serem ignorados
+        ignore_substrings = [
+            r"AppData\Local\Temp",
+            r"AppData\Roaming\Microsoft",
+            r"AppData\Local\Package Cache",
+            r"AppData\Local\Packages",
+            r"AppData\Local\Microsoft",
+            r"AppData\Local\Backup",
+            r"AppData\Local\CEF",
+            r"AppData\Local\AMD",
+            r"AppData\Local\AMD_Common",
+            r"AppData\Local\AMDIdentifyWindow",
+            r"AppData\Local\ATI",
+            r"AppData\Local\Backup",
+            r"AppData\Local\NVIDIA",
+            r"AppData\Local\NVIDIA Corporation",
+            r"AppData\Local\NVIDIA Web Helper",
+            r"AppData\Local\Steam",
+            r"AppData\Roaming\Code",
+            r"AppData\Local\D3DSCache",
+            r"AppData\Local\Publisher"
+        ]
+        def should_ignore(p):
+            # Ignora se for um dos paths do sistema
+            if any(sp in p for sp in system_paths):
+                return True
+            # Ignora se contiver algum dos substrings especificados
+            for sub in ignore_substrings:
+                if sub.replace("\\", os.sep) in p:
+                    return True
+            return False
+
+        return [p for p in paths if not should_ignore(p)]
 
     def detect_save_location(self):
         try:
