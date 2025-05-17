@@ -42,3 +42,7 @@ def normalize_game_name(game_name):
     normalized = re.sub(r'\s+', '_', normalized)
     
     return normalized
+
+def sanitize_process_name(process_name):
+    """Remove a extensão .exe de uma string se presente"""
+    return process_name.replace('.exe', '').strip()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# CloudQuest - Script para criar o executável usando PyInstaller
+# QuestConfig - Script para criar o executável usando PyInstaller
 
 import os
 import sys
@@ -31,9 +31,9 @@ def get_certifi_path():
 
 def main():
     """
-    Cria o executável do CloudQuest usando PyInstaller.
+    Cria o executável do QuestConfig usando PyInstaller.
     """
-    print("=== CloudQuest - Gerador de Executável ===")
+    print("=== QuestConfig - Gerador de Executável ===")
     
     # Verificar dependências
     dependencies = [
@@ -52,10 +52,10 @@ def main():
     current_dir = Path.cwd()
     
     # Nome do arquivo de saída
-    output_name = "cloudquest"
+    output_name = "questconfig"
     
     # Criar diretório temporário para build
-    build_dir = Path(os.environ.get('TEMP', current_dir)) / "cloudquest_build"
+    build_dir = Path(os.environ.get('TEMP', current_dir)) / "questconfig_build"
     build_dir.mkdir(exist_ok=True)
     
     # Arquivos e pastas para copiar para o diretório de build

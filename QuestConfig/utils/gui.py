@@ -19,6 +19,7 @@ from .path_utils import validate_path
 from .config import load_rclone_remotes, save_game_config, get_default_values
 from .steam_api import detect_appid_from_file, fetch_game_info
 from .text_utils import normalize_game_name
+from .text_utils import sanitize_process_name
 from .shortcut_creator import create_game_shortcut
 
 class QuestConfigGUI:
@@ -62,7 +63,10 @@ class QuestConfigGUI:
         
         # Inicializar valores
         self.update_cloud_dir()
-        
+
+        # Adicionar trace para sanitizar o processo de entrada
+        self.game_process.trace_add("write", lambda *_: self.sanitize_process_input())
+
         write_log("GUI iniciada")
         
     def load_defaults(self):
@@ -232,15 +236,22 @@ class QuestConfigGUI:
             
             # Auto-detectar nome do processo
             if not self.game_process.get():
-                self.game_process.set(Path(filename).name)
+                game_process_name = Path(filename).stem  # Remove a extensão .exe
+                self.game_process.set(game_process_name)
             
-            # Auto-detectar diretório local para saves
-            if not self.local_dir.get():
-                self.setup_default_local_dir(game_file)
+            # # Auto-detectar diretório local para saves
+            # if not self.local_dir.get():
+            #     self.setup_default_local_dir(game_file)
             
             # Atualizar diretório cloud
             self.update_cloud_dir()
     
+    def sanitize_process_input(self):
+        current_value = self.game_process.get()
+        sanitized = sanitize_process_name(current_value)
+        if current_value != sanitized:
+            self.game_process.set(sanitized)
+
     def setup_default_local_dir(self, game_name):
         """Define um diretório local padrão para os saves do jogo"""
         documents_dir = Path(os.environ['USERPROFILE']) / "Documents"
@@ -397,18 +408,18 @@ class QuestConfigGUI:
         
         # Criar resumo
         summary = f"""Nome do Jogo: {self.game_name.get()}
-Nome Interno: {self.game_name_internal}
-AppID Steam: {self.app_id.get()}
-Executável: {self.executable_path.get()}
-Processo: {self.game_process.get()}
+                Nome Interno: {self.game_name_internal}
+                AppID Steam: {self.app_id.get()}
+                Executável: {self.executable_path.get()}
+                Processo: {self.game_process.get()}
 
-Configuração Rclone:
-- Remote: {self.cloud_remote.get()}
-- Diretório Local: {self.local_dir.get()}
-- Diretório Cloud: {self.cloud_dir.get()}
+                Configuração Rclone:
+                - Remote: {self.cloud_remote.get()}
+                - Diretório Local: {self.local_dir.get()}
+                - Diretório Cloud: {self.cloud_dir.get()}
 
-Criar atalho: {"Sim" if self.create_shortcut_var.get() else "Não"}
-"""
+                Criar atalho: {"Sim" if self.create_shortcut_var.get() else "Não"}
+                """
         
         # Atualizar widget de texto
         self.summary_text.config(state=tk.NORMAL)
@@ -435,7 +446,7 @@ Criar atalho: {"Sim" if self.create_shortcut_var.get() else "Não"}
             "InternalName": self.game_name_internal,
             "AppID": self.app_id.get(),
             "ExecutablePath": self.executable_path.get(),
-            "GameProcess": self.game_process.get(),
+            "GameProcess": sanitize_process_name(self.game_process.get()),
             "RclonePath": self.rclone_path.get(),
             "CloudRemote": self.cloud_remote.get(),
             "LocalDir": self.local_dir.get(),
@@ -487,9 +498,10 @@ Criar atalho: {"Sim" if self.create_shortcut_var.get() else "Não"}
         if not self.cloud_dir.get():
             missing_fields.append("Diretório Cloud")
         
-        if not self.game_process.get():
+        game_process = sanitize_process_name(self.game_process.get())
+        if not game_process:
             missing_fields.append("Processo do Jogo")
-        
+
         if missing_fields:
             messagebox.showerror("Campos Obrigatórios", 
                                 "Os seguintes campos são obrigatórios:\n" + 
