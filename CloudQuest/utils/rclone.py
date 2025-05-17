@@ -7,7 +7,10 @@ import time
 from pathlib import Path
 
 from utils.logger import log
+from utils.logger import setup_logger, global_log_dir
 from config.settings import RCLONE_TIMEOUT, RCLONE_MAX_RETRIES, RCLONE_RETRY_WAIT
+
+setup_logger()
 
 def test_rclone_config(rclone_path, cloud_remote):
     """Verifica se o Rclone está configurado corretamente."""
@@ -83,10 +86,17 @@ def execute_rclone_sync(rclone_path, source, destination):
                 "copy",
                 source,
                 destination,
+                "--progress",
                 "--update",
+                "--log-level=DEBUG",
+                "--log-file=rclone.log",
+                "--stats=5h",
+                "--multi-thread-streams=8",
+                "--disable-http2",
+                "--ignore-checksum",
                 "--create-empty-src-dirs"
             ]
-            
+
             # Executar o comando
             process = subprocess.Popen(
                 command,

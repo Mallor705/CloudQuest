@@ -8,6 +8,7 @@ from pathlib import Path
 
 # Configuração global do logger
 log = logging.getLogger("CloudQuest")
+global_log_dir = None  # Nova variável global
 
 def setup_logger(log_dir=None):
     """
@@ -16,6 +17,8 @@ def setup_logger(log_dir=None):
     Args:
         log_dir (Path, optional): Diretório onde os logs serão salvos.
     """
+    global global_log_dir  # Declarar a variável global
+
     if log.handlers:
         # Se o logger já está configurado, retornar
         return
@@ -36,6 +39,9 @@ def setup_logger(log_dir=None):
     timestamp = datetime.now().strftime("%Y%m%d")
     log_file = log_dir / f"cloudquest.log"
     
+    # Definir o diretório de logs global
+    global_log_dir = log_dir
+
     # Configuração do logger
     log.setLevel(logging.DEBUG)
     

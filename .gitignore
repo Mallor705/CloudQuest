@@ -7,3 +7,4 @@ build_cloudquest.py
 create_steam_shortcut.py
 questconfig_builder.py
 questconfig.exe
+*.log
