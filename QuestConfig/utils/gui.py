@@ -21,6 +21,7 @@ from .steam_api import detect_appid_from_file, fetch_game_info
 from .text_utils import normalize_game_name
 from .text_utils import sanitize_process_name
 from .shortcut_creator import create_game_shortcut
+from .save_detector import SaveGameDetector
 
 class QuestConfigGUI:
     def __init__(self, root, app_paths):
@@ -36,6 +37,7 @@ class QuestConfigGUI:
         self.root.title("QuestConfig Game Configurator")
         self.root.geometry("800x700")
         self.root.resizable(True, True)
+        self.detect_thread = None
         
         # Variáveis para armazenar dados
         self.executable_path = tk.StringVar()
@@ -151,6 +153,7 @@ class QuestConfigGUI:
         
         ttk.Entry(local_dir_frame, textvariable=self.local_dir, width=50).pack(side=tk.LEFT, fill=tk.X, expand=True)
         ttk.Button(local_dir_frame, text="Procurar...", command=self.browse_local_dir).pack(side=tk.RIGHT, padx=(5, 0))
+        ttk.Button(local_dir_frame, text="Detectar Auto", command=self.detect_save_location).pack(side=tk.RIGHT, padx=(5, 0))
         
         # Cloud Dir
         ttk.Label(tab2, text="Diretório Cloud:").grid(row=4, column=0, sticky="w", pady=2)
@@ -269,6 +272,34 @@ class QuestConfigGUI:
             self.rclone_path.set(filename)
             self.add_log_message(f"Rclone selecionado: {filename}")
     
+    def detect_save_location(self):
+        if not self.executable_path.get():
+            messagebox.showerror("Erro", "Selecione um executável primeiro!")
+            return
+
+        self.status_var.set("Iniciando detecção de saves...")
+        self.add_log_message("Iniciando detecção automática de local de saves")
+
+        def run_detection():
+            detector = SaveGameDetector(self.executable_path.get())
+            save_path = detector.detect_save_location()
+            
+            self.root.after(0, lambda: self.update_save_location(save_path))
+        
+        self.detect_thread = threading.Thread(target=run_detection)
+        self.detect_thread.start()
+    
+    def update_save_location(self, save_path):
+        if save_path:
+            self.local_dir.set(str(save_path))
+            self.add_log_message(f"Diretório de save detectado: {save_path}")
+            self.status_var.set("Local de save detectado com sucesso")
+            messagebox.showinfo("Sucesso", f"Diretório de save detectado:\n{save_path}")
+        else:
+            self.add_log_message("Não foi possível detectar o local de saves automaticamente")
+            self.status_var.set("Falha na detecção de saves")
+            messagebox.showwarning("Aviso", "Não foi possível detectar o local de saves automaticamente")
+
     def browse_local_dir(self):
         """Abre diálogo para selecionar diretório local para saves"""
         directory = filedialog.askdirectory(title="Selecionar Diretório Local para Saves")
