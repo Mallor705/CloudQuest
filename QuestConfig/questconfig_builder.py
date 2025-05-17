@@ -55,7 +55,7 @@ def main():
     output_name = "cloudquest"
     
     # Criar diretório temporário para build
-    build_dir = current_dir / "build_tmp"
+    build_dir = Path(os.environ.get('TEMP', current_dir)) / "cloudquest_build"
     build_dir.mkdir(exist_ok=True)
     
     # Arquivos e pastas para copiar para o diretório de build
@@ -137,16 +137,12 @@ def main():
     # Limpar diretório de build
     print("\nLimpando arquivos temporários...")
     if build_dir.exists():
-        print("Aguardando liberação de recursos...")
-        time.sleep(2)  # Espera 2 segundos
-        for _ in range(3):  # Tenta 3 vezes
-            try:
-                shutil.rmtree(build_dir)
-                break
-            except Exception as e:
-                print(f"Tentativa {_+1}/3 falhou: {str(e)}")
-                time.sleep(2)
-        shutil.rmtree(build_dir)
+        print("Forçando remoção do diretório...")
+        try:
+            force_rmtree(build_dir)  # Substitua shutil.rmtree por esta linha
+        except Exception as e:
+            print(f"Erro crítico ao excluir: {str(e)}")
+            print("Você pode precisar excluir manualmente:", build_dir)
     
     print("\nProcesso concluído!")
 
