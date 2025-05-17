@@ -138,7 +138,8 @@ def extract_save_game_locations(wikitext):
                 path = match.group(1).strip()
                 if path and path not in results["save_locations"]["Windows"]:
                     results["save_locations"]["Windows"].append(path)
-        
+                    write_log(f"PCGamingWiki: Caminho de save extraído para Windows: {path}")
+
         # Procurar por templates para macOS
         macos_templates = re.finditer(
             r'\{\{Game data/(?:saves|row/PC/Save game data location)\|macOS\|(.*?)\}\}',
@@ -151,7 +152,8 @@ def extract_save_game_locations(wikitext):
                 path = match.group(1).strip()
                 if path and path not in results["save_locations"]["macOS"]:
                     results["save_locations"]["macOS"].append(path)
-        
+                    write_log(f"PCGamingWiki: Caminho de save extraído para macOS: {path}")
+
         # Procurar por templates para Linux
         linux_templates = re.finditer(
             r'\{\{Game data/(?:saves|row/PC/Save game data location)\|Linux\|(.*?)\}\}',
@@ -164,6 +166,7 @@ def extract_save_game_locations(wikitext):
                 path = match.group(1).strip()
                 if path and path not in results["save_locations"]["Linux"]:
                     results["save_locations"]["Linux"].append(path)
+                    write_log(f"PCGamingWiki: Caminho de save extraído para Linux: {path}")
     
     # Se não encontrou nada, tenta buscar em outros formatos de template
     if not any(results["save_locations"].values()):
@@ -177,18 +180,21 @@ def extract_save_game_locations(wikitext):
             if windows_match:
                 path = windows_match.group(1).strip()
                 results["save_locations"]["Windows"].append(path)
+                write_log(f"PCGamingWiki: Caminho de save extraído (alternativo) para Windows: {path}")
             
             # macOS
             macos_match = re.search(r'\|\s*macOS\s*=\s*([^\n|]+)', block_text)
             if macos_match:
                 path = macos_match.group(1).strip()
                 results["save_locations"]["macOS"].append(path)
+                write_log(f"PCGamingWiki: Caminho de save extraído (alternativo) para macOS: {path}")
             
             # Linux
             linux_match = re.search(r'\|\s*Linux\s*=\s*([^\n|]+)', block_text)
             if linux_match:
                 path = linux_match.group(1).strip()
                 results["save_locations"]["Linux"].append(path)
+                write_log(f"PCGamingWiki: Caminho de save extraído (alternativo) para Linux: {path}")
     
     # Processar templates embutidos e variáveis
     for os_name in results["save_locations"]:
@@ -228,38 +234,29 @@ def extract_save_game_locations(wikitext):
 def expand_windows_path(path):
     """
     Expande variáveis de ambiente do Windows em caminhos.
-    
-    Args:
-        path (str): Caminho com variáveis de ambiente
-    
-    Returns:
-        str: Caminho expandido
     """
     if not path or not '%' in path:
         return path
-    
+
     try:
         # Usar a expansão nativa do sistema
         expanded = os.path.expandvars(path)
-        
-        # Se ainda contém %, tenta substituir manualmente
-        if '%' in expanded:
-            # Variáveis de ambiente comuns
-            env_vars = {
-                "%USERPROFILE%": str(Path.home()),
-                "%LOCALAPPDATA%": str(Path.home() / "AppData" / "Local"),
-                "%APPDATA%": str(Path.home() / "AppData" / "Roaming"),
-                "%PROGRAMDATA%": os.environ.get("PROGRAMDATA", "C:/ProgramData"),
-                "%DOCUMENTS%": str(Path.home() / "Documents"),
-                "%SAVED GAMES%": str(Path.home() / "Saved Games")
-            }
-            
-            for var, replacement in env_vars.items():
-                if var.lower() in expanded.lower():
-                    expanded = expanded.replace(var, replacement)
-                    # Também tenta a versão em lower case
-                    expanded = expanded.replace(var.lower(), replacement)
-        
+
+        # Substituição robusta, case-insensitive
+        env_vars = {
+            "%USERPROFILE%": str(Path.home()),
+            "%LOCALAPPDATA%": str(Path.home() / "AppData" / "Local"),
+            "%APPDATA%": str(Path.home() / "AppData" / "Roaming"),
+            "%PROGRAMDATA%": os.environ.get("PROGRAMDATA", "C:/ProgramData"),
+            "%USERPROFILE%\\Documents": str(Path.home() / "Documents"),
+            "%USERPROFILE%\\Saved Games": str(Path.home() / "Saved Games"),
+        }
+
+        for var, replacement in env_vars.items():
+            # Escapa barras invertidas para evitar erro de escape no re.sub
+            safe_replacement = replacement.replace("\\", r"\\")
+            expanded = re.sub(re.escape(var), safe_replacement, expanded, flags=re.IGNORECASE)
+
         return expanded
     except Exception as e:
         write_log(f"Erro ao expandir caminho: {str(e)}", level='WARNING')
@@ -344,10 +341,11 @@ def find_save_locations(steam_app_id):
     # Passo 4: Processar para o OS atual e verificar quais existem
     expanded_paths = get_current_os_save_paths(save_info["save_locations"])
     if expanded_paths:
+        for path in expanded_paths:
+            write_log(f"Caminho de save expandido: {path}", level='INFO')
         current_os = platform.system()
         os_mapping = {"Windows": "Windows", "Darwin": "macOS", "Linux": "Linux"}
         current_os_name = os_mapping.get(current_os, "Unknown")
-        
         # Verificar quais caminhos existem
         existing_paths = []
         for path in expanded_paths:
@@ -359,7 +357,6 @@ def find_save_locations(steam_app_id):
                     write_log(f"Caminho de save não existe: {path}", level='DEBUG')
             except Exception as e:
                 write_log(f"Erro ao verificar caminho {path}: {str(e)}", level='WARNING')
-        
         save_info["expanded_paths"] = expanded_paths
         save_info["existing_paths"] = existing_paths
         save_info["current_os"] = current_os_name
