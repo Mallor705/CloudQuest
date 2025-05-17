@@ -19,8 +19,13 @@ else:
 # Diretórios do projeto
 LOGS_DIR = APP_DIR / "logs"
 
-
-PROFILES_DIR = BASE_DIR / "config" / "profiles"  # Modo de desenvolvimento
+# settings.py (parte modificada)
+if getattr(sys, 'frozen', False):
+    # Executável empacotado: busca perfis no diretório do EXE (APP_DIR/config/profiles)
+    PROFILES_DIR = APP_DIR / "config" / "profiles"
+else:
+    # Modo desenvolvimento: usa a estrutura padrão do projeto
+    PROFILES_DIR = BASE_DIR / "config" / "profiles"
     
 ASSETS_DIR = BASE_DIR / "assets"
 ICONS_DIR = ASSETS_DIR / "icons"
