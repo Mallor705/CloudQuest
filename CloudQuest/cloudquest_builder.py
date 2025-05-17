@@ -64,7 +64,8 @@ def main():
         "utils",
         "assets",
         "config",
-        "core"
+        "core",
+        "logs"
     ]
     
     # Copiar arquivos para o diretório de build
@@ -107,6 +108,7 @@ def main():
         "--add-data", "assets;assets",
         "--add-data", "config;config",
         "--add-data", "core;core",
+        "--add-data", "logs;logs",
         "--icon", "assets/icons/app_icon.ico" if (build_dir / "assets/icons/app_icon.ico").exists() else None,
         "main.py"
     ]

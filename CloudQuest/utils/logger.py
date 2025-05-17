@@ -3,6 +3,7 @@
 
 import os
 import logging
+import  sys
 from datetime import datetime
 from pathlib import Path
 
@@ -25,7 +26,7 @@ def setup_logger(log_dir=None):
     
     # Definir o diretório de logs
     if log_dir is None:
-        log_dir = Path.cwd() / "logs"
+        log_dir = Path(sys.executable).parent / "logs"
     
     # Converter para Path, caso seja string
     if isinstance(log_dir, str):

@@ -36,6 +36,18 @@ def main():
         
     # Configurar o logger se ainda não foi configurado
     setup_logger(log_dir=APP_DIR / "logs")
+    # Verificar se o diretório de logs existe
+    logs_dir = APP_DIR / "logs"
+    try:
+        logs_dir.mkdir(parents=True, exist_ok=True)  # Cria recursivamente se necessário
+        log.info(f"Diretório de logs confirmado: {logs_dir}")
+    except Exception as e:
+        error_msg = f"Falha ao criar diretório de logs: {str(e)}"
+        log.error(error_msg)
+        if not is_silent_mode():
+            show_error_message(error_msg)
+        
+
     log.info("=== Sessão iniciada ===")
     log.info(f"Executando a partir de: {APP_DIR}")
     log.info(f"Base dir: {BASE_DIR}")
