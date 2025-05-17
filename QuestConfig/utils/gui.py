@@ -13,6 +13,7 @@ import datetime
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from tkinter import Toplevel, Label
 
 from .logger import write_log, get_timestamped_message
 from .path_utils import validate_path
@@ -22,6 +23,34 @@ from .text_utils import normalize_game_name
 from .text_utils import sanitize_process_name
 from .shortcut_creator import create_game_shortcut
 from .save_detector import SaveGameDetector
+
+# Adicione um tooltip explicativo (opcional):
+from tkinter import Toplevel, Label
+
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tw = None
+        self.widget.bind("<Enter>", self.enter)
+        self.widget.bind("<Leave>", self.close)
+
+    def enter(self, event=None):
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        
+        self.tw = Toplevel(self.widget)
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_geometry(f"+{x}+{y}")
+        
+        label = Label(self.tw, text=self.text, background="#ffffe0", relief="solid", borderwidth=1)
+        label.pack()
+
+    def close(self, event=None):
+        if self.tw:
+            self.tw.destroy()
+            self.tw = None
 
 class QuestConfigGUI:
     def __init__(self, root, app_paths):
@@ -153,8 +182,10 @@ class QuestConfigGUI:
         
         ttk.Entry(local_dir_frame, textvariable=self.local_dir, width=50).pack(side=tk.LEFT, fill=tk.X, expand=True)
         ttk.Button(local_dir_frame, text="Procurar...", command=self.browse_local_dir).pack(side=tk.RIGHT, padx=(5, 0))
-        ttk.Button(local_dir_frame, text="Detectar Auto", command=self.detect_save_location).pack(side=tk.RIGHT, padx=(5, 0))
-        
+        detect_button = ttk.Button(local_dir_frame, text="Detectar Auto", command=self.detect_save_location)
+        detect_button.pack(side=tk.RIGHT, padx=(5, 0))
+        ToolTip(detect_button, "Executa o jogo brevemente e tenta detectar\nonde os saves estão sendo armazenados")
+
         # Cloud Dir
         ttk.Label(tab2, text="Diretório Cloud:").grid(row=4, column=0, sticky="w", pady=2)
         cloud_dir_frame = ttk.Frame(tab2)
@@ -273,8 +304,15 @@ class QuestConfigGUI:
             self.add_log_message(f"Rclone selecionado: {filename}")
     
     def detect_save_location(self):
-        if not self.executable_path.get():
-            messagebox.showerror("Erro", "Selecione um executável primeiro!")
+        if not validate_path(self.executable_path.get(), 'File'):
+            messagebox.showerror("Erro", "Selecione um executável válido primeiro!")
+            return
+        
+        resposta = messagebox.askyesno(
+            "Aviso", 
+            "O jogo será executado temporariamente. Feche-o manualmente após criar um save.\nContinuar?"
+        )
+        if not resposta:
             return
 
         self.status_var.set("Iniciando detecção de saves...")

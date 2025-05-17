@@ -20,7 +20,9 @@ class SaveGameDetector:
     def __init__(self, executable_path):
         # Caminho do executável do jogo
         self.executable_path = Path(executable_path)
-        # Lista de arquivos modificados durante a execução
+        # Lista de caminhos detectados
+        self.detected_paths = []
+        # Lista de arquivos modificados
         self.modified_files = []
         # Observador de eventos do sistema de arquivos
         self.observer = None
@@ -34,11 +36,16 @@ class SaveGameDetector:
         def __init__(self, detector):
             # Referência ao detector principal
             self.detector = detector
+            self.ignored_events = 2  # Ignorar eventos iniciais
 
-        def on_modified(self, event):
-            # Adiciona arquivos modificados após 2 segundos do início
-            if time.time() - self.detector.start_time > 2:  # Ignora alterações iniciais
-                self.detector.modified_files.append(event.src_path)
+        def on_any_event(self, event):
+            if time.time() - self.detector.start_time < 2:
+                return
+
+            path = Path(event.src_path)
+            # Registrar apenas pastas e arquivos de save relevantes
+            if path.is_dir() or path.suffix.lower() in ('.sav', '.cfg', '.ini', '.dat'):
+                self.detector.detected_paths.append(path.parent)  # Registrar o diretório pa
 
     def get_common_save_dirs(self):
         """
@@ -46,14 +53,36 @@ class SaveGameDetector:
         """
         return [
             Path(os.environ['USERPROFILE']) / "Documents",  # Documentos do usuário
+            Path(os.environ['USERPROFILE']) / "Saved Games",  # Jogos Salvos
             Path(os.environ['APPDATA']),  # Pasta AppData\Roaming
             Path(os.environ['LOCALAPPDATA']),  # Pasta AppData\Local
             self.executable_path.parent  # Pasta do executável
         ]
 
+    def analyze_results(self):
+            from collections import defaultdict
+            
+            # Contar ocorrências de caminhos
+            path_counts = defaultdict(int)
+            for path in self.detected_paths:
+                path_counts[str(path.resolve())] += 1
+
+            # Priorizar pastas que foram criadas/modificadas
+            sorted_paths = sorted(path_counts.items(), key=lambda x: x[1], reverse=True)
+            
+            # Procurar padrões comuns
+            for path_str, _ in sorted_paths:
+                path = Path(path_str)
+                if any(keyword in path_str.lower() for keyword in ['save', 'game', 'data']):
+                    return path
+                if path.name.lower() == self.executable_path.stem.lower():
+                    return path
+
+            return Path(sorted_paths[0][0]) if sorted_paths else None
+
     def detect_save_location(self):
         """
-        Detecta automaticamente o diretório de save executando o jogo e monitorando alterações em arquivos.
+        Detecta automaticamente o diretório de save executando o jogo e monitorando alterações em arquivos e pastas.
         """
         try:
             self.start_time = time.time()
@@ -62,34 +91,35 @@ class SaveGameDetector:
             # Configurar monitoramento dos diretórios de save
             event_handler = self.ChangeHandler(self)
             self.observer = Observer()
+            
             for directory in save_dirs:
                 if directory.exists():
-                    self.observer.schedule(event_handler, str(directory), recursive=True)
+                    # Monitorar recursivamente com timeout de 30 segundos
+                    self.observer.schedule(
+                        event_handler,
+                        str(directory),
+                        recursive=True
+                    )
 
             self.observer.start()
 
             # Executar o jogo
             write_log(f"Iniciando jogo para detecção de saves: {self.executable_path}")
             process = subprocess.Popen([str(self.executable_path)])
-            process.wait(timeout=300)  # Timeout de 5 minutos
+            
+            # Tempo máximo de execução: 3 minutos
+            for _ in range(180):
+                if process.poll() is not None:
+                    break
+                time.sleep(1)
+            else:
+                process.kill()
 
-            time.sleep(5)  # Espera para capturar alterações pós-fechamento
+            time.sleep(2)  # Espera final para eventos pendentes
             self.observer.stop()
             self.observer.join()
-
-            # Analisar arquivos modificados
-            save_candidates = []
-            for f in self.modified_files:
-                path = Path(f)
-                # Considera apenas arquivos com extensões comuns de save
-                if path.suffix.lower() in ('.sav', '.cfg', '.ini', '.dat'):
-                    save_candidates.append(path.parent)
-
-            # Encontrar o diretório mais comum entre os candidatos
-            if save_candidates:
-                return max(set(save_candidates), key=save_candidates.count)
             
-            return None
+            return self.analyze_results()
 
         except Exception as e:
             # Registra erro caso ocorra alguma exceção
