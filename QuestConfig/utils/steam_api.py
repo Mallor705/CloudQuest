@@ -18,6 +18,7 @@ from .steam_savegame_finder import find_save_locations
 def detect_appid_from_file(executable_path):
     """
     Tenta detectar o AppID do jogo a partir do arquivo steam_appid.txt
+    em todas as pastas e subpastas próximas ao executável.
     
     Args:
         executable_path (str): Caminho do executável do jogo
@@ -27,26 +28,32 @@ def detect_appid_from_file(executable_path):
     """
     try:
         exe_folder = Path(executable_path).parent
-        steam_appid_path = exe_folder / "steam_appid.txt"
+        steam_appid_files = list(exe_folder.rglob("steam_appid.txt"))
         
-        if not steam_appid_path.exists():
-            write_log(f"Arquivo steam_appid.txt não encontrado", level='WARNING')
+        if not steam_appid_files:
+            write_log(f"Arquivo steam_appid.txt não encontrado em {exe_folder} ou subpastas", level='WARNING')
             return None
         
-        with open(steam_appid_path, 'r') as f:
-            raw_content = f.read()
+        for steam_appid_path in steam_appid_files:
+            try:
+                with open(steam_appid_path, 'r') as f:
+                    raw_content = f.read()
+                
+                match = re.search(r'\d{4,}', raw_content)
+                if match:
+                    app_id = match.group()
+                    write_log(f"AppID {app_id} detectado em {steam_appid_path}")
+                    return app_id
+                else:
+                    write_log(f"Arquivo {steam_appid_path} sem AppID válido", level='WARNING')
+            except Exception as e:
+                write_log(f"Falha ao ler {steam_appid_path}: {str(e)}", level='ERROR')
         
-        match = re.search(r'\d{4,}', raw_content)
-        if match:
-            app_id = match.group()
-            write_log(f"AppID detectado: {app_id}")
-            return app_id
-        else:
-            write_log("Arquivo steam_appid.txt sem AppID válido", level='WARNING')
-            return None
+        write_log("Nenhum AppID válido encontrado nos arquivos steam_appid.txt", level='WARNING')
+        return None
             
     except Exception as e:
-        write_log(f"Falha ao ler steam_appid.txt: {str(e)}", level='ERROR')
+        write_log(f"Falha ao buscar steam_appid.txt: {str(e)}", level='ERROR')
         return None
 
 def get_save_location_for_appid(app_id):
