@@ -263,11 +263,11 @@ def process_wiki_path(path):
         r'\{\{p\|steamapps\}\}': r'%PROGRAMFILES(X86)%\\Steam\\steamapps',
         r'\{\{p\|steamuserdata\}\}': r'%PROGRAMFILES(X86)%\\Steam\\userdata',
         
-        # # Templates para variáveis específicas
-        # r'\{\{(?:p\|)?steamid\}\}': '<STEAMID>',
-        # r'\{\{(?:p\|)?uid\}\}': '<USERID>',
-        # r'\{\{(?:p\|)?userid\}\}': '<USERID>',
-        # r'\{\{(?:p\|)?username\}\}': '%USERNAME%',
+        # Templates para variáveis específicas
+        r'\{\{(?:p\|)?steamid\}\}': '<steamid>',
+        r'\{\{(?:p\|)?uid\}\}': '<userid>',
+        r'\{\{(?:p\|)?userid\}\}': '<userid>',
+        r'\{\{(?:p\|)?username\}\}': '%USERNAME%',
         
         # Templates para diretórios macOS
         r'\{\{p\|Library/Application Support\}\}': '~/Library/Application Support',

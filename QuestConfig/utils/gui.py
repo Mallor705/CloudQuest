@@ -496,12 +496,12 @@ class QuestConfigGUI:
             if web_save_path:
                 # Validar e formatar o caminho
                 resolved_path = Path(web_save_path)
-                if resolved_path.exists() and resolved_path.is_dir():
-                    self.local_dir.set(str(resolved_path))
-                    self.add_log_message(f"Diretório de save detectado via web: {resolved_path}")
-                else:
-                    self.setup_default_local_dir(self.game_name_internal)
-                    self.add_log_message("Caminho da web inválido, usando padrão", level='WARNING')
+                # if resolved_path.exists() and resolved_path.is_dir():
+                self.local_dir.set(str(resolved_path))
+                self.add_log_message(f"Diretório de save detectado via web: {resolved_path}")
+                # else:
+                #     self.setup_default_local_dir(self.game_name_internal)
+                #     self.add_log_message("Caminho da web inválido, usando padrão", level='WARNING')
             else:
                 # Fallback para detecção automática
                 self.setup_default_local_dir(self.game_name_internal)
