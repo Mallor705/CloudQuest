@@ -115,8 +115,7 @@ def extract_save_game_locations(wikitext):
         results["game_name"] = game_name_match.group(1).strip()
         write_log(f"PCGamingWiki: Nome do jogo encontrado: {results['game_name']}")
     
-    # Extrair seção de saves
-    # Procura pela seção específica de saves
+    # Extrair seção de saves - abordagem principal
     save_section = re.search(
         r'(?i)(==\s*Save game data location\s*==)(.*?)(?=\n==|\Z)',
         wikitext,
@@ -126,52 +125,35 @@ def extract_save_game_locations(wikitext):
     if save_section:
         section_text = save_section.group(2)
         
-        # Procurar por templates {{Game data/saves|Windows|...}}
-        windows_templates = re.finditer(
-            r'\{\{Game data/(?:saves|row/PC/Save game data location)\|Windows\|(.*?)\}\}',
-            section_text,
-            re.DOTALL
-        )
+        # Método 1: Extrair caminhos de templates de dados de jogo
+        # Padrão recursivo que lida com templates aninhados, considerando chaves {} balanceadas
+        windows_pattern = r'\{\{(?:Game data/(?:saves|row/PC/Save game data location)|Path/Steam game data)\|Windows\|((?:[^{}]|(?:\{\{[^{}]*\}\}))+)\}\}'
+        macos_pattern = r'\{\{(?:Game data/(?:saves|row/PC/Save game data location)|Path/Steam game data)\|macOS\|((?:[^{}]|(?:\{\{[^{}]*\}\}))+)\}\}'
+        linux_pattern = r'\{\{(?:Game data/(?:saves|row/PC/Save game data location)|Path/Steam game data)\|Linux\|((?:[^{}]|(?:\{\{[^{}]*\}\}))+)\}\}'
         
-        for match in windows_templates:
+        # Windows
+        for match in re.finditer(windows_pattern, section_text, re.DOTALL | re.IGNORECASE):
             if match:
                 path = match.group(1).strip()
                 if path and path not in results["save_locations"]["Windows"]:
                     results["save_locations"]["Windows"].append(path)
-                    write_log(f"PCGamingWiki: Caminho de save extraído para Windows: {path}")
-
-        # Procurar por templates para macOS
-        macos_templates = re.finditer(
-            r'\{\{Game data/(?:saves|row/PC/Save game data location)\|macOS\|(.*?)\}\}',
-            section_text,
-            re.DOTALL
-        )
         
-        for match in macos_templates:
+        # macOS
+        for match in re.finditer(macos_pattern, section_text, re.DOTALL | re.IGNORECASE):
             if match:
                 path = match.group(1).strip()
                 if path and path not in results["save_locations"]["macOS"]:
                     results["save_locations"]["macOS"].append(path)
-                    write_log(f"PCGamingWiki: Caminho de save extraído para macOS: {path}")
-
-        # Procurar por templates para Linux
-        linux_templates = re.finditer(
-            r'\{\{Game data/(?:saves|row/PC/Save game data location)\|Linux\|(.*?)\}\}',
-            section_text,
-            re.DOTALL
-        )
         
-        for match in linux_templates:
+        # Linux
+        for match in re.finditer(linux_pattern, section_text, re.DOTALL | re.IGNORECASE):
             if match:
                 path = match.group(1).strip()
                 if path and path not in results["save_locations"]["Linux"]:
                     results["save_locations"]["Linux"].append(path)
-                    write_log(f"PCGamingWiki: Caminho de save extraído para Linux: {path}")
-    
-    # Se não encontrou nada, tenta buscar em outros formatos de template
-    if not any(results["save_locations"].values()):
-        # Procurar por formato alternativo: {{Save game data location|...}}
-        save_block = re.search(r'\{\{Save game data location(.*?)\}\}', wikitext, re.DOTALL)
+        
+        # Método 2: Para formato alternativo {{Save game data location|...}}
+        save_block = re.search(r'\{\{Save game data location(.*?)\}\}', section_text, re.DOTALL)
         if save_block:
             block_text = save_block.group(1)
             
@@ -179,50 +161,72 @@ def extract_save_game_locations(wikitext):
             windows_match = re.search(r'\|\s*Windows\s*=\s*([^\n|]+)', block_text)
             if windows_match:
                 path = windows_match.group(1).strip()
-                results["save_locations"]["Windows"].append(path)
-                write_log(f"PCGamingWiki: Caminho de save extraído (alternativo) para Windows: {path}")
+                if path and path not in results["save_locations"]["Windows"]:
+                    results["save_locations"]["Windows"].append(path)
             
             # macOS
             macos_match = re.search(r'\|\s*macOS\s*=\s*([^\n|]+)', block_text)
             if macos_match:
                 path = macos_match.group(1).strip()
-                results["save_locations"]["macOS"].append(path)
-                write_log(f"PCGamingWiki: Caminho de save extraído (alternativo) para macOS: {path}")
+                if path and path not in results["save_locations"]["macOS"]:
+                    results["save_locations"]["macOS"].append(path)
             
             # Linux
             linux_match = re.search(r'\|\s*Linux\s*=\s*([^\n|]+)', block_text)
             if linux_match:
                 path = linux_match.group(1).strip()
-                results["save_locations"]["Linux"].append(path)
-                write_log(f"PCGamingWiki: Caminho de save extraído (alternativo) para Linux: {path}")
+                if path and path not in results["save_locations"]["Linux"]:
+                    results["save_locations"]["Linux"].append(path)
     
-    # Processar templates embutidos e variáveis
+    # Método 3: Pesquisa global para formatos alternativos, como fallback
+    if not any(results["save_locations"].values()):
+        # Procurar por formato alternativo em qualquer lugar do documento
+        save_template_patterns = [
+            r'\{\{SaveFiles\|(.*?)\}\}',
+            r'\{\{Save Files\|(.*?)\}\}',
+            r'\{\{Save files\|(.*?)\}\}',
+            r'\{\{Save game data\|(.*?)\}\}',
+            r'\{\{Save Game Data\|(.*?)\}\}'
+        ]
+        
+        for pattern in save_template_patterns:
+            save_block = re.search(pattern, wikitext, re.DOTALL | re.IGNORECASE)
+            if save_block:
+                block_text = save_block.group(1)
+                
+                # Windows
+                windows_match = re.search(r'\|\s*Windows\s*=\s*([^\n|]+)', block_text)
+                if windows_match:
+                    path = windows_match.group(1).strip()
+                    if path and path not in results["save_locations"]["Windows"]:
+                        results["save_locations"]["Windows"].append(path)
+                
+                # macOS
+                macos_match = re.search(r'\|\s*macOS\s*=\s*([^\n|]+)', block_text)
+                if macos_match:
+                    path = macos_match.group(1).strip()
+                    if path and path not in results["save_locations"]["macOS"]:
+                        results["save_locations"]["macOS"].append(path)
+                
+                # Linux
+                linux_match = re.search(r'\|\s*Linux\s*=\s*([^\n|]+)', block_text)
+                if linux_match:
+                    path = linux_match.group(1).strip()
+                    if path and path not in results["save_locations"]["Linux"]:
+                        results["save_locations"]["Linux"].append(path)
+    
+    # Processar templates embutidos e expandir variáveis
     for os_name in results["save_locations"]:
         processed_paths = []
         for path in results["save_locations"][os_name]:
-            # Substituir templates conhecidos
-            path = re.sub(r'\{\{p\|appdata\}\}', '%APPDATA%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|localappdata\}\}', '%LOCALAPPDATA%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|userprofile\}\}', '%USERPROFILE%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|documents\}\}', r'%USERPROFILE%\\Documents', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|saved games\}\}', r'%USERPROFILE%\\Saved Games', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|programdata\}\}', '%PROGRAMDATA%', path, flags=re.IGNORECASE)
-            # Corrigir templates malformados comuns
-            path = re.sub(r'\{\{p\|appdata\b', '%APPDATA%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|localappdata\b', '%LOCALAPPDATA%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|userprofile\b', '%USERPROFILE%', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|documents\b', r'%USERPROFILE%\\Documents', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|saved games\b', r'%USERPROFILE%\\Saved Games', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|programdata\b', '%PROGRAMDATA%', path, flags=re.IGNORECASE)
-            # Substituir outros templates {{p|uid}} por <uid>
-            path = re.sub(r'\{\{p\|uid\}\}', '<uid>', path, flags=re.IGNORECASE)
-            path = re.sub(r'\{\{p\|steamid\}\}', '<steamid>', path, flags=re.IGNORECASE)
-            # Se sobrar algum template desconhecido, substitua por vazio ou por <var>
-            # path = re.sub(r'\{\{[^\}]+\}\}', '<var>', path)
+            # Extrair e processar caminho completo, incluindo templates aninhados
+            processed_path = process_wiki_path(path)
+            
             # Limpar e normalizar o caminho
-            path = path.strip()
-            if path and path not in processed_paths:
-                processed_paths.append(path)
+            processed_path = processed_path.strip()
+            if processed_path and processed_path not in processed_paths:
+                processed_paths.append(processed_path)
+        
         results["save_locations"][os_name] = processed_paths
     
     write_log(f"PCGamingWiki: Encontrados {len(results['save_locations']['Windows'])} locais para Windows, "
@@ -231,32 +235,138 @@ def extract_save_game_locations(wikitext):
     
     return results
 
+def process_wiki_path(path):
+    """
+    Processa um caminho do wikitext, expandindo todos os templates e variáveis.
+    
+    Args:
+        path (str): Caminho do wikitext com possíveis templates
+    
+    Returns:
+        str: Caminho processado
+    """
+    # Processar templates recursivamente
+    # Este é um processo de várias etapas para lidar com templates aninhados
+    
+    # Substituições de templates específicos
+    template_map = {
+        # Templates de locais comuns do Windows
+        r'\{\{p\|appdata\}\}': '%APPDATA%',
+        r'\{\{p\|localappdata\}\}': '%LOCALAPPDATA%',
+        r'\{\{p\|userprofile\}\}': '%USERPROFILE%',
+        r'\{\{p\|documents\}\}': r'%USERPROFILE%\\Documents',
+        r'\{\{p\|savedgames\}\}': r'%USERPROFILE%\\Saved Games',
+        r'\{\{p\|saved games\}\}': r'%USERPROFILE%\\Saved Games',
+        r'\{\{p\|programdata\}\}': '%PROGRAMDATA%',
+        r'\{\{p\|commonappdata\}\}': '%PROGRAMDATA%',
+        r'\{\{p\|steam\}\}': r'%PROGRAMFILES(X86)%\\Steam',
+        r'\{\{p\|steamapps\}\}': r'%PROGRAMFILES(X86)%\\Steam\\steamapps',
+        r'\{\{p\|steamuserdata\}\}': r'%PROGRAMFILES(X86)%\\Steam\\userdata',
+        
+        # # Templates para variáveis específicas
+        # r'\{\{(?:p\|)?steamid\}\}': '<STEAMID>',
+        # r'\{\{(?:p\|)?uid\}\}': '<USERID>',
+        # r'\{\{(?:p\|)?userid\}\}': '<USERID>',
+        # r'\{\{(?:p\|)?username\}\}': '%USERNAME%',
+        
+        # Templates para diretórios macOS
+        r'\{\{p\|Library/Application Support\}\}': '~/Library/Application Support',
+        r'\{\{p\|Library/Containers\}\}': '~/Library/Containers',
+        
+        # Templates para diretórios Linux
+        r'\{\{p\|\.config\}\}': '~/.config',
+        r'\{\{p\|\.local/share\}\}': '~/.local/share',
+        r'\{\{p\|\.steam\}\}': '~/.steam',
+    }
+    
+    # Aplicar substituições específicas primeiro
+    for pattern, replacement in template_map.items():
+        path = re.sub(pattern, replacement, path, flags=re.IGNORECASE)
+    
+    # Tentar extrair conteúdo de outros templates não reconhecidos
+    # Por exemplo, {{cn|Microsoft|Halo}} -> Microsoft\Halo
+    cn_pattern = r'\{\{cn\|(.*?)\}\}'
+    while re.search(cn_pattern, path):
+        cn_match = re.search(cn_pattern, path)
+        if cn_match:
+            # Extrair partes do template e juntá-las com \ para Windows ou / para outros
+            cn_parts = cn_match.group(1).split('|')
+            if "Windows" in path:
+                cn_replacement = '\\'.join(cn_parts)
+            else:
+                cn_replacement = '/'.join(cn_parts)
+            path = path.replace(cn_match.group(0), cn_replacement)
+    
+    # Remover outros templates não reconhecidos
+    path = re.sub(r'\{\{[^{}]*\}\}', '', path)
+
+    # Normalizar separadores de caminho
+    # Corrigido: sempre usar \ para Windows, / para outros
+    if os.name == "nt":
+        # Para Windows, substituir todas as barras por barra invertida
+        path = path.replace('/', '\\')
+        # Remover barras invertidas duplicadas
+        while '\\\\' in path:
+            path = path.replace('\\\\', '\\')
+    else:
+        # Para Unix, substituir todas as barras invertidas por barra normal
+        path = path.replace('\\', '/')
+        # Remover barras duplas
+        while '//' in path:
+            path = path.replace('//', '/')
+
+    # Remover espaços extras e caracteres indesejados
+    path = path.strip()
+    path = re.sub(r'\s+', ' ', path)
+
+    return path
+
 def expand_windows_path(path):
     """
     Expande variáveis de ambiente do Windows em caminhos.
+    
+    Args:
+        path (str): Caminho com variáveis de ambiente
+    
+    Returns:
+        str: Caminho expandido
     """
-    if not path or not '%' in path:
+    if not path:
         return path
-
+    
     try:
+        # Substituições específicas para placeholders da Steam
+        if '<STEAMID>' in path or '<USERID>' in path:
+            # Na falta de um ID Steam ou user ID real, usaremos wildcards
+            path = path.replace('<STEAMID>', '*')
+            path = path.replace('<USERID>', '*')
+        
         # Usar a expansão nativa do sistema
         expanded = os.path.expandvars(path)
-
-        # Substituição robusta, case-insensitive
-        env_vars = {
-            "%USERPROFILE%": str(Path.home()),
-            "%LOCALAPPDATA%": str(Path.home() / "AppData" / "Local"),
-            "%APPDATA%": str(Path.home() / "AppData" / "Roaming"),
-            "%PROGRAMDATA%": os.environ.get("PROGRAMDATA", "C:/ProgramData"),
-            "%USERPROFILE%\\Documents": str(Path.home() / "Documents"),
-            "%USERPROFILE%\\Saved Games": str(Path.home() / "Saved Games"),
-        }
-
-        for var, replacement in env_vars.items():
-            # Escapa barras invertidas para evitar erro de escape no re.sub
-            safe_replacement = replacement.replace("\\", r"\\")
-            expanded = re.sub(re.escape(var), safe_replacement, expanded, flags=re.IGNORECASE)
-
+        
+        # Se ainda contém %, tenta substituir manualmente
+        if '%' in expanded:
+            # Variáveis de ambiente comuns
+            env_vars = {
+                "%USERPROFILE%": str(Path.home()),
+                "%LOCALAPPDATA%": str(Path.home() / "AppData" / "Local"),
+                "%APPDATA%": str(Path.home() / "AppData" / "Roaming"),
+                "%PROGRAMDATA%": os.environ.get("PROGRAMDATA", "C:/ProgramData"),
+                "%DOCUMENTS%": str(Path.home() / "Documents"),
+                "%SAVED GAMES%": str(Path.home() / "Saved Games"),
+                "%PROGRAMFILES(X86)%": os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")
+            }
+            
+            for var, replacement in env_vars.items():
+                if var.lower() in expanded.lower():
+                    expanded = expanded.replace(var, replacement)
+                    # Também tenta a versão em lower case
+                    expanded = expanded.replace(var.lower(), replacement)
+        
+        # Normalizar caminhos com barras duplas
+        while '\\\\' in expanded:
+            expanded = expanded.replace('\\\\', '\\')
+        
         return expanded
     except Exception as e:
         write_log(f"Erro ao expandir caminho: {str(e)}", level='WARNING')
@@ -341,11 +451,10 @@ def find_save_locations(steam_app_id):
     # Passo 4: Processar para o OS atual e verificar quais existem
     expanded_paths = get_current_os_save_paths(save_info["save_locations"])
     if expanded_paths:
-        for path in expanded_paths:
-            write_log(f"Caminho de save expandido: {path}", level='INFO')
         current_os = platform.system()
         os_mapping = {"Windows": "Windows", "Darwin": "macOS", "Linux": "Linux"}
         current_os_name = os_mapping.get(current_os, "Unknown")
+        
         # Verificar quais caminhos existem
         existing_paths = []
         for path in expanded_paths:
@@ -357,6 +466,7 @@ def find_save_locations(steam_app_id):
                     write_log(f"Caminho de save não existe: {path}", level='DEBUG')
             except Exception as e:
                 write_log(f"Erro ao verificar caminho {path}: {str(e)}", level='WARNING')
+        
         save_info["expanded_paths"] = expanded_paths
         save_info["existing_paths"] = existing_paths
         save_info["current_os"] = current_os_name
