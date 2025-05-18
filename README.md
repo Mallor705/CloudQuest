@@ -63,5 +63,13 @@ Reporte problemas no [GitHub Issues](https://github.com/Mallor705/CloudQuest/iss
 
 ---
 
+## 📝 Créditos e Reconhecimentos
+
+- **[PCGamingWiki](https://www.pcgamingwiki.com/)**  
+  Este projeto utiliza a API pública da PCGamingWiki para localizar e identificar os diretórios de saves dos jogos. Agradecemos à comunidade da PCGamingWiki por manter uma base de dados tão completa e aberta.
+
+- **[Rclone](https://rclone.org/)**  
+  A sincronização de arquivos com serviços de nuvem é realizada através do Rclone, uma ferramenta open source poderosa para gerenciamento de arquivos em múltiplos provedores de nuvem.
+
 **📜 Licença**  
  GNU GENERAL PUBLIC LICENSE - Consulte o arquivo [LICENSE](LICENSE) para detalhes

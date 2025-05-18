@@ -36,7 +36,7 @@ def get_page_id_by_app_id(steam_app_id):
         response = requests.get(
             url, 
             params=params,
-            headers={'User-Agent': 'QuestConfig/1.0 (+https://github.com/questconfig)'},
+            headers={'User-Agent': 'QuestConfig/1.0 (+https://github.com/Mallor705/CloudQuest)'},
             timeout=15
         )
         response.raise_for_status()
