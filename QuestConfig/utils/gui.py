@@ -546,26 +546,31 @@ class QuestConfigGUI:
             self.status_var.set("Nenhum remote encontrado")
     
     def update_cloud_dir(self):
-        """Atualiza o diretório cloud com base no diretório final do caminho local"""
+        """Atualiza o diretório cloud com base no nome do jogo e diretório local"""
         local_dir = self.local_dir.get()
         
-        if local_dir:
+        # Determinar o nome do jogo (prioridade: nome interno > nome normalizado)
+        game_name = self.game_name_internal or normalize_game_name(self.game_name.get()) if self.game_name.get() else ""
+        
+        if local_dir and game_name:
             # Extrair o nome do diretório final do caminho local
             final_dir_name = Path(local_dir).name
             
-            # Criar caminho cloud com o formato 'CloudQuest/{nome_do_diretório_final}'
-            cloud_path = f"CloudQuest/{final_dir_name}"
+            # Novo formato: CloudQuest/{nome_do_jogo}/{final_dir_name}
+            cloud_path = f"CloudQuest/{game_name}/{final_dir_name}"
             self.cloud_dir.set(cloud_path)
             self.add_log_message(f"Diretório cloud atualizado: {cloud_path}")
-        elif self.game_name_internal:
-            # Caso fallback se não houver diretório local
-            cloud_path = f"CloudQuest/{self.game_name_internal}"
+        
+        elif game_name:
+            # Fallback se não houver diretório local
+            cloud_path = f"CloudQuest/{game_name}"
             self.cloud_dir.set(cloud_path)
             self.add_log_message(f"Diretório cloud atualizado: {cloud_path}")
+        
         elif self.game_name.get():
-            # Segundo fallback usando o nome normalizado do jogo
-            norm_name = normalize_game_name(self.game_name.get())
-            cloud_path = f"CloudQuest/{norm_name}"
+            # Fallback extremo usando nome não normalizado
+            raw_name = normalize_game_name(self.game_name.get())
+            cloud_path = f"CloudQuest/{raw_name}"
             self.cloud_dir.set(cloud_path)
             self.add_log_message(f"Diretório cloud atualizado: {cloud_path}")
     
