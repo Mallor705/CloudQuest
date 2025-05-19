@@ -78,7 +78,8 @@ class QuestConfigGUI:
         self.local_dir = tk.StringVar()
         self.cloud_dir = tk.StringVar()
         self.game_process = tk.StringVar()
-        
+        self.steam_uid = tk.StringVar()
+
         # Status bar
         self.status_var = tk.StringVar()
         self.status_var.set("Pronto")
@@ -107,6 +108,7 @@ class QuestConfigGUI:
         """Carrega valores padrões para os campos"""
         defaults = get_default_values()
         self.rclone_path.set(defaults['rclone_path'])
+        self.steam_uid.set(defaults.get('steam_uid', ''))
         
     def create_widgets(self):
         """Cria todos os widgets da interface"""
@@ -131,27 +133,34 @@ class QuestConfigGUI:
         # Título da seção
         header1 = ttk.Label(tab1, text="Informações do Jogo", style='Header.TLabel')
         header1.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
-        
+
+        # Steam UID (agora na aba 1, acima do AppID)
+        ttk.Label(tab1, text="Steam UID:").grid(row=1, column=0, sticky="w", pady=2)
+        uid_frame = ttk.Frame(tab1)
+        uid_frame.grid(row=1, column=1, sticky="ew", pady=2)
+        ttk.Entry(uid_frame, textvariable=self.steam_uid, width=50).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ToolTip(uid_frame, "Seu UserID numérico da Steam\nSubstitui <userid> nos caminhos de save")
+
         # Executável
-        ttk.Label(tab1, text="Executável do Jogo:").grid(row=1, column=0, sticky="w", pady=2)
+        ttk.Label(tab1, text="Executável do Jogo:").grid(row=2, column=0, sticky="w", pady=2)
         exe_frame = ttk.Frame(tab1)
-        exe_frame.grid(row=1, column=1, sticky="ew", pady=2)
+        exe_frame.grid(row=2, column=1, sticky="ew", pady=2)
         
         ttk.Entry(exe_frame, textvariable=self.executable_path, width=50).pack(side=tk.LEFT, fill=tk.X, expand=True)
         ttk.Button(exe_frame, text="Procurar...", command=self.browse_executable).pack(side=tk.RIGHT, padx=(5, 0))
         
         # AppID
-        ttk.Label(tab1, text="AppID Steam:").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(tab1, text="AppID Steam:").grid(row=3, column=0, sticky="w", pady=2)
         appid_frame = ttk.Frame(tab1)
-        appid_frame.grid(row=2, column=1, sticky="ew", pady=2)
+        appid_frame.grid(row=3, column=1, sticky="ew", pady=2)
         
         ttk.Entry(appid_frame, textvariable=self.app_id, width=20).pack(side=tk.LEFT)
         ttk.Button(appid_frame, text="Detectar", command=self.detect_appid).pack(side=tk.LEFT, padx=(5, 0))
         ttk.Button(appid_frame, text="Consultar Steam", command=self.query_steam_api).pack(side=tk.LEFT, padx=(5, 0))
         
         # Nome do Jogo
-        ttk.Label(tab1, text="Nome do Jogo:").grid(row=3, column=0, sticky="w", pady=2)
-        ttk.Entry(tab1, textvariable=self.game_name, width=50).grid(row=3, column=1, sticky="ew", pady=2)
+        ttk.Label(tab1, text="Nome do Jogo:").grid(row=4, column=0, sticky="w", pady=2)
+        ttk.Entry(tab1, textvariable=self.game_name, width=50).grid(row=4, column=1, sticky="ew", pady=2)
         
         # Aba 2: Configuração do Rclone
         tab2 = ttk.Frame(notebook, padding=10)
@@ -200,7 +209,7 @@ class QuestConfigGUI:
         ttk.Label(tab2, text="Processo do Jogo:").grid(row=5, column=0, sticky="w", pady=2)
         ttk.Entry(tab2, textvariable=self.game_process, width=50).grid(row=5, column=1, sticky="ew", pady=2)
         ttk.Label(tab2, text="(Nome do .exe, ex: Skyrim.exe)").grid(row=5, column=2, sticky="w", padx=(5, 0), pady=2)
-        
+
         # Aba 3: Resumo e Finalização
         tab3 = ttk.Frame(notebook, padding=10)
         notebook.add(tab3, text="3. Finalizar")
@@ -493,8 +502,9 @@ class QuestConfigGUI:
             web_save_path = game_info.get('save_location')
 
             # Atualizar diretórios
-            if web_save_path:
+            if web_save_path and self.steam_uid.get():
                 # Validar e formatar o caminho
+                web_save_path = web_save_path.replace('<userid>', self.steam_uid.get())
                 resolved_path = Path(web_save_path)
                 # if resolved_path.exists() and resolved_path.is_dir():
                 self.local_dir.set(str(resolved_path))
@@ -586,6 +596,7 @@ class QuestConfigGUI:
                 AppID Steam: {self.app_id.get()}
                 Executável: {self.executable_path.get()}
                 Processo: {self.game_process.get()}
+                Steam UID: {self.steam_uid.get()}
 
                 Configuração Rclone:
                 - Remote: {self.cloud_remote.get()}
@@ -626,7 +637,8 @@ class QuestConfigGUI:
             "LocalDir": self.local_dir.get(),
             "CloudDir": self.cloud_dir.get(),
             "CreateShortcut": self.create_shortcut_var.get(),
-            "Created": datetime.datetime.now().isoformat()
+            "Created": datetime.datetime.now().isoformat(),
+            "SteamUID": self.steam_uid.get()
         }
         
         # Salvar configuração

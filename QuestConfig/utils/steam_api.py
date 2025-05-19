@@ -56,19 +56,20 @@ def detect_appid_from_file(executable_path):
         write_log(f"Falha ao buscar steam_appid.txt: {str(e)}", level='ERROR')
         return None
 
-def get_save_location_for_appid(app_id):
+def get_save_location_for_appid(app_id, steam_uid=None):
     """
     Obtém o local de saves para um jogo usando a API integrada PCGamingWiki
     
     Args:
         app_id (str): Steam AppID do jogo
-    
+        steam_uid (str, optional): Steam UserID do jogador
+
     Returns:
         str: Caminho para o local de saves ou None se não encontrado
     """
     try:
         # Usar o novo módulo para buscar locais de save
-        save_info = find_save_locations(app_id)
+        save_info = find_save_locations(app_id, steam_uid)
         
         if save_info and save_info.get("existing_paths"):
             # Se encontrou caminhos que existem, retorna o primeiro

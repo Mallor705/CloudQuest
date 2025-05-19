@@ -321,13 +321,14 @@ def process_wiki_path(path):
 
     return path
 
-def expand_windows_path(path):
+def expand_windows_path(path, steam_uid=None):
     """
     Expande variáveis de ambiente do Windows em caminhos.
     
     Args:
         path (str): Caminho com variáveis de ambiente
-    
+        steam_uid (str, optional): Steam UserID do jogador
+
     Returns:
         str: Caminho expandido
     """
@@ -335,11 +336,13 @@ def expand_windows_path(path):
         return path
     
     try:
-        # Substituições específicas para placeholders da Steam
-        if '<STEAMID>' in path or '<USERID>' in path:
-            # Na falta de um ID Steam ou user ID real, usaremos wildcards
-            path = path.replace('<STEAMID>', '*')
+        # Substituir <USERID> pelo Steam UID fornecido
+        if steam_uid:
+            path = path.replace('<USERID>', steam_uid)
+            path = path.replace('<userid>', steam_uid)
+        else:
             path = path.replace('<USERID>', '*')
+            path = path.replace('<userid>', '*')
         
         # Usar a expansão nativa do sistema
         expanded = os.path.expandvars(path)
@@ -396,7 +399,7 @@ def expand_unix_path(path):
         write_log(f"Erro ao expandir caminho Unix: {str(e)}", level='WARNING')
         return path
 
-def get_current_os_save_paths(save_locations):
+def get_current_os_save_paths(save_locations, steam_uid=None):
     """
     Retorna os caminhos de save apropriados para o sistema operacional atual.
     
@@ -411,19 +414,19 @@ def get_current_os_save_paths(save_locations):
     if current_os == "Windows":
         paths = save_locations["Windows"]
         if paths:
-            return [expand_windows_path(path) for path in paths]
+            return [expand_windows_path(path, steam_uid) for path in paths]
     elif current_os == "Darwin":  # macOS
         paths = save_locations["macOS"]
         if paths:
-            return [expand_unix_path(path) for path in paths]
+            return [expand_unix_path(path, steam_uid) for path in paths]
     elif current_os == "Linux":
         paths = save_locations["Linux"]
         if paths:
-            return [expand_unix_path(path) for path in paths]
+            return [expand_unix_path(path, steam_uid) for path in paths]
     
     return []
 
-def find_save_locations(steam_app_id):
+def find_save_locations(steam_app_id, steam_uid=None):
     """
     Função principal para encontrar locais de saves para um AppID da Steam.
     
@@ -449,11 +452,12 @@ def find_save_locations(steam_app_id):
     save_info = extract_save_game_locations(wikitext)
     
     # Passo 4: Processar para o OS atual e verificar quais existem
-    expanded_paths = get_current_os_save_paths(save_info["save_locations"])
+    expanded_paths = get_current_os_save_paths(save_info["save_locations"], steam_uid)
     if expanded_paths:
         current_os = platform.system()
         os_mapping = {"Windows": "Windows", "Darwin": "macOS", "Linux": "Linux"}
         current_os_name = os_mapping.get(current_os, "Unknown")
+        
         
         # Verificar quais caminhos existem
         existing_paths = []
@@ -464,6 +468,7 @@ def find_save_locations(steam_app_id):
                     existing_paths.append(path)
                 else:
                     write_log(f"Caminho de save não existe: {path}", level='DEBUG')
+                    existing_paths.append(path)
             except Exception as e:
                 write_log(f"Erro ao verificar caminho {path}: {str(e)}", level='WARNING')
         
