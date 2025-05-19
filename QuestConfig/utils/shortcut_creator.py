@@ -54,7 +54,7 @@ def create_game_shortcut(game_config, exe_path):
             write_log(f"Atalho criado: {shortcut_path}")
             return True
         else:
-            write_log(f"Arquivo de script não encontrado: {exe_path}", level='WARNING')
+            write_log(f"Arquivo de script não encontrado: {exe_path}. Verifique se o arquivo existe e está no local correto.", level='WARNING')
             return False
     except Exception as e:
         write_log(f"Erro ao criar atalho: {str(e)}", level='ERROR')

@@ -56,6 +56,18 @@ def detect_appid_from_file(executable_path):
         write_log(f"Falha ao buscar steam_appid.txt: {str(e)}", level='ERROR')
         return None
 
+def find_numeric_subfolder(base_path):
+    """
+    Busca por subpasta composta apenas por números (SteamID).
+    Retorna o caminho completo se encontrar, senão None.
+    """
+    if not base_path or not os.path.isdir(base_path):
+        return None
+    for entry in os.listdir(base_path):
+        if entry.isdigit() and os.path.isdir(os.path.join(base_path, entry)):
+            return os.path.join(base_path, entry)
+    return None
+
 def get_save_location_for_appid(app_id, steam_uid=None):
     """
     Obtém o local de saves para um jogo usando a API integrada PCGamingWiki
@@ -68,18 +80,43 @@ def get_save_location_for_appid(app_id, steam_uid=None):
         str: Caminho para o local de saves ou None se não encontrado
     """
     try:
-        # Usar o novo módulo para buscar locais de save
         save_info = find_save_locations(app_id, steam_uid)
-        
+        candidate = None
+
+        # Preferir caminhos existentes
+        paths = []
         if save_info and save_info.get("existing_paths"):
-            # Se encontrou caminhos que existem, retorna o primeiro
-            return save_info["existing_paths"][0]
+            paths = save_info["existing_paths"]
         elif save_info and save_info.get("expanded_paths"):
-            # Se não encontrou caminhos existentes, retorna o primeiro expandido
-            return save_info["expanded_paths"][0]
-        else:
-            write_log(f"Nenhum local de save encontrado para AppID {app_id}", level='WARNING')
-            return None
+            paths = save_info["expanded_paths"]
+
+        for path in paths:
+            # Se o caminho contém <userid>, <USERID>, <steamid> ou similar
+            if any(tag in path.lower() for tag in ["<userid>", "<user id>", "<steamid>", "<user_id>"]):
+                # Encontrar a parte antes do marcador
+                parts = re.split(r"<userid>|<user id>|<steamid>|<user_id>", path, flags=re.IGNORECASE)
+                if len(parts) >= 2:
+                    base = parts[0].rstrip(r"\\/ ")
+                    # Buscar subpasta numérica
+                    real_folder = find_numeric_subfolder(base)
+                    if real_folder:
+                        candidate = real_folder + parts[1]
+                        if os.path.exists(candidate):
+                            return candidate
+                        else:
+                            # Se não existe, retorna mesmo assim para o usuário ver
+                            return candidate
+            else:
+                # Se não tem marcador, retorna se existir
+                if os.path.exists(path):
+                    return path
+                candidate = path  # fallback
+
+        if candidate:
+            return candidate
+
+        write_log(f"Nenhum local de save encontrado para AppID {app_id}", level='WARNING')
+        return None
     except Exception as e:
         write_log(f"Erro ao buscar local de save: {str(e)}", level='ERROR')
         return None
