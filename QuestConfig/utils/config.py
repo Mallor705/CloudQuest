@@ -22,7 +22,7 @@ def load_rclone_remotes():
     Returns:
         list: Lista de remotes disponíveis
     """
-    rclone_conf_path = os.path.join(os.environ.get('APPDATA', ''), "rclone\\rclone.conf")
+    rclone_conf_path = os.path.join(os.environ.get('APPDATA', ''), r"rclone\\rclone.conf")
     remotes = []
     
     if validate_path(rclone_conf_path, 'File'):
@@ -118,5 +118,5 @@ def get_default_values():
         dict: Valores padrão
     """
     return {
-        'rclone_path': os.path.join(os.environ.get('ProgramFiles', 'C:\\Program Files'), "Rclone\\rclone.exe")
+        'rclone_path': os.path.join(os.environ.get('ProgramFiles', r'C:\\Program Files'), r"Rclone\\rclone.exe")
     }

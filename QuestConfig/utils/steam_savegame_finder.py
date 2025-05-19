@@ -277,6 +277,20 @@ def process_wiki_path(path):
         r'\{\{p\|\.config\}\}': '~/.config',
         r'\{\{p\|\.local/share\}\}': '~/.local/share',
         r'\{\{p\|\.steam\}\}': '~/.steam',
+        r'\{\{p\|\.steam/steam/steamapps/compatdata\}\}': '~/.steam/steam/steamapps/compatdata',
+        r'\{\{p\|\.local/share/Steam/steamapps/compatdata\}\}': '~/.local/share/Steam/steamapps/compatdata',
+
+        # Novos templates para clientes
+        r'\{\{p\|epicgames\}\}': r'%PROGRAMFILES%\\Epic Games',
+        r'\{\{p\|gog\}\}': r'%PROGRAMFILES(X86)%\\GOG Galaxy\\Games',
+        r'\{\{p\|ea\}\}': r'%PROGRAMFILES%\\EA Games',
+        r'\{\{p\|ubisoft\}\}': r'%PROGRAMFILES(X86)%\\Ubisoft\\Ubisoft Game Launcher',
+        
+        # Caminhos do Proton
+        r'\{\{p\|proton\}\}': '~/.steam/steam/steamapps/compatdata/<steamid>/pfx/drive_c',
+        
+        # Virtual Store
+        r'\{\{p\|virtualstore\}\}': r'%LOCALAPPDATA%\\VirtualStore'
     }
     
     # Aplicar substituições específicas primeiro
@@ -375,7 +389,7 @@ def expand_windows_path(path, steam_uid=None):
         write_log(f"Erro ao expandir caminho: {str(e)}", level='WARNING')
         return path
 
-def expand_unix_path(path):
+def expand_unix_path(path, steam_uid=None):
     """
     Expande caminhos no estilo Unix com ~ ou variáveis de ambiente.
     
@@ -385,19 +399,34 @@ def expand_unix_path(path):
     Returns:
         str: Caminho expandido
     """
-    if not path:
-        return path
+
+    # Expansão específica para caminhos do Proton
+    if '<steamid>' in path:
+        if not steam_uid:
+            path = path.replace('<steamid>', '*')
+        else:
+            path = path.replace('<steamid>', steam_uid)
     
-    try:
-        # Expandir ~ para home
-        if '~' in path:
-            path = path.replace('~', str(Path.home()))
+    # Converter caminhos do Proton para estrutura Linux
+    proton_path = Path.home() / ".steam/steam/steamapps/compatdata"
+    if str(proton_path) in path:
+        path = path.replace('drive_c/users/steamuser', 'pfx/drive_c/users/steamuser')
+    
+    return os.path.expandvars(path)
+
+    # if not path:
+    #     return path
+    
+    # try:
+    #     # Expandir ~ para home
+    #     if '~' in path:
+    #         path = path.replace('~', str(Path.home()))
         
-        # Expandir variáveis de ambiente
-        return os.path.expandvars(path)
-    except Exception as e:
-        write_log(f"Erro ao expandir caminho Unix: {str(e)}", level='WARNING')
-        return path
+    #     # Expandir variáveis de ambiente
+    #     return os.path.expandvars(path)
+    # except Exception as e:
+    #     write_log(f"Erro ao expandir caminho Unix: {str(e)}", level='WARNING')
+    #     return path
 
 def get_current_os_save_paths(save_locations, steam_uid=None):
     """

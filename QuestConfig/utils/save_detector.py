@@ -6,6 +6,7 @@ Módulo para detecção de locais de save com interface de seleção manual.
 """
 
 import os
+import platform
 import time
 import subprocess
 from pathlib import Path
@@ -43,14 +44,32 @@ class SaveGameDetector:
                 self.detector.detected_paths.append(str(path.resolve()))
 
     def get_common_save_dirs(self):
-        return [
+        common_dirs = [
             Path(os.environ['APPDATA']),
             Path(os.environ['LOCALAPPDATA']),
             Path(os.environ['USERPROFILE']) / "Documents",
             Path(os.environ['USERPROFILE']) / "Saved Games",
             Path(os.environ['USERPROFILE']) / "Jogos Salvos",
-            self.executable_path.parent
+            self.executable_path.parent,
+            # Novos caminhos específicos da Steam
+            Path(os.environ['PROGRAMFILES(X86)']) / "Steam/userdata",
+            Path(os.environ['LOCALAPPDATA']) / "VirtualStore",
+            Path(os.environ['PROGRAMFILES(X86)']) / "Steam/steamapps/common",
+            # Caminhos para outros clientes
+            Path(os.environ['PROGRAMFILES']) / "Epic Games",
+            Path(os.environ['PROGRAMFILES(X86)']) / "GOG Galaxy/Games",
+            Path(os.environ['PROGRAMFILES']) / "EA Games",
+            Path(os.environ['PROGRAMFILES(X86)']) / "Ubisoft/Ubisoft Game Launcher"
         ]
+        
+        # Adicionar caminhos específicos do Linux via Proton
+        if platform.system() == "Linux":
+            common_dirs.extend([
+                Path.home() / ".steam/steam/steamapps/compatdata",
+                Path.home() / ".local/share/Steam/steamapps/compatdata"
+            ])
+            
+        return common_dirs
 
     def filter_system_paths(self, paths):
         system_paths = {

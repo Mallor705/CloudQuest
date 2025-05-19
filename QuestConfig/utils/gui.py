@@ -161,6 +161,12 @@ class QuestConfigGUI:
         # Nome do Jogo
         ttk.Label(tab1, text="Nome do Jogo:").grid(row=4, column=0, sticky="w", pady=2)
         ttk.Entry(tab1, textvariable=self.game_name, width=50).grid(row=4, column=1, sticky="ew", pady=2)
+
+        # Novo combobox para seleção de plataforma
+        ttk.Label(tab1, text="Plataforma:").grid(row=5, column=0, sticky="w", pady=2)
+        self.platform_combo = ttk.Combobox(tab1, values=["Steam", "Epic", "GOG", "EA", "Ubisoft"], width=15)
+        self.platform_combo.grid(row=5, column=1, sticky="w")
+        self.platform_combo.bind("<<ComboboxSelected>>", self.update_platform_paths)
         
         # Aba 2: Configuração do Rclone
         tab2 = ttk.Frame(notebook, padding=10)
@@ -740,3 +746,14 @@ class QuestConfigGUI:
         
         # Registrar no sistema de log
         write_log(message, level)
+
+    def update_platform_paths(self, event):
+        platform = self.platform_combo.get()
+        default_paths = {
+            "Steam": str(Path(os.environ['PROGRAMFILES(X86)']) / "Steam/steamapps/common"),
+            "Epic": str(Path(os.environ['PROGRAMFILES']) / "Epic Games"),
+            "GOG": str(Path(os.environ['PROGRAMFILES(X86)']) / "GOG Galaxy/Games"),
+            "EA": str(Path(os.environ['PROGRAMFILES']) / "EA Games"),
+            "Ubisoft": str(Path(os.environ['PROGRAMFILES(X86)']) / "Ubisoft/Ubisoft Game Launcher")
+        }
+        self.executable_path.set(default_paths.get(platform, ""))

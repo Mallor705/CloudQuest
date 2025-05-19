@@ -56,8 +56,11 @@ def validate_path(path, path_type='File'):
     """
     path_obj = Path(path)
     
-    if not path_obj.exists():
-        return False
+    if os.name == 'nt' and not path_obj.exists():
+        virtual_store = Path(os.environ['LOCALAPPDATA']) / "VirtualStore"
+        virtual_path = virtual_store / path_obj.relative_to(Path(path).anchor)
+        if virtual_path.exists():
+            return True
     
     if path_type == 'File' and not path_obj.is_file():
         return False
