@@ -79,7 +79,7 @@ def get_wikitext_by_page_id(page_id):
         )
         response.raise_for_status()
         data = response.json()
-        
+
         if "parse" in data and "wikitext" in data["parse"] and "*" in data["parse"]["wikitext"]:
             write_log(f"PCGamingWiki: Wikitext obtido para PageID {page_id}")
             return data["parse"]["wikitext"]["*"]
@@ -219,6 +219,8 @@ def extract_save_game_locations(wikitext):
     for os_name in results["save_locations"]:
         processed_paths = []
         for path in results["save_locations"][os_name]:
+            # Logar o caminho bruto do wikitext antes de processar
+            write_log(f"Caminho bruto do wikitext ({os_name}): {path}", level='DEBUG')
             # Extrair e processar caminho completo, incluindo templates aninhados
             processed_path = process_wiki_path(path)
             
@@ -355,9 +357,8 @@ def expand_windows_path(path, steam_uid=None):
             path = path.replace('<USERID>', steam_uid)
             path = path.replace('<userid>', steam_uid)
         else:
-            path = path.replace('<USERID>', '*')
-            path = path.replace('<userid>', '*')
-        
+            path = path.replace('<USERID>', '<USERID>')
+            path = path.replace('<userid>', '<userid>')
         # Usar a expansão nativa do sistema
         expanded = os.path.expandvars(path)
         
@@ -413,20 +414,6 @@ def expand_unix_path(path, steam_uid=None):
         path = path.replace('drive_c/users/steamuser', 'pfx/drive_c/users/steamuser')
     
     return os.path.expandvars(path)
-
-    # if not path:
-    #     return path
-    
-    # try:
-    #     # Expandir ~ para home
-    #     if '~' in path:
-    #         path = path.replace('~', str(Path.home()))
-        
-    #     # Expandir variáveis de ambiente
-    #     return os.path.expandvars(path)
-    # except Exception as e:
-    #     write_log(f"Erro ao expandir caminho Unix: {str(e)}", level='WARNING')
-    #     return path
 
 def get_current_os_save_paths(save_locations, steam_uid=None):
     """
