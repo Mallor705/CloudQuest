@@ -1,0 +1,2 @@
+[console_scripts]
+questconfig = QuestConfig.ui.app:main

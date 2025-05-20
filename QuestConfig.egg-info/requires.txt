@@ -1,0 +1,6 @@
+requests
+psutil
+watchdog
+
+[:platform_system == "Windows"]
+pywin32

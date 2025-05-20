@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 """
-Módulo para detecção de locais de save com interface de seleção manual.
+Serviço para detecção de locais de saves de jogos.
 """
 
 import os
@@ -10,40 +7,47 @@ import platform
 import time
 import subprocess
 from pathlib import Path
+from typing import List, Optional
+import psutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from collections import defaultdict
-from .logger import write_log
-import psutil
-import time
 
-def wait_for_process_end(process_name):
+from ..interfaces.services import SaveDetectorService
+from ..utils.logger import write_log
+
+
+def wait_for_process_end(process_name: str) -> None:
+    """Espera o processo terminar."""
     while True:
         found = any(proc.name().lower() == process_name.lower() for proc in psutil.process_iter())
         if not found:
             break
         time.sleep(2)
-class SaveGameDetector:
-    def __init__(self, executable_path):
+
+
+class SaveDetectorService:
+    """Serviço de detecção de saves."""
+    
+    def __init__(self, executable_path: str):
         self.executable_path = Path(executable_path)
         self.detected_paths = []
         self.observer = None
         self.start_time = None
-
+    
     class ChangeHandler(FileSystemEventHandler):
         def __init__(self, detector):
             self.detector = detector
-            self.ignored_events = 2  # Ignorar eventos iniciais
-
+            
         def on_any_event(self, event):
             if time.time() - self.detector.start_time < 2:
                 return
 
-            path = Path(event.src_path).parent  # Pegar diretório pai
+            path = Path(event.src_path).parent
             if path.is_dir():
                 self.detector.detected_paths.append(str(path.resolve()))
-
-    def get_common_save_dirs(self):
+    
+    def get_common_save_dirs(self) -> List[Path]:
+        """Retorna diretórios comuns para saves."""
         common_dirs = [
             Path(os.environ['APPDATA']),
             Path(os.environ['LOCALAPPDATA']),
@@ -51,15 +55,15 @@ class SaveGameDetector:
             Path(os.environ['USERPROFILE']) / "Saved Games",
             Path(os.environ['USERPROFILE']) / "Jogos Salvos",
             self.executable_path.parent,
-            # Novos caminhos específicos da Steam
-            Path(os.environ['PROGRAMFILES(X86)']) / "Steam/userdata",
+            # Caminhos específicos da Steam
+            Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "Steam/userdata",
             Path(os.environ['LOCALAPPDATA']) / "VirtualStore",
-            Path(os.environ['PROGRAMFILES(X86)']) / "Steam/steamapps/common",
+            Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "Steam/steamapps/common",
             # Caminhos para outros clientes
-            Path(os.environ['PROGRAMFILES']) / "Epic Games",
-            Path(os.environ['PROGRAMFILES(X86)']) / "GOG Galaxy/Games",
-            Path(os.environ['PROGRAMFILES']) / "EA Games",
-            Path(os.environ['PROGRAMFILES(X86)']) / "Ubisoft/Ubisoft Game Launcher"
+            Path(os.environ.get('PROGRAMFILES', 'C:/Program Files')) / "Epic Games",
+            Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "GOG Galaxy/Games",
+            Path(os.environ.get('PROGRAMFILES', 'C:/Program Files')) / "EA Games",
+            Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "Ubisoft/Ubisoft Game Launcher"
         ]
         
         # Adicionar caminhos específicos do Linux via Proton
@@ -70,14 +74,16 @@ class SaveGameDetector:
             ])
             
         return common_dirs
-
-    def filter_system_paths(self, paths):
+    
+    def filter_system_paths(self, paths: List[str]) -> List[str]:
+        """Filtra caminhos do sistema."""
         system_paths = {
-            str(Path(os.environ['WINDIR'])),
-            str(Path(os.environ['PROGRAMFILES'])),
-            str(Path(os.environ['TEMP'])),
-            str(Path(os.environ['SYSTEMROOT']))
+            str(Path(os.environ.get('WINDIR', 'C:/Windows'))),
+            str(Path(os.environ.get('PROGRAMFILES', 'C:/Program Files'))),
+            str(Path(os.environ.get('TEMP', 'C:/Temp'))),
+            str(Path(os.environ.get('SYSTEMROOT', 'C:/Windows')))
         }
+        
         # Diretórios extras a serem ignorados
         ignore_substrings = [
             r"AppData\Local\Temp",
@@ -87,20 +93,11 @@ class SaveGameDetector:
             r"AppData\Local\Microsoft",
             r"AppData\Local\Backup",
             r"AppData\Local\CEF",
-            r"AppData\Local\AMD",
-            r"AppData\Local\AMD_Common",
-            r"AppData\Local\AMDIdentifyWindow",
-            r"AppData\Local\ATI",
-            r"AppData\Local\Backup",
             r"AppData\Local\NVIDIA",
-            r"AppData\Local\NVIDIA Corporation",
-            r"AppData\Local\NVIDIA Web Helper",
-            r"AppData\Local\Steam",
-            r"AppData\Roaming\Code",
-            r"AppData\Local\D3DSCache",
-            r"AppData\Local\Publisher"
+            r"AppData\Local\Steam"
         ]
-        def should_ignore(p):
+        
+        def should_ignore(p: str) -> bool:
             # Ignora se for um dos paths do sistema
             if any(sp in p for sp in system_paths):
                 return True
@@ -111,8 +108,9 @@ class SaveGameDetector:
             return False
 
         return [p for p in paths if not should_ignore(p)]
-
-    def detect_save_location(self):
+    
+    def detect_save_location(self) -> List[str]:
+        """Detecta possíveis localizações de saves para um jogo."""
         try:
             self.start_time = time.time()
             self.detected_paths = []
@@ -142,6 +140,7 @@ class SaveGameDetector:
             self.observer.join()
 
             # Processar resultados
+            from collections import defaultdict
             path_counts = defaultdict(int)
             for path in self.detected_paths:
                 path_counts[path] += 1
@@ -149,7 +148,7 @@ class SaveGameDetector:
             # Ordenar por frequência e data de modificação
             sorted_paths = sorted(
                 path_counts.keys(),
-                key=lambda x: (-path_counts[x], -Path(x).stat().st_mtime)
+                key=lambda x: (-path_counts[x], -Path(x).stat().st_mtime if Path(x).exists() else 0)
             )
 
             # Filtrar paths do sistema e limitar a 20 resultados
@@ -157,9 +156,6 @@ class SaveGameDetector:
 
             return filtered_paths
 
-        except subprocess.TimeoutExpired:
-            write_log("Tempo de execução do jogo excedido", level='WARNING')
-            return []
         except Exception as e:
             write_log(f"Erro na detecção de saves: {str(e)}", level='ERROR')
-            return []
+            return [] 

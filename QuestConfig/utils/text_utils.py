@@ -2,47 +2,74 @@
 # -*- coding: utf-8 -*-
 
 """
-Utilitários para manipulação de texto do QuestConfig.
-Fornece funções para normalização e processamento de texto.
+Utilitários para manipulação de texto.
 """
 
 import re
 import unicodedata
+from typing import Optional
 
-def remove_accents(input_string):
+
+def remove_accents(text: str) -> str:
     """
-    Remove acentos de uma string
+    Remove acentos de um texto.
     
     Args:
-        input_string (str): String com acentos
+        text: Texto com acentos
         
     Returns:
-        str: String sem acentos
+        str: Texto sem acentos
     """
-    normalized = unicodedata.normalize('NFKD', input_string)
-    return ''.join([c for c in normalized if not unicodedata.combining(c)])
+    normalized = unicodedata.normalize('NFD', text)
+    return ''.join(c for c in normalized if not unicodedata.combining(c))
 
-def normalize_game_name(game_name):
+
+def normalize_game_name(game_name: str) -> str:
     """
-    Normaliza o nome do jogo para uso em arquivos e caminhos
+    Normaliza o nome do jogo para uso interno.
     
     Args:
-        game_name (str): Nome original do jogo
+        game_name: Nome do jogo
         
     Returns:
         str: Nome normalizado
     """
     # Remove acentos
-    normalized = remove_accents(game_name)
+    name_no_accents = remove_accents(game_name)
     
-    # Substitui caracteres especiais por underscore
-    normalized = re.sub(r'[^\w\s-]', '_', normalized)
+    # Remove caracteres especiais
+    name_clean = re.sub(r'[^\w\s-]', '_', name_no_accents)
     
     # Substitui espaços por underscore
-    normalized = re.sub(r'\s+', '_', normalized)
+    name_clean = re.sub(r'\s+', '_', name_clean)
     
-    return normalized
+    # Remove underscores múltiplos
+    name_clean = re.sub(r'_+', '_', name_clean)
+    
+    # Remove underscores no início e fim
+    name_clean = name_clean.strip('_')
+    
+    return name_clean
 
-def sanitize_process_name(process_name):
-    """Remove a extensão .exe de uma string se presente"""
-    return process_name.replace('.exe', '').strip()
+
+def sanitize_process_name(process_name: Optional[str]) -> str:
+    """
+    Sanitiza o nome do processo.
+    
+    Args:
+        process_name: Nome do processo
+        
+    Returns:
+        str: Nome do processo sanitizado
+    """
+    if not process_name:
+        return ""
+    
+    # Remove espaços e garante extensão .exe
+    sanitized = process_name.strip()
+    
+    # Adiciona extensão .exe se não existir
+    if not sanitized.lower().endswith('.exe'):
+        sanitized += '.exe'
+    
+    return sanitized
