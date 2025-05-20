@@ -1,4 +1,6 @@
 profiles/
+dist/
+build/
 logs/
 __pycache__/
 cloudquest.exe

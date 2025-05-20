@@ -16,6 +16,14 @@ from pathlib import Path
 from CloudQuest.config.settings import COLORS, NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT, ICONS_DIR
 from CloudQuest.utils.logger import log
 
+# Definir BASE_DIR para usado no _find_icon_path
+if getattr(sys, 'frozen', False):
+    # Executando como aplicativo compilado
+    BASE_DIR = Path(sys._MEIPASS)
+else:
+    # Executando como script
+    BASE_DIR = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent
+
 class NotificationWindow:
     """Janela de notificacao personalizada."""
     
@@ -94,10 +102,11 @@ class NotificationWindow:
             # Executando como aplicativo compilado
             base_dir = Path(sys.executable).parent
             
-            # Caminhos possíveis em ordem de prioridade
+            # Caminhos possíveis em ordem de prioridade (priorizar pasta externa)
             possible_dirs = [
-                base_dir / "_internal" / "assets" / "icons",
-                base_dir / "assets" / "icons",
+                base_dir / "assets" / "icons",  # Primeira opção: pasta ao lado do EXE
+                base_dir / "icons",
+                BASE_DIR / "assets" / "icons",
             ]
         else:
             # Executando como script

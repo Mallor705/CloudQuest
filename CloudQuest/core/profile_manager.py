@@ -45,35 +45,49 @@ def load_profile(profile_name):
             'cloud_dir': 'CloudDir'
         }
         
+        # Lista de pares de chaves obrigatórias (formato antigo, formato novo)
+        required_key_pairs = [
+            ('name', 'GameName'),
+            ('executable_path', 'ExecutablePath'),
+            ('process_name', 'GameProcess'),
+            ('save_location', 'LocalDir'),
+            ('cloud_remote', 'CloudRemote'),
+            ('cloud_dir', 'CloudDir')
+        ]
+        
         # Normaliza as chaves do perfil
         normalized_profile = {}
-        for key, value in profile.items():
-            normalized_key = key_mapping.get(key, key)  # Usa a chave mapeada ou mantém a original
-            normalized_profile[normalized_key] = value
         
+        # Primeiro copia todas as chaves existentes para o perfil normalizado
+        for key, value in profile.items():
+            normalized_profile[key] = value
+            
+            # Se esta é uma chave antiga, adiciona também com o novo nome
+            if key in key_mapping:
+                normalized_profile[key_mapping[key]] = value
+                
         # Se não há RclonePath, adiciona um valor padrão
         if 'RclonePath' not in normalized_profile:
             normalized_profile['RclonePath'] = "C:\\Program Files\\rclone\\rclone.exe"
             log.info(f"RclonePath não encontrado, usando valor padrão")
             
-        # Lista todas as chaves obrigatorias que um perfil deve ter
-        required_keys = [
-            'GameName',
-            'ExecutablePath', 
-            'GameProcess', 
-            'RclonePath',
-            'CloudRemote',
-            'CloudDir',
-            'LocalDir'
-        ]
+        # Verifica se todas as chaves obrigatórias estão presentes
+        missing_keys = []
+        for old_key, new_key in required_key_pairs:
+            # Se nem a chave antiga nem a nova estão presentes, é um erro
+            if old_key not in profile and new_key not in profile:
+                missing_keys.append(f"{old_key}/{new_key}")
         
-        missing_keys = [key for key in required_keys if key not in normalized_profile]
-        
+        # Adiciona RclonePath à verificação
+        if 'RclonePath' not in normalized_profile:
+            missing_keys.append("RclonePath")
+            
         if missing_keys:
             raise ValueError(f"Chaves obrigatorias ausentes no perfil: {', '.join(missing_keys)}")
             
         # Garantir que o diretorio local exista
-        local_dir = Path(normalized_profile['LocalDir'])
+        local_dir_key = 'LocalDir' if 'LocalDir' in normalized_profile else 'save_location'
+        local_dir = Path(normalized_profile[local_dir_key])
         if not local_dir.exists():
             log.info(f"Criando diretorio local: {local_dir}")
             local_dir.mkdir(parents=True, exist_ok=True)

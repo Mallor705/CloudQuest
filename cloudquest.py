@@ -190,8 +190,9 @@ def compile_cloudquest():
     
     # Adicionar recursos somente se existirem
     resource_paths = [
-        (str(current_dir / "assets" / "icons" / "*.ico"), "assets/icons"),
-        (str(current_dir / "assets" / "icons" / "*.png"), "assets/icons"),
+        # Os ícones NÃO devem ser incluídos no executável
+        # (str(current_dir / "assets" / "icons" / "*.ico"), "assets/icons"),
+        # (str(current_dir / "assets" / "icons" / "*.png"), "assets/icons"),
         # (str(current_dir / "CloudQuest" / "config" / "profiles"), "CloudQuest/config/profiles"),
         # (str(current_dir / "config" / "profiles"), "config/profiles"),
         (str(current_dir / "CloudQuest"), "CloudQuest"),
@@ -215,9 +216,10 @@ def compile_cloudquest():
     pyinstaller_args = [
         "pyinstaller",
         "--noconfirm",
+        "--noupx",
         "--clean",
         "--name=CloudQuest",
-        "--onedir",  # Criar diretório com arquivos (em vez de um único executável)
+        "--onefile",  # Criar um único executável
     ]
     
     # Adicionar o ícone se encontrado
@@ -297,6 +299,7 @@ def compile_cloudquest():
         "win32process",
         "win32service",
         "win32serviceutil",
+        "winshell",
     ]
     
     # Combinar todos os módulos para importação
@@ -322,8 +325,25 @@ def compile_cloudquest():
     
     try:
         subprocess.run(pyinstaller_args, check=True)
+        
+        # Após compilar, copiar os ícones para o diretório de distribuição
+        print("\nCopiando ícones para o diretório de distribuição...")
+        
+        # Criar diretório de ícones ao lado do executável
+        icons_dir = dist_dir / "assets" / "icons"
+        icons_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Diretório de ícones criado: {icons_dir}")
+        
+        # Copiar todos os ícones PNG e ICO
+        for icon_file in glob.glob(str(current_dir / "assets" / "icons" / "*.png")) + \
+                          glob.glob(str(current_dir / "assets" / "icons" / "*.ico")):
+            icon_path = Path(icon_file)
+            dest_path = icons_dir / icon_path.name
+            shutil.copy2(icon_path, dest_path)
+            print(f"Ícone copiado: {icon_path.name}")
+        
         print("\nCompilação concluída com sucesso!")
-        print(f"Executável gerado em: {dist_dir / 'CloudQuest' / 'CloudQuest.exe'}")
+        print(f"Executável gerado em: {dist_dir / 'CloudQuest.exe'}")
     
     except subprocess.CalledProcessError as e:
         print(f"\nErro durante a compilação: {e}")
