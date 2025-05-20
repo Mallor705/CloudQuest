@@ -34,6 +34,7 @@ class ShortcutCreatorService:
             
             game_name = shortcut_data.get('name', '')
             game_name_internal = shortcut_data.get('internal_name', '')
+            game_executable = shortcut_data.get('executable_path', '')
             
             if not game_name or not game_name_internal or not self.batch_path:
                 write_log("Dados insuficientes para criar atalho", level='ERROR')
@@ -46,14 +47,31 @@ class ShortcutCreatorService:
             # Criar atalho
             shell = win32com.client.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortCut(str(shortcut_path))
-            shortcut.TargetPath = self.batch_path
-            shortcut.Arguments = f'game="{game_name_internal}"'
-            shortcut.WorkingDirectory = os.path.dirname(self.batch_path)
+            shortcut.TargetPath = str(self.batch_path) if isinstance(self.batch_path, Path) else self.batch_path
+            shortcut.Arguments = f'"{game_name_internal}"'
             
-            # Definir icone se disponivel
-            icon_path = shortcut_data.get('icon_path', '')
-            if icon_path and os.path.isfile(icon_path):
-                shortcut.IconLocation = icon_path
+            # Usar o diretório do executável do jogo como "Iniciar em:"
+            if game_executable:
+                game_exe_path = str(game_executable) if isinstance(game_executable, Path) else game_executable
+                working_dir = os.path.dirname(game_exe_path)
+                shortcut.WorkingDirectory = working_dir
+                write_log(f"Diretório de trabalho definido como: {working_dir}")
+            else:
+                # Fallback para o diretório do CloudQuest se o executável do jogo não estiver definido
+                working_dir = os.path.dirname(str(self.batch_path) if isinstance(self.batch_path, Path) else self.batch_path)
+                shortcut.WorkingDirectory = working_dir
+                write_log(f"Usando diretório do CloudQuest como fallback: {working_dir}")
+            
+            # Usar o ícone do executável do jogo
+            if game_executable and os.path.isfile(str(game_executable)):
+                shortcut.IconLocation = f"{str(game_executable)},0"
+                write_log(f"Usando ícone do executável do jogo: {game_executable}")
+            else:
+                # Fallback para o ícone especificado ou nenhum
+                icon_path = shortcut_data.get('icon_path', '')
+                if icon_path and os.path.isfile(str(icon_path)):
+                    shortcut.IconLocation = str(icon_path)
+                    write_log(f"Usando ícone alternativo: {icon_path}")
             
             # Salvar atalho
             shortcut.save()
