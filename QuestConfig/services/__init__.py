@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Factory para serviços.
-Fornece métodos para instanciar serviços com as dependências adequadas.
+Factory para servicos.
+Fornece metodos para instanciar servicos com as dependencias adequadas.
 """
 
 from pathlib import Path
@@ -15,23 +17,23 @@ from .shortcut import ShortcutCreatorService
 
 
 class ServiceFactory:
-    """Factory para criar instâncias de serviços."""
+    """Factory para criar instancias de servicos."""
     
     @staticmethod
     def create_config_service(app_paths: Dict[str, Path]) -> ConfigService:
-        """Cria uma instância do serviço de configuração."""
+        """Cria uma instancia do servico de configuracao."""
         return AppConfigService(app_paths)
     
     @staticmethod
     def create_game_info_service(service_name: str = "steam") -> GameInfoService:
         """
-        Cria uma instância do serviço de informações de jogos.
+        Cria uma instancia do servico de informacoes de jogos.
         
         Args:
-            service_name: Nome do serviço ('steam' ou 'pcgamingwiki')
+            service_name: Nome do servico ('steam' ou 'pcgamingwiki')
             
         Returns:
-            Serviço de informações de jogos
+            Servico de informacoes de jogos
         """
         if service_name.lower() == "pcgamingwiki":
             return PCGamingWikiService()
@@ -41,13 +43,13 @@ class ServiceFactory:
     @staticmethod
     def create_save_detector_service(executable_path: Optional[str] = None) -> SaveDetectorService:
         """
-        Cria uma instância do serviço detector de saves.
+        Cria uma instancia do servico detector de saves.
         
         Args:
-            executable_path: Caminho para o executável do jogo
+            executable_path: Caminho para o executavel do jogo
             
         Returns:
-            Um objeto SaveDetectorService ou None se não for possível criar
+            Um objeto SaveDetectorService ou None se nao for possivel criar
         """
         if executable_path:
             return SaveDetectorServiceImpl(executable_path)
@@ -55,5 +57,5 @@ class ServiceFactory:
     
     @staticmethod
     def create_shortcut_service(batch_path: Optional[Path] = None) -> ShortcutService:
-        """Cria uma instância do serviço de criação de atalhos."""
+        """Cria uma instancia do servico de criacao de atalhos."""
         return ShortcutCreatorService(batch_path) 

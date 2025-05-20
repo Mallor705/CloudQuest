@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# CloudQuest - Interface de notificações personalizadas
+# -*- coding: utf-8 -*-
+"""
+CloudQuest - Interface de notificacoes personalizadas.
+"""
 
 import os
 import sys
@@ -10,36 +13,36 @@ from PIL import Image, ImageTk
 import time
 from pathlib import Path
 
-from config.settings import COLORS, NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT, ICONS_DIR
-from utils.logger import log
+from CloudQuest.config.settings import COLORS, NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT, ICONS_DIR
+from CloudQuest.utils.logger import log
 
 class NotificationWindow:
-    """Janela de notificação personalizada."""
+    """Janela de notificacao personalizada."""
     
     def __init__(self, title, message, game_name, direction="down", notification_type="info"):
         """
-        Inicializa a janela de notificação.
+        Inicializa a janela de notificacao.
         
         Args:
-            title (str): Título da notificação
-            message (str): Mensagem da notificação
+            title (str): Titulo da notificacao
+            message (str): Mensagem da notificacao
             game_name (str): Nome do jogo
-            direction (str): Direção da sincronização ('down' ou 'up')
-            notification_type (str): Tipo da notificação ('info' ou 'error')
+            direction (str): Direcao da sincronizacao ('down' ou 'up')
+            notification_type (str): Tipo da notificacao ('info' ou 'error')
         """
         self.root = tk.Tk()
         self.root.withdraw()  # Esconde a janela principal
         self.root.title("CloudQuest Notification")
         
-        # Configurações da janela
-        self.root.overrideredirect(True)  # Remove bordas e título
+        # Configuracoes da janela
+        self.root.overrideredirect(True)  # Remove bordas e titulo
         self.root.geometry(f"{NOTIFICATION_WIDTH}x{NOTIFICATION_HEIGHT}")
         self.root.configure(bg=self._rgb_to_hex(COLORS["background"]))
         
         # Garantir que a janela fique sempre no topo
         self.root.attributes("-topmost", True)
         
-        # Em Windows, configurações adicionais para transparência
+        # Em Windows, configuracoes adicionais para transparencia
         if sys.platform == "win32":
             self.root.attributes("-transparentcolor", "")
             self.root.wm_attributes("-toolwindow", True)
@@ -47,7 +50,7 @@ class NotificationWindow:
         # Posicionamento na tela (canto inferior direito)
         self._position_window()
         
-        # Configuração do conteúdo
+        # Configuracao do conteudo
         self._setup_ui(title, message, game_name, direction, notification_type)
         
         # Mostrar a janela com efeito de fade-in
@@ -55,12 +58,12 @@ class NotificationWindow:
         self.root.deiconify()
         self._fade_in()
         
-        # Configuração para fechar a janela
+        # Configuracao para fechar a janela
         self.closed = False
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         
-        # Iniciar loop de eventos de forma assíncrona
-        self.root.after(100, self._update_loop)  # Novo método
+        # Iniciar loop de eventos de forma assincrona
+        self.root.after(100, self._update_loop)  # Novo metodo
     
     def _rgb_to_hex(self, rgb):
         """Converte RGB para formato hexadecimal."""
@@ -76,31 +79,60 @@ class NotificationWindow:
         
         self.root.geometry(f"+{x_position}+{y_position}")
     
+    def _find_icon_path(self, icon_name):
+        """
+        Localiza um ícone no diretório correto.
+        
+        Args:
+            icon_name (str): Nome do arquivo de ícone
+        
+        Returns:
+            Path: Caminho do arquivo de ícone ou None se não encontrado
+        """
+        # Caminho da aplicação atual
+        if getattr(sys, 'frozen', False):
+            # Executando como aplicativo compilado
+            base_dir = Path(sys.executable).parent
+            
+            # Caminhos possíveis em ordem de prioridade
+            possible_dirs = [
+                base_dir / "_internal" / "assets" / "icons",
+                base_dir / "assets" / "icons",
+            ]
+        else:
+            # Executando como script
+            possible_dirs = [
+                Path("assets") / "icons",
+                ICONS_DIR
+            ]
+        
+        # Buscar o arquivo em todos os diretórios possíveis
+        for dir_path in possible_dirs:
+            icon_path = dir_path / icon_name
+            if icon_path.exists():
+                log.debug(f"Ícone encontrado: {icon_path}")
+                return icon_path
+        
+        log.warning(f"Ícone não encontrado: {icon_name}")
+        return None
+    
     def _setup_ui(self, title, message, game_name, direction, notification_type):
-        """Configura os elementos visuais da notificação."""
+        """Configura os elementos visuais da notificacao."""
         # Frame principal com gradiente
         self.frame = tk.Frame(self.root, bg=self._rgb_to_hex(COLORS["background"]), width=NOTIFICATION_WIDTH, height=NOTIFICATION_HEIGHT)
         self.frame.pack(fill=tk.BOTH, expand=True)
         self.frame.pack_propagate(False)  # Impede que o frame se redimensione
         
-        # Determinar ícones baseado no tipo e direção
+        # Determinar icones baseado no tipo e direcao
         icon_prefix = "error_" if notification_type == "error" else ""
         icon_name = f"{icon_prefix}{'down' if direction == 'down' else 'up'}.png"
         bg_name = f"{icon_prefix}{'down' if direction == 'down' else 'up'}_background.png"
         
-        icon_path = ICONS_DIR / icon_name
-        bg_path = ICONS_DIR / bg_name
+        # Buscar caminhos de icones usando o metodo melhorado
+        icon_path = self._find_icon_path(icon_name)
+        bg_path = self._find_icon_path(bg_name)
         
-        # Verificar se os ícones existem
-        if not icon_path.exists():
-            log.warning(f"Ícone não encontrado: {icon_path}")
-            icon_path = None
-        
-        if not bg_path.exists():
-            log.warning(f"Background não encontrado: {bg_path}")
-            bg_path = None
-        
-        # Adicionar ícone (se existir)
+        # Adicionar icone (se existir)
         if icon_path:
             try:
                 icon_img = Image.open(icon_path)
@@ -108,10 +140,12 @@ class NotificationWindow:
                 icon_photo = ImageTk.PhotoImage(icon_img)
                 
                 icon_label = tk.Label(self.frame, image=icon_photo, bg=self._rgb_to_hex(COLORS["background"]))
-                icon_label.image = icon_photo  # Manter referência
+                icon_label.image = icon_photo  # Manter referencia
                 icon_label.place(x=10, y=15)
             except Exception as e:
-                log.error(f"Erro ao carregar ícone: {e}")
+                log.error(f"Erro ao carregar icone {icon_path}: {e}")
+        else:
+            log.warning(f"Nao foi possivel encontrar o icone: {icon_name}")
         
         # Adicionar background (se existir)
         if bg_path:
@@ -121,12 +155,14 @@ class NotificationWindow:
                 bg_photo = ImageTk.PhotoImage(bg_img)
                 
                 bg_label = tk.Label(self.frame, image=bg_photo, bg=self._rgb_to_hex(COLORS["background"]))
-                bg_label.image = bg_photo  # Manter referência
+                bg_label.image = bg_photo  # Manter referencia
                 bg_label.place(x=201, y=-4)
             except Exception as e:
-                log.error(f"Erro ao carregar background: {e}")
+                log.error(f"Erro ao carregar background {bg_path}: {e}")
+        else:
+            log.warning(f"Nao foi possivel encontrar o background: {bg_name}")
         
-        # Adicionar título
+        # Adicionar titulo
         title_label = tk.Label(
             self.frame, 
             text="CloudQuest",
@@ -147,7 +183,7 @@ class NotificationWindow:
         game_label.place(x=75, y=30)
         
         # Adicionar mensagem de status
-        # Determinar mensagem de status com base no tipo e direção
+        # Determinar mensagem de status com base no tipo e direcao
         if notification_type == "error":
             status_message = "Falha no download!" if direction == "down" else "Falha no upload!"
             status_color = self._rgb_to_hex(COLORS["error"])
@@ -189,17 +225,17 @@ class NotificationWindow:
                 self.root.update()
                 self.root.after(100, self._update_loop)  # Reagendar
         except Exception as e:
-            log.error(f"Erro no loop de eventos da notificação: {e}")
+            log.error(f"Erro no loop de eventos da notificacao: {e}")
     
     def close(self):
-        """Fecha a janela de notificação."""
+        """Fecha a janela de notificacao."""
         if not self.closed:
             try:
                 self._fade_out()
                 self.root.destroy()
                 self.closed = True
             except Exception as e:
-                log.error(f"Erro ao fechar notificação: {e}")
+                log.error(f"Erro ao fechar notificacao: {e}")
                 # Tentar destruir diretamente em caso de erro
                 try:
                     self.root.destroy()
@@ -210,17 +246,17 @@ class NotificationWindow:
 
 def show_notification(title, message, game_name, direction="down", notification_type="info"):
     """
-    Mostra uma notificação personalizada ao usuário.
+    Mostra uma notificacao personalizada ao usuario.
     
     Args:
-        title (str): Título da notificação
-        message (str): Mensagem da notificação
+        title (str): Titulo da notificacao
+        message (str): Mensagem da notificacao
         game_name (str): Nome do jogo
-        direction (str): Direção da sincronização ('down' para download, 'up' para upload)
-        notification_type (str): Tipo da notificação ('info' ou 'error')
+        direction (str): Direcao da sincronizacao ('down' para download, 'up' para upload)
+        notification_type (str): Tipo da notificacao ('info' ou 'error')
         
     Returns:
-        NotificationWindow: Objeto da janela de notificação ou None em caso de erro
+        NotificationWindow: Objeto da janela de notificacao ou None em caso de erro
     """
     try:
         notification = NotificationWindow(
@@ -232,5 +268,5 @@ def show_notification(title, message, game_name, direction="down", notification_
         )
         return notification
     except Exception as e:
-        log.error(f"Erro ao criar notificação: {e}", exc_info=True)
+        log.error(f"Erro ao criar notificacao: {e}", exc_info=True)
         return None

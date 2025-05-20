@@ -1,8 +1,89 @@
 # CloudQuest
 
-Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um diretório local e um armazenamento em nuvem, utilizando o **rclone**.
+CloudQuest é uma aplicação Python para configurar jogos e sincronizar seus arquivos de salvamento usando Rclone.
 
-*Sincronize seus saves de jogos com a nuvem de forma transparente*
+## Sobre a aplicação
+
+CloudQuest permite que você sincronize arquivos de salvamento de jogos entre múltiplos dispositivos usando o serviço de nuvem de sua preferência via Rclone. A aplicação agora integra dois componentes em um único executável:
+
+1. **Interface de Configuração**: Interface gráfica para configurar jogos e definir locais de salvamento
+2. **Sincronizador de Saves**: Responsável por sincronizar os saves antes e depois de jogar
+
+## Como usar
+
+### Executando a aplicação
+
+A aplicação pode ser executada de várias maneiras:
+
+1. **Modo de Configuração**:
+   ```
+   CloudQuest.exe --config
+   ```
+   ou
+   ```
+   CloudQuest.exe -c
+   ```
+   Isso inicia a interface de configuração para gerenciar seus jogos.
+
+2. **Sincronizar e Jogar** (com perfil já configurado):
+   ```
+   CloudQuest.exe nome_do_perfil
+   ```
+   Isso sincroniza o jogo especificado, executa-o e depois sincroniza novamente.
+
+3. **Modo Interativo** (sem parâmetros):
+   ```
+   CloudQuest.exe
+   ```
+   Se não for especificado um perfil, a aplicação iniciará a interface de configuração.
+
+### Fluxo de uso
+
+1. Execute a aplicação em modo de configuração (`CloudQuest.exe --config`)
+2. Configure seus jogos:
+   - Adicione o caminho executável do jogo
+   - Defina o local dos arquivos de salvamento
+   - Configure o diretório na nuvem onde os saves serão armazenados
+3. Salve a configuração (isso criará um perfil)
+4. Para jogar, execute `CloudQuest.exe nome_do_jogo` ou use os atalhos criados
+
+## Requisitos
+
+- Python 3.6 ou superior (apenas para desenvolvimento)
+- Rclone instalado e configurado com pelo menos um remote
+- Windows, macOS ou Linux
+
+## Desenvolvimento
+
+### Estrutura do projeto
+
+O projeto foi organizado seguindo princípios SOLID:
+
+- **CloudQuest/**: Componente de sincronização
+  - **core/**: Lógica principal
+  - **utils/**: Utilitários
+  - **config/**: Configurações
+
+- **QuestConfig/**: Interface de configuração
+  - **core/**: Modelo de domínio e lógica de negócio
+  - **interfaces/**: Interfaces para contratos claros
+  - **services/**: Implementações de serviços
+  - **ui/**: Interface gráfica
+  - **utils/**: Utilitários
+
+### Compilando o executável
+
+Para compilar a aplicação em um único executável:
+
+```bash
+python cloudquest.py
+```
+
+Isso usará PyInstaller para gerar o executável na pasta `dist/CloudQuest/`.
+
+## Aviso
+
+CloudQuest está em desenvolvimento. Use por sua conta e risco.
 
 ---
 

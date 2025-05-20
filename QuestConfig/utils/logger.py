@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Sistema de logging para a aplicação.
+Sistema de logging para a aplicacao.
 """
 
 import os
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 
-# Configuração global
+# Configuracao global
 LOGGER = None
 LOG_FILE = None
 
@@ -22,12 +22,12 @@ def setup_logger(log_dir: Path, level: str = 'INFO') -> None:
     Configura o sistema de log.
     
     Args:
-        log_dir: Diretório para salvar os logs
-        level: Nível de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_dir: Diretorio para salvar os logs
+        level: Nivel de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
     global LOGGER, LOG_FILE
     
-    # Criar diretório de logs se não existir
+    # Criar diretorio de logs se nao existir
     log_dir.mkdir(parents=True, exist_ok=True)
     
     # Criar nome do arquivo com data
@@ -52,8 +52,8 @@ def setup_logger(log_dir: Path, level: str = 'INFO') -> None:
     LOGGER.addHandler(console_handler)
     
     # Log inicial
-    LOGGER.info(f"Iniciando sessão de log: {log_file}")
-    LOGGER.info(f"Versão QuestConfig: 1.0.0")
+    LOGGER.info(f"Iniciando sessao de log: {log_file}")
+    LOGGER.info(f"Versao QuestConfig: 1.0.0")
 
 
 def write_log(message: str, level: str = 'INFO') -> None:
@@ -62,12 +62,12 @@ def write_log(message: str, level: str = 'INFO') -> None:
     
     Args:
         message: Mensagem a ser registrada
-        level: Nível do log (INFO, WARNING, ERROR, CRITICAL, DEBUG)
+        level: Nivel do log (INFO, WARNING, ERROR, CRITICAL, DEBUG)
     """
     global LOGGER
     
     if LOGGER is None:
-        # Configuração padrão se não inicializado
+        # Configuracao padrao se nao inicializado
         setup_logger(Path.cwd() / "logs")
     
     log_method = getattr(LOGGER, level.lower(), LOGGER.info)
@@ -87,7 +87,7 @@ def get_log_file() -> Optional[Path]:
 
 def get_timestamped_message(message: str) -> str:
     """
-    Adiciona timestamp à mensagem.
+    Adiciona timestamp a mensagem.
     
     Args:
         message: Mensagem original

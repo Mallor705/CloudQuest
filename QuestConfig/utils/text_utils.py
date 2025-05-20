@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Utilitários para manipulação de texto.
+Utilitarios para manipulacao de texto.
 """
 
 import re
@@ -40,13 +40,13 @@ def normalize_game_name(game_name: str) -> str:
     # Remove caracteres especiais
     name_clean = re.sub(r'[^\w\s-]', '_', name_no_accents)
     
-    # Substitui espaços por underscore
+    # Substitui espacos por underscore
     name_clean = re.sub(r'\s+', '_', name_clean)
     
-    # Remove underscores múltiplos
+    # Remove underscores multiplos
     name_clean = re.sub(r'_+', '_', name_clean)
     
-    # Remove underscores no início e fim
+    # Remove underscores no inicio e fim
     name_clean = name_clean.strip('_')
     
     return name_clean
@@ -60,16 +60,16 @@ def sanitize_process_name(process_name: Optional[str]) -> str:
         process_name: Nome do processo
         
     Returns:
-        str: Nome do processo sanitizado sem extensão .exe
+        str: Nome do processo sanitizado sem extensao .exe
     """
     if not process_name:
         return ""
     
-    # Remove espaços e remove extensão .exe
+    # Remove espacos e remove extensao .exe
     sanitized = process_name.strip()
     
-    # Remove extensão .exe se existir
+    # Remove extensao .exe se existir
     if sanitized.lower().endswith('.exe'):
-        sanitized = sanitized[:-4]  # Remove os últimos 4 caracteres (.exe)
+        sanitized = sanitized[:-4]  # Remove os ultimos 4 caracteres (.exe)
     
     return sanitized

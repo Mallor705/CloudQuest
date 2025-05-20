@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
-Interfaces para os serviços da aplicação.
-Define os contratos que as implementações concretas devem seguir.
+Interfaces para os servicos da aplicacao.
+Define os contratos que as implementacoes concretas devem seguir.
 """
 
 from abc import ABC, abstractmethod
@@ -9,52 +11,52 @@ from pathlib import Path
 
 
 class ConfigService(Protocol):
-    """Interface para o serviço de configuração."""
+    """Interface para o servico de configuracao."""
     
     def load_rclone_remotes(self) -> List[str]:
         """Carrega os remotes configurados no Rclone"""
         ...
     
     def save_game_config(self, config_data: Dict[str, Any], profiles_dir: Path) -> Optional[Path]:
-        """Salva a configuração do jogo"""
+        """Salva a configuracao do jogo"""
         ...
     
     def load_game_config(self, game_name_internal: str, profiles_dir: Path) -> Optional[Dict[str, Any]]:
-        """Carrega a configuração de um jogo"""
+        """Carrega a configuracao de um jogo"""
         ...
     
     def get_default_values(self) -> Dict[str, Any]:
-        """Retorna valores padrão para os campos do formulário"""
+        """Retorna valores padrao para os campos do formulario"""
         ...
 
 
 class GameInfoService(Protocol):
-    """Interface para o serviço de informações de jogos."""
+    """Interface para o servico de informacoes de jogos."""
     
     def detect_appid_from_file(self, executable_path: str) -> Optional[str]:
-        """Detecta o AppID do jogo a partir de arquivos no diretório do executável"""
+        """Detecta o AppID do jogo a partir de arquivos no diretorio do executavel"""
         ...
     
     def fetch_game_info(self, app_id: str) -> Optional[Dict[str, Any]]:
-        """Consulta informações do jogo na API da plataforma"""
+        """Consulta informacoes do jogo na API da plataforma"""
         ...
     
     def get_save_location(self, app_id: str, user_id: Optional[str] = None) -> Optional[str]:
-        """Obtém o local de saves para um jogo"""
+        """Obtem o local de saves para um jogo"""
         ...
 
 
 class SaveDetectorService(Protocol):
-    """Interface para o serviço de detecção de saves."""
+    """Interface para o servico de deteccao de saves."""
     
     def detect_save_location(self) -> List[str]:
-        """Detecta possíveis localizações de saves para um jogo"""
+        """Detecta possiveis localizacoes de saves para um jogo"""
         ...
 
 
 class ShortcutService(Protocol):
-    """Interface para o serviço de criação de atalhos."""
+    """Interface para o servico de criacao de atalhos."""
     
     def create_game_shortcut(self, shortcut_data: Dict[str, Any]) -> bool:
-        """Cria um atalho para o jogo na área de trabalho"""
+        """Cria um atalho para o jogo na area de trabalho"""
         ... 

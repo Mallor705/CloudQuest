@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Ponto de entrada para executar o QuestConfig como módulo.
+Ponto de entrada para executar o QuestConfig como modulo.
 Exemplo: python -m QuestConfig
 """
 

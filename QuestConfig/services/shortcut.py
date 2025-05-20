@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
-Serviço para criação de atalhos na área de trabalho.
+Servico para criacao de atalhos na area de trabalho.
 """
 
 import os
@@ -12,17 +14,17 @@ from ..utils.logger import write_log
 
 
 class ShortcutCreatorService:
-    """Implementação do serviço de criação de atalhos."""
+    """Implementacao do servico de criacao de atalhos."""
     
     def __init__(self, batch_path: Optional[str] = None):
         self.batch_path = batch_path
     
     def create_game_shortcut(self, shortcut_data: Dict[str, Any]) -> bool:
         """
-        Cria um atalho para o jogo na área de trabalho.
+        Cria um atalho para o jogo na area de trabalho.
         
         Args:
-            shortcut_data: Dicionário com dados do jogo
+            shortcut_data: Dicionario com dados do jogo
         
         Returns:
             bool: True se o atalho foi criado com sucesso
@@ -37,7 +39,7 @@ class ShortcutCreatorService:
                 write_log("Dados insuficientes para criar atalho", level='ERROR')
                 return False
             
-            # Obter caminho da área de trabalho
+            # Obter caminho da area de trabalho
             desktop_path = Path(os.path.join(os.environ['USERPROFILE'], 'Desktop'))
             shortcut_path = desktop_path / f"{game_name}.lnk"
             
@@ -48,7 +50,7 @@ class ShortcutCreatorService:
             shortcut.Arguments = f'game="{game_name_internal}"'
             shortcut.WorkingDirectory = os.path.dirname(self.batch_path)
             
-            # Definir ícone se disponível
+            # Definir icone se disponivel
             icon_path = shortcut_data.get('icon_path', '')
             if icon_path and os.path.isfile(icon_path):
                 shortcut.IconLocation = icon_path

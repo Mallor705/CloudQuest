@@ -1,59 +1,56 @@
 #!/usr/bin/env python3
-# CloudQuest - Sistema de logging
+# -*- coding: utf-8 -*-
+"""
+CloudQuest - Sistema de logging.
+"""
 
-import os
 import logging
-import  sys
+import sys
 from datetime import datetime
 from pathlib import Path
 
-# Configuração global do logger
+# Configuracao global do logger
 log = logging.getLogger("CloudQuest")
-global_log_dir = None  # Nova variável global
 
-def setup_logger(log_dir=None):
+def setup_logger(custom_log_dir=None):
     """
-    Configura o sistema de log da aplicação.
+    Configura o sistema de log da aplicacao.
     
     Args:
-        log_dir (Path, optional): Diretório onde os logs serão salvos.
+        custom_log_dir (Path, optional): Diretorio onde os logs serao salvos.
     """
-    global global_log_dir  # Declarar a variável global
-
+    # Evitar importacao circular
+    from CloudQuest.utils.paths import APP_PATHS
+    
     if log.handlers:
-        # Se o logger já está configurado, retornar
+        # Se o logger ja esta configurado, retornar
         return
     
-    # Definir o diretório de logs
-    if log_dir is None:
-        log_dir = Path(sys.executable).parent / "logs"
+    # Definir o diretorio de logs
+    log_dir = custom_log_dir if custom_log_dir else APP_PATHS['LOGS_DIR']
     
     # Converter para Path, caso seja string
     if isinstance(log_dir, str):
         log_dir = Path(log_dir)
     
-    # Criar diretório de logs se não existir
-    if not log_dir.exists():
-        log_dir.mkdir(parents=True, exist_ok=True)
+    # Criar diretorio de logs se nao existir
+    log_dir.mkdir(parents=True, exist_ok=True)
     
     # Definir arquivo de log com timestamp para evitar conflitos
     timestamp = datetime.now().strftime("%Y%m%d")
-    log_file = log_dir / f"cloudquest.log"
-    
-    # Definir o diretório de logs global
-    global_log_dir = log_dir
+    log_file = log_dir / f"cloudquest_{timestamp}.log"
 
-    # Configuração do logger
+    # Configuracao do logger
     log.setLevel(logging.DEBUG)
     
     # Handler para arquivo
-    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+    file_handler = logging.FileHandler(log_file, mode='a', encoding='utf-8')
     file_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', 
                                        datefmt='%Y-%m-%d %H:%M:%S')
     file_handler.setFormatter(file_formatter)
     log.addHandler(file_handler)
     
-    # Handler para console (opcional, útil para debugging)
+    # Handler para console (opcional, util para debugging)
     console_handler = logging.StreamHandler()
     console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', 
                                          datefmt='%H:%M:%S')
@@ -61,6 +58,8 @@ def setup_logger(log_dir=None):
     console_handler.setLevel(logging.INFO)
     log.addHandler(console_handler)
     
-    # Log de inicialização
+    # Log de inicializacao
     log.debug(f"Logger inicializado em: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     log.debug(f"Arquivo de log: {log_file}")
+    
+    return log

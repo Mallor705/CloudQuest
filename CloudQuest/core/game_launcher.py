@@ -1,44 +1,17 @@
 #!/usr/bin/env python3
-# CloudQuest - Gerenciador de inicialização do jogo
+# -*- coding: utf-8 -*-
+"""
+CloudQuest - Gerenciador de inicializacao do jogo.
+"""
 
 import os
 import time
 import subprocess
 import psutil
-import json
-from pathlib import Path
 
-from config.settings import PROFILES_DIR
-from utils.logger import log
-from core.notification_ui import show_notification
-
-def load_profile(profile_name):
-    """Carrega as configurações do perfil do usuário."""
-    profile_path = PROFILES_DIR / f"{profile_name}.json"
-    
-    if not profile_path.exists():
-        log.error(f"Arquivo de configuração não encontrado: {profile_path}")
-        raise FileNotFoundError(f"Arquivo de configuração do usuário não encontrado: {profile_path}")
-    
-    try:
-        with open(profile_path, 'r', encoding='utf-8') as file:
-            profile = json.load(file)
-            
-        required_keys = ['ExecutablePath', 'GameProcess', 'GameName']
-        missing_keys = [key for key in required_keys if key not in profile]
-        
-        if missing_keys:
-            raise ValueError(f"Chaves obrigatórias ausentes no perfil: {', '.join(missing_keys)}")
-            
-        return profile
-    
-    except json.JSONDecodeError as e:
-        log.error(f"Erro ao processar JSON do perfil: {e}")
-        raise
-    except Exception as e:
-        log.error(f"Erro ao carregar perfil: {e}")
-        raise
-
+from CloudQuest.core.profile_manager import load_profile
+from CloudQuest.utils.logger import log
+from CloudQuest.core.notification_ui import show_notification
 
 def launch_game(profile_name):
     """
@@ -54,14 +27,14 @@ def launch_game(profile_name):
     launcher_path = profile['ExecutablePath']
     game_process_name = profile['GameProcess']
     
-    # Verificar se o executável existe
+    # Verificar se o executavel existe
     if not os.path.exists(launcher_path):
-        err_msg = f"Caminho do launcher não encontrado: {launcher_path}"
+        err_msg = f"Caminho do launcher nao encontrado: {launcher_path}"
         log.error(err_msg)
         
-        # Mostrar notificação de erro
+        # Mostrar notificacao de erro
         error_notification = show_notification(
-            title="Erro Crítico",
+            title="Erro Critico",
             message="Falha ao iniciar o jogo",
             game_name=profile.get('GameName', 'Erro'),
             notification_type="error"
@@ -77,7 +50,7 @@ def launch_game(profile_name):
         log.info(f"Iniciando launcher: {launcher_path}")
         launcher_process = subprocess.Popen(
             [launcher_path],
-            # Opções para ocultar o processo
+            # Opcoes para ocultar o processo
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
             shell=False
         )
@@ -94,7 +67,7 @@ def launch_game(profile_name):
             # Procurar pelo processo do jogo
             for proc in psutil.process_iter(['pid', 'name']):
                 try:
-                    # Verificar se o nome do processo corresponde, independente da extensão
+                    # Verificar se o nome do processo corresponde, independente da extensao
                     base_name = os.path.splitext(proc.info['name'])[0].lower()
                     if base_name == game_process_name.lower():
                         game_process = proc
@@ -107,16 +80,16 @@ def launch_game(profile_name):
                 time.sleep(1)
         
         if not game_process:
-            raise TimeoutError(f"Processo do jogo não iniciado após {timeout} segundos")
+            raise TimeoutError(f"Processo do jogo nao iniciado apos {timeout} segundos")
             
         return game_process
         
     except Exception as e:
         log.error(f"Erro ao iniciar o launcher: {str(e)}")
         
-        # Mostrar notificação de erro
+        # Mostrar notificacao de erro
         error_notification = show_notification(
-            title="Erro Crítico",
+            title="Erro Critico",
             message="Falha ao iniciar o jogo",
             game_name=profile.get('GameName', 'Erro'),
             notification_type="error"
@@ -138,13 +111,13 @@ def wait_for_game(game_process):
     log.info(f"Monitorando processo do jogo (PID: {game_process.pid})...")
     
     try:
-        # Verificar se o processo ainda está em execução
+        # Verificar se o processo ainda esta em execucao
         while game_process.is_running() and not game_process.status() == psutil.STATUS_ZOMBIE:
             # Aguardar, verificando periodicamente
             time.sleep(0.5)
             
     except psutil.NoSuchProcess:
-        log.info(f"Processo não encontrado (PID: {game_process.pid})")
+        log.info(f"Processo nao encontrado (PID: {game_process.pid})")
     except Exception as e:
         log.error(f"Erro ao monitorar processo: {str(e)}")
         

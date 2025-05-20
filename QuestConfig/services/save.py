@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
-Serviço para detecção de locais de saves de jogos.
+Servico para deteccao de locais de saves de jogos.
 """
 
 import os
@@ -26,7 +28,7 @@ def wait_for_process_end(process_name: str) -> None:
 
 
 class SaveDetectorService:
-    """Serviço de detecção de saves."""
+    """Servico de deteccao de saves."""
     
     def __init__(self, executable_path: str):
         self.executable_path = Path(executable_path)
@@ -47,7 +49,7 @@ class SaveDetectorService:
                 self.detector.detected_paths.append(str(path.resolve()))
     
     def get_common_save_dirs(self) -> List[Path]:
-        """Retorna diretórios comuns para saves."""
+        """Retorna diretorios comuns para saves."""
         common_dirs = [
             Path(os.environ['APPDATA']),
             Path(os.environ['LOCALAPPDATA']),
@@ -55,7 +57,7 @@ class SaveDetectorService:
             Path(os.environ['USERPROFILE']) / "Saved Games",
             Path(os.environ['USERPROFILE']) / "Jogos Salvos",
             self.executable_path.parent,
-            # Caminhos específicos da Steam
+            # Caminhos especificos da Steam
             Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "Steam/userdata",
             Path(os.environ['LOCALAPPDATA']) / "VirtualStore",
             Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "Steam/steamapps/common",
@@ -66,7 +68,7 @@ class SaveDetectorService:
             Path(os.environ.get('PROGRAMFILES(X86)', 'C:/Program Files (x86)')) / "Ubisoft/Ubisoft Game Launcher"
         ]
         
-        # Adicionar caminhos específicos do Linux via Proton
+        # Adicionar caminhos especificos do Linux via Proton
         if platform.system() == "Linux":
             common_dirs.extend([
                 Path.home() / ".steam/steam/steamapps/compatdata",
@@ -84,7 +86,7 @@ class SaveDetectorService:
             str(Path(os.environ.get('SYSTEMROOT', 'C:/Windows')))
         }
         
-        # Diretórios extras a serem ignorados
+        # Diretorios extras a serem ignorados
         ignore_substrings = [
             r"AppData\Local\Temp",
             r"AppData\Roaming\Microsoft",
@@ -110,7 +112,7 @@ class SaveDetectorService:
         return [p for p in paths if not should_ignore(p)]
     
     def detect_save_location(self) -> List[str]:
-        """Detecta possíveis localizações de saves para um jogo."""
+        """Detecta possiveis localizacoes de saves para um jogo."""
         try:
             self.start_time = time.time()
             self.detected_paths = []
@@ -126,7 +128,7 @@ class SaveDetectorService:
             self.observer.start()
 
             # Executar o jogo
-            write_log(f"Iniciando jogo para detecção de saves: {self.executable_path}")
+            write_log(f"Iniciando jogo para deteccao de saves: {self.executable_path}")
             process = subprocess.Popen(
                 [str(self.executable_path)],
                 cwd=str(self.executable_path.parent)
@@ -145,7 +147,7 @@ class SaveDetectorService:
             for path in self.detected_paths:
                 path_counts[path] += 1
 
-            # Ordenar por frequência e data de modificação
+            # Ordenar por frequencia e data de modificacao
             sorted_paths = sorted(
                 path_counts.keys(),
                 key=lambda x: (-path_counts[x], -Path(x).stat().st_mtime if Path(x).exists() else 0)
@@ -157,5 +159,5 @@ class SaveDetectorService:
             return filtered_paths
 
         except Exception as e:
-            write_log(f"Erro na detecção de saves: {str(e)}", level='ERROR')
+            write_log(f"Erro na deteccao de saves: {str(e)}", level='ERROR')
             return [] 

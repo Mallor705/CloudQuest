@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
-Gerenciador de configurações da aplicação.
+Gerenciador de configuracoes da aplicacao.
 """
 
 import os
@@ -14,7 +16,7 @@ from ..utils.logger import setup_logger, write_log
 
 
 class AppConfigService:
-    """Implementação do serviço de configuração."""
+    """Implementacao do servico de configuracao."""
     
     def __init__(self, app_paths: Dict[str, Path]):
         self.app_paths = app_paths
@@ -37,14 +39,14 @@ class AppConfigService:
             except Exception as e:
                 write_log(f"Falha ao ler rclone.conf: {str(e)}", level='ERROR')
         else:
-            write_log("Arquivo rclone.conf não encontrado", level='WARNING')
+            write_log("Arquivo rclone.conf nao encontrado", level='WARNING')
         
         return remotes
     
     def save_game_config(self, config_data: Dict[str, Any], profiles_dir: Path) -> Optional[Path]:
-        """Salva a configuração do jogo em um arquivo JSON."""
+        """Salva a configuracao do jogo em um arquivo JSON."""
         try:
-            # Garantir que o diretório existe
+            # Garantir que o diretorio existe
             profiles_dir.mkdir(parents=True, exist_ok=True)
             
             # Adicionar timestamp
@@ -53,46 +55,46 @@ class AppConfigService:
             # Nome do arquivo baseado no nome interno do jogo
             internal_name = config_data.get("internal_name", "unknown_game")
             
-            # Salvar arquivo de configuração
+            # Salvar arquivo de configuracao
             config_file = profiles_dir / f"{internal_name}.json"
             with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(config_data, f, indent=4, ensure_ascii=False)
             
-            write_log(f"Configurações salvas em: {config_file}")
+            write_log(f"Configuracoes salvas em: {config_file}")
             
-            # Criar diretório local se não existir
+            # Criar diretorio local se nao existir
             local_dir = Path(config_data.get("save_location", ""))
             if local_dir and not local_dir.exists() and str(local_dir).strip():
                 local_dir.mkdir(parents=True, exist_ok=True)
-                write_log(f"Diretório local criado: {local_dir}")
+                write_log(f"Diretorio local criado: {local_dir}")
             
             return config_file
         
         except Exception as e:
-            write_log(f"Erro ao salvar configuração: {str(e)}", level='ERROR')
+            write_log(f"Erro ao salvar configuracao: {str(e)}", level='ERROR')
             return None
     
     def load_game_config(self, game_name_internal: str, profiles_dir: Path) -> Optional[Dict[str, Any]]:
-        """Carrega a configuração de um jogo a partir do arquivo JSON."""
+        """Carrega a configuracao de um jogo a partir do arquivo JSON."""
         try:
             config_file = profiles_dir / f"{game_name_internal}.json"
             
             if not config_file.exists():
-                write_log(f"Arquivo de configuração não encontrado: {config_file}", level='WARNING')
+                write_log(f"Arquivo de configuracao nao encontrado: {config_file}", level='WARNING')
                 return None
             
             with open(config_file, 'r', encoding='utf-8') as f:
                 config_data = json.load(f)
             
-            write_log(f"Configuração carregada: {game_name_internal}")
+            write_log(f"Configuracao carregada: {game_name_internal}")
             return config_data
         
         except Exception as e:
-            write_log(f"Erro ao carregar configuração: {str(e)}", level='ERROR')
+            write_log(f"Erro ao carregar configuracao: {str(e)}", level='ERROR')
             return None
     
     def get_default_values(self) -> Dict[str, Any]:
-        """Retorna valores padrão para os campos do formulário."""
+        """Retorna valores padrao para os campos do formulario."""
         return {
             'rclone_path': os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), r"Rclone\rclone.exe"),
             'steam_uid': ''

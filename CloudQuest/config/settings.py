@@ -1,52 +1,34 @@
 #!/usr/bin/env python3
-# CloudQuest - Configurações globais
+# -*- coding: utf-8 -*-
+# CloudQuest - Configuracoes globais
 
-import os
-import sys
-import tempfile
-from pathlib import Path
+"""
+Configuracoes globais do CloudQuest.
+"""
 
-# Determinar diretórios da aplicação com base no modo de execução
-if getattr(sys, 'frozen', False):
-    # Executando como executável empacotado (PyInstaller)
-    BASE_DIR = Path(sys._MEIPASS)  # Diretório temporário do PyInstaller
-    APP_DIR = Path(os.path.dirname(sys.executable))  # Diretório do executável
-else:
-    # Executando como script Python normal
-    BASE_DIR = Path(__file__).resolve().parent.parent  # cloudquest/
-    APP_DIR = BASE_DIR
+from CloudQuest.utils.paths import APP_PATHS
 
-# Diretórios do projeto
-LOGS_DIR = APP_DIR / "logs"
+# Exportar caminhos da aplicacao
+BASE_DIR = APP_PATHS['BASE_DIR']
+APP_DIR = APP_PATHS['APP_DIR'] 
+LOGS_DIR = APP_PATHS['LOGS_DIR']
+PROFILES_DIR = APP_PATHS['PROFILES_DIR']
+ASSETS_DIR = APP_PATHS['ASSETS_DIR']
+ICONS_DIR = APP_PATHS['ICONS_DIR']
+TEMP_PROFILE_FILE = APP_PATHS['TEMP_PROFILE_FILE']
+TEMP_PROFILE_PATH = TEMP_PROFILE_FILE
 
-# settings.py (parte modificada)
-if getattr(sys, 'frozen', False):
-    # Executável empacotado: busca perfis no diretório do EXE (APP_DIR/config/profiles)
-    PROFILES_DIR = APP_DIR / "config" / "profiles"
-else:
-    # Modo desenvolvimento: usa a estrutura padrão do projeto
-    PROFILES_DIR = BASE_DIR / "config" / "profiles"
-    
-ASSETS_DIR = BASE_DIR / "assets"
-ICONS_DIR = ASSETS_DIR / "icons"
-
-# Criação de diretórios necessários que devem persistir (apenas no diretório APP)
-LOGS_DIR.mkdir(exist_ok=True)
-
-# Arquivo temporário para perfil
-TEMP_PROFILE_FILE = os.path.join(tempfile.gettempdir(), "cloudquest_profile.txt")
-
-# Configurações do Rclone
+# Configuracoes do Rclone
 RCLONE_TIMEOUT = 120  # segundos
 RCLONE_MAX_RETRIES = 3
 RCLONE_RETRY_WAIT = 5  # segundos
 
-# Configurações de notificação
+# Configuracoes de notificacao
 NOTIFICATION_DISPLAY_TIME = 5000  # milissegundos
 NOTIFICATION_WIDTH = 300
 NOTIFICATION_HEIGHT = 75
 
-# Configurações padrão (podem ser sobrescritas pelos perfis)
+# Configuracoes padrao (podem ser sobrescritas pelos perfis)
 DEFAULT_FONT = "Segoe UI"
 
 # Cores da UI
@@ -57,6 +39,3 @@ COLORS = {
     "text_secondary": (140, 145, 151),
     "error": (220, 50, 50),
 }
-
-# Adicione no final do settings.py
-TEMP_PROFILE_PATH = Path(TEMP_PROFILE_FILE)

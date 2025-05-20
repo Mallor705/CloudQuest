@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
-Serviço de integração com a API da Steam.
+Servico de integracao com a API da Steam.
 """
 
 import re
@@ -15,7 +17,7 @@ from .pcgamingwiki import PCGamingWikiService
 
 
 class SteamService:
-    """Implementação do serviço de informações de jogos da Steam."""
+    """Implementacao do servico de informacoes de jogos da Steam."""
     
     def __init__(self):
         self.pcgaming_wiki = PCGamingWikiService()
@@ -29,7 +31,7 @@ class SteamService:
             steam_appid_files = list(exe_folder.rglob("steam_appid.txt"))
             
             if not steam_appid_files:
-                write_log(f"Arquivo steam_appid.txt não encontrado em {exe_folder} ou subpastas", level='WARNING')
+                write_log(f"Arquivo steam_appid.txt nao encontrado em {exe_folder} ou subpastas", level='WARNING')
                 return None
             
             for steam_appid_path in steam_appid_files:
@@ -52,10 +54,10 @@ class SteamService:
     
     def fetch_game_info(self, app_id: str) -> Optional[Dict[str, Any]]:
         """
-        Consulta a API da Steam para obter informações do jogo.
+        Consulta a API da Steam para obter informacoes do jogo.
         """
         if not re.match(r'^\d+$', app_id):
-            write_log(f"AppID inválido: {app_id}", level='WARNING')
+            write_log(f"AppID invalido: {app_id}", level='WARNING')
             return None
         
         api_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&l=portuguese"
@@ -86,16 +88,16 @@ class SteamService:
                 write_log(f"Dados obtidos com sucesso para {game_name}")
                 return result
             else:
-                write_log(f"AppID {app_id} não encontrado ou dados incompletos", level='WARNING')
+                write_log(f"AppID {app_id} nao encontrado ou dados incompletos", level='WARNING')
                 return None
                 
         except Exception as e:
-            write_log(f"Falha na consulta à API Steam: {str(e)}", level='ERROR')
+            write_log(f"Falha na consulta a API Steam: {str(e)}", level='ERROR')
             return None
     
     def get_save_location(self, app_id: str, user_id: Optional[str] = None) -> Optional[str]:
         """
-        Obtém o local de saves para um jogo usando informações da PCGamingWiki.
+        Obtem o local de saves para um jogo usando informacoes da PCGamingWiki.
         """
         try:
             # Tentar obter via PCGamingWiki
@@ -105,12 +107,12 @@ class SteamService:
             if save_info and save_info.get("existing_paths"):
                 return save_info["existing_paths"][0]
             
-            # Se não encontrou caminho existente mas tem caminhos expandidos, retornar o primeiro
+            # Se nao encontrou caminho existente mas tem caminhos expandidos, retornar o primeiro
             if save_info and save_info.get("expanded_paths"):
                 return save_info["expanded_paths"][0]
             
-            # Se não encontrou via PCGamingWiki, tentar caminhos comuns
-            write_log(f"PCGamingWiki não retornou locais de save, tentando caminhos comuns", level='INFO')
+            # Se nao encontrou via PCGamingWiki, tentar caminhos comuns
+            write_log(f"PCGamingWiki nao retornou locais de save, tentando caminhos comuns", level='INFO')
             
             # Caminhos comuns para saves de jogos Steam
             common_paths = [
