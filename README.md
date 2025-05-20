@@ -1,98 +1,75 @@
-# QuestConfig
+# CloudQuest
 
-QuestConfig é uma ferramenta para configurar jogos para o CloudQuest. Permite automatizar a configuração de sincronização de saves de jogos usando o Rclone.
+Automatiza a sincronização bidirecional dos arquivos de save de jogos entre um diretório local e um armazenamento em nuvem, utilizando o **rclone**.
 
-## Recursos
+*Sincronize seus saves de jogos com a nuvem de forma transparente*
 
-- Consulta informações de jogos na Steam
-- Detecta localizações de saves automaticamente
-- Integra com o PCGamingWiki para obter informações sobre localizações de saves
-- Configura sincronização usando Rclone
-- Cria atalhos na área de trabalho para facilitar o acesso aos jogos
+---
 
-## Requisitos
+## 🌟 Recursos Principais
+### 🔄 Sincronização Bidirecional
+- Upload automático após fechar o jogo
+- Download pré-execução dos saves mais recentes
+- Suporte a qualquer serviço de nuvem via [Rclone](https://rclone.org/)
 
-- Python 3.6 ou superior
-- Bibliotecas: requests, tkinter, psutil, watchdog, pywin32 (Windows)
-- Rclone instalado e configurado no sistema
+### 🖥 Interface Inteligente
+- Configurador gráfico (`questconfig.exe`)
+- Notificações animadas com status de sincronização
+- Auto-detecção de AppID Steam
+- Gerenciamento de múltiplos perfis de jogos
+- Criação de atalhos personalizados na área de trabalho
 
-## Instalação
+### ⚙️ Núcleo Avançado
+- Monitoramento preciso de processos
+- 3 tentativas de sincronização com backoff exponencial
+- Sistema de logging detalhado com rotação automática
 
-### Método 1: Instalação em modo desenvolvimento
+## ⚙️ Pré-requisitos
+- [Rclone](https://rclone.org/) instalado e configurado com pelo menos 1 remote
+- Windows 10 ou superior
+- .NET Framework 4.8 (já incluído na maioria das instalações do Windows)
 
-```bash
-# Clonar o repositório
-git clone https://github.com/seu-usuario/CloudQuest.git
-cd CloudQuest
+## 📥 Instalação
+1. Baixe os arquivo `.zip`
+2. Extraia em um diretório permanente (ex: `C:\CloudQuest`)
+3. Execute `questconfig.exe` para começar a configurar seus jogos
 
-# Instalar em modo desenvolvimento
-pip install -e .
-
-# Executar o aplicativo
-questconfig
-```
-
-### Método 2: Execução direta
-
-```bash
-# Clonar o repositório
-git clone https://github.com/seu-usuario/CloudQuest.git
-cd CloudQuest
-
-# Executar diretamente (a partir do diretório do projeto)
-python -m QuestConfig.ui.app
-```
-
-## Uso
-
-1. Abra o QuestConfig através do comando `questconfig` ou pelo método direto
-2. Na aba "Informações do Jogo":
-   - Adicione o Steam UID (opcional)
+## 🕹 Como Usar
+### Configuração Inicial
+1. Execute `questconfig.exe`
+2. Na aba **1. Executável e AppID**:
    - Selecione o executável do jogo
-   - Detecte ou insira o AppID da Steam
-   - Forneça o nome do jogo
-3. Na aba "Configuração Rclone":
-   - Configure o caminho do Rclone
-   - Selecione o remote do Rclone
-   - Defina o diretório local dos saves (pode ser detectado automaticamente)
-   - Configure o diretório cloud
-   - Adicione o nome do processo do jogo
-4. Na aba "Finalizar":
-   - Revise as configurações no resumo
-   - Selecione se deseja criar um atalho na área de trabalho
+   - Detecte/insira o AppID da Steam
+3. Na aba **2. Configuração Rclone**:
+   - Indique a localização de instalação do Rclone.
+   - Selecione o remote configurado
+   - Defina diretórios local e na nuvem
+4. Na aba **3. Finalizar**:
+   - Revise o resumo
    - Salve a configuração
 
-## Integração com PCGamingWiki
+### Sincronização
+- Execute o atalho criado na área de trabalho para iniciar o jogo com sincronização automática
+- A sincronização ocorrerá:
+  - Antes de iniciar o jogo (download da nuvem)
+  - Após fechar o jogo (upload para nuvem)
 
-A ferramenta integra-se com o PCGamingWiki para obter informações sobre localizações de saves de jogos. Esta integração possui duas abordagens:
+## 🛠 Notas Técnicas
+- Os perfis de configuração são armazenados em `config/profiles/`
+- Formatos suportados de nuvem: Qualquer serviço configurável no rclone (Google Drive, Dropbox, OneDrive, etc)
 
-1. **API Query** - Usa a API do PCGamingWiki para buscar informações dos jogos
-2. **WikiText Parser** - Um método mais avançado que extrai e processa o texto wiki quando a API não retorna resultados satisfatórios
+## ❓ Suporte
+Reporte problemas no [GitHub Issues](https://github.com/Mallor705/CloudQuest/issues)
 
-Para cada jogo, o sistema:
-- Busca a página do jogo usando o AppID da Steam
-- Extrai informações sobre localizações de saves para Windows, macOS e Linux
-- Processa e expande caminhos com variáveis de ambiente e templates
-- Valida quais caminhos existem no sistema atual
+---
 
-## Arquitetura
+## 📝 Créditos e Reconhecimentos
 
-O projeto segue os princípios SOLID:
+- **[PCGamingWiki](https://www.pcgamingwiki.com/)**  
+  Este projeto utiliza a API pública da PCGamingWiki para localizar e identificar os diretórios de saves dos jogos. Agradecemos à comunidade da PCGamingWiki por manter uma base de dados tão completa e aberta.
 
-1. **Single Responsibility**: Cada classe tem uma responsabilidade única
-2. **Open/Closed**: As classes são abertas para extensão, fechadas para modificação
-3. **Liskov Substitution**: As implementações seguem estritamente as interfaces
-4. **Interface Segregation**: Interfaces específicas para cada tipo de serviço
-5. **Dependency Inversion**: Componentes dependem de abstrações, não de implementações concretas
+- **[Rclone](https://rclone.org/)**  
+  A sincronização de arquivos com serviços de nuvem é realizada através do Rclone, uma ferramenta open source poderosa para gerenciamento de arquivos em múltiplos provedores de nuvem.
 
-A estrutura do projeto é organizada em:
-
-- **interfaces**: Define contratos para serviços
-- **core**: Contém lógica de negócios e modelo de domínio
-- **services**: Implementações dos serviços
-- **ui**: Interface gráfica do usuário
-- **utils**: Utilitários gerais
-
-## Licença
-
-[MIT](LICENSE)
+**📜 Licença**  
+ GNU GENERAL PUBLIC LICENSE - Consulte o arquivo [LICENSE](LICENSE) para detalhes
