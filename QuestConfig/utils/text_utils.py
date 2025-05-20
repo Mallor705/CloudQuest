@@ -60,16 +60,16 @@ def sanitize_process_name(process_name: Optional[str]) -> str:
         process_name: Nome do processo
         
     Returns:
-        str: Nome do processo sanitizado
+        str: Nome do processo sanitizado sem extensão .exe
     """
     if not process_name:
         return ""
     
-    # Remove espaços e garante extensão .exe
+    # Remove espaços e remove extensão .exe
     sanitized = process_name.strip()
     
-    # Adiciona extensão .exe se não existir
-    if not sanitized.lower().endswith('.exe'):
-        sanitized += '.exe'
+    # Remove extensão .exe se existir
+    if sanitized.lower().endswith('.exe'):
+        sanitized = sanitized[:-4]  # Remove os últimos 4 caracteres (.exe)
     
     return sanitized

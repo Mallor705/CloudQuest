@@ -3,7 +3,6 @@ README.md
 setup.py
 QuestConfig/__init__.py
 QuestConfig/__main__.py
-QuestConfig/main.py
 QuestConfig/questconfig_builder.py
 QuestConfig.egg-info/PKG-INFO
 QuestConfig.egg-info/SOURCES.txt

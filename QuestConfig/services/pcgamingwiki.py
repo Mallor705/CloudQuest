@@ -49,6 +49,55 @@ class PCGamingWikiService(GameInfoService):
             write_log(f"Erro ao consultar PCGamingWiki por AppID: {str(e)}", level='ERROR')
             return None
     
+    def get_game_info_by_name(self, game_name: str) -> Optional[Dict]:
+        """
+        Busca informações de um jogo pelo nome na PCGamingWiki.
+        
+        Args:
+            game_name: Nome do jogo
+            
+        Returns:
+            dict: Informações do jogo ou None se não encontrado
+        """
+        try:
+            # Preparar a consulta
+            params = {
+                "action": "askargs",
+                "format": "json",
+                "conditions": f"Steam AppID::+",  # Buscar jogos com AppID definido
+                "printouts": "Steam AppID|Save game data location|Save game cloud syncing|Save game cloud location",
+                "parameters": f"|~*{game_name}*"  # Busca parcial pelo nome
+            }
+            
+            # Fazer a consulta
+            headers = {'User-Agent': self.user_agent}
+            response = requests.get(self.base_url, params=params, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                write_log(f"Resposta inválida da PCGamingWiki: {response.status_code}", level='WARNING')
+                return None
+                
+            data = response.json()
+            results = data.get('query', {}).get('results', {})
+            
+            if not results:
+                write_log(f"Nenhum resultado encontrado para: {game_name}", level='INFO')
+                return None
+            
+            # Processar o primeiro resultado encontrado
+            for page_id, info in results.items():
+                game_info = {
+                    "title": info.get("fulltext", ""),
+                    "save_locations": self._extract_save_locations(info.get("printouts", {}))
+                }
+                write_log(f"Informação encontrada na PCGamingWiki para: {game_name}")
+                return game_info
+            
+            return None
+        except Exception as e:
+            write_log(f"Erro ao consultar PCGamingWiki por nome: {str(e)}", level='ERROR')
+            return None
+    
     def get_page_id_by_app_id(self, steam_app_id: str) -> Optional[str]:
         """
         Recupera o ID da página PCGamingWiki para um jogo com base no AppID da Steam.
@@ -364,13 +413,82 @@ class PCGamingWikiService(GameInfoService):
 
         return path
 
+    def _find_steam_user_dir(self, base_path: str) -> Optional[str]:
+        """
+        Tenta encontrar automaticamente a pasta de usuário do Steam.
+        
+        Args:
+            base_path: Caminho base onde procurar pastas de usuário
+            
+        Returns:
+            str: Caminho completo da pasta de usuário ou None se não encontrada
+        """
+        try:
+            # Verificar se o diretório base existe
+            if not os.path.exists(base_path) or not os.path.isdir(base_path):
+                return None
+            
+            write_log(f"Procurando pastas de usuário do Steam em: {base_path}")
+            
+            # Pastas de usuário do Steam são números inteiros grandes
+            user_dirs = []
+            
+            for item in os.listdir(base_path):
+                item_path = os.path.join(base_path, item)
+                
+                # Verificar se é uma pasta e se o nome é numérico
+                if os.path.isdir(item_path) and item.isdigit() and len(item) >= 6:
+                    user_dirs.append(item_path)
+            
+            if not user_dirs:
+                write_log("Nenhuma pasta de usuário do Steam encontrada", level='WARNING')
+                return None
+            
+            if len(user_dirs) == 1:
+                # Se só tem uma pasta, é a que queremos
+                return user_dirs[0]
+            else:
+                # Se tem várias pastas, tentar encontrar a mais provável
+                # Critério: pasta mais recentemente modificada e com mais conteúdo
+                most_recent = None
+                most_recent_time = 0
+                most_contents = 0
+                
+                for user_dir in user_dirs:
+                    # Verificar data de modificação
+                    mod_time = os.path.getmtime(user_dir)
+                    
+                    # Contar número de arquivos/subpastas
+                    try:
+                        num_contents = len(os.listdir(user_dir))
+                    except:
+                        num_contents = 0
+                    
+                    # Usar a pasta mais recente com mais conteúdo
+                    if mod_time > most_recent_time and num_contents > most_contents:
+                        most_recent = user_dir
+                        most_recent_time = mod_time
+                        most_contents = num_contents
+                
+                if most_recent:
+                    write_log(f"Várias pastas encontradas, usando a mais recente/ativa: {most_recent}")
+                    return most_recent
+                else:
+                    # Fallback: retornar a primeira pasta encontrada
+                    write_log(f"Várias pastas encontradas, usando a primeira: {user_dirs[0]}")
+                    return user_dirs[0]
+                
+        except Exception as e:
+            write_log(f"Erro ao procurar pasta de usuário: {str(e)}", level='ERROR')
+            return None
+
     def _expand_windows_path(self, path: str, steam_uid: Optional[str] = None) -> str:
         """
         Expande variáveis de ambiente do Windows em caminhos.
         
         Args:
             path: Caminho com variáveis de ambiente
-            steam_uid: Steam UserID do jogador
+            steam_uid: Steam UserID do jogador (opcional, agora detecta automaticamente)
 
         Returns:
             str: Caminho expandido
@@ -379,16 +497,7 @@ class PCGamingWikiService(GameInfoService):
             return path
         
         try:
-            # Substituir <USERID> pelo Steam UID fornecido
-            if steam_uid:
-                path = path.replace('<USERID>', steam_uid)
-                path = path.replace('<userid>', steam_uid)
-                path = path.replace('<steamid>', steam_uid)
-            else:
-                path = path.replace('<USERID>', '<userid>')
-                path = path.replace('<steamid>', '<steamid>')
-                
-            # Usar a expansão nativa do sistema
+            # Expandir variáveis de ambiente primeiro
             expanded = os.path.expandvars(path)
             
             # Se ainda contém %, tenta substituir manualmente
@@ -410,6 +519,25 @@ class PCGamingWikiService(GameInfoService):
                         # Também tenta a versão em lower case
                         expanded = expanded.replace(var.lower(), replacement)
             
+            # Detectar pastas de usuário do Steam se necessário
+            if any(marker in expanded for marker in ['<USERID>', '<userid>', '<steamid>']):
+                # Encontrar a parte do caminho antes do marcador de userID
+                base_path = None
+                for marker in ['<USERID>', '<userid>', '<steamid>']:
+                    if marker in expanded:
+                        # Separa o caminho em parte antes e depois do marcador
+                        parts = expanded.split(marker, 1)
+                        if len(parts) == 2:
+                            base_path = parts[0].rstrip('\\/ ')
+                            remainder = parts[1].lstrip('\\/ ')
+                            
+                            # Tentar encontrar a pasta do usuário automaticamente
+                            user_dir = self._find_steam_user_dir(base_path)
+                            if user_dir:
+                                expanded = os.path.join(user_dir, remainder)
+                                write_log(f"Pasta de usuário Steam detectada: {user_dir}")
+                                break
+            
             # Normalizar caminhos com barras duplas
             while '\\\\' in expanded:
                 expanded = expanded.replace('\\\\', '\\')
@@ -425,6 +553,7 @@ class PCGamingWikiService(GameInfoService):
         
         Args:
             path: Caminho com ~ ou variáveis
+            steam_uid: Steam UserID do jogador (opcional, agora detecta automaticamente)
         
         Returns:
             str: Caminho expandido
@@ -433,23 +562,32 @@ class PCGamingWikiService(GameInfoService):
             return path
             
         try:
-            # Expansão específica para caminhos do Proton
-            if '<steamid>' in path:
-                if not steam_uid:
-                    path = path.replace('<steamid>', '*')
-                else:
-                    path = path.replace('<steamid>', steam_uid)
+            # Expandir ~ primeiro
+            expanded = os.path.expanduser(path)
             
-            # Converter caminhos do Proton para estrutura Linux
-            proton_path = Path.home() / ".steam/steam/steamapps/compatdata"
-            if str(proton_path) in path:
-                path = path.replace('drive_c/users/steamuser', 'pfx/drive_c/users/steamuser')
+            # Detectar pastas de usuário do Steam se necessário
+            if '<steamid>' in expanded:
+                # Encontrar a parte do caminho antes do marcador de steamid
+                parts = expanded.split('<steamid>', 1)
+                if len(parts) == 2:
+                    base_path = parts[0].rstrip('/ ')
+                    remainder = parts[1].lstrip('/ ')
+                    
+                    # Tentar encontrar a pasta do usuário automaticamente
+                    user_dir = self._find_steam_user_dir(base_path)
+                    if user_dir:
+                        expanded = os.path.join(user_dir, remainder)
+                        write_log(f"Pasta de usuário Steam detectada: {user_dir}")
             
-            return os.path.expandvars(path)
+            # Converter caminhos do Proton para estrutura Linux se necessário
+            if 'drive_c/users/steamuser' in expanded:
+                expanded = expanded.replace('drive_c/users/steamuser', 'pfx/drive_c/users/steamuser')
+            
+            return os.path.expandvars(expanded)
         except Exception as e:
             write_log(f"Erro ao expandir caminho Unix: {str(e)}", level='WARNING')
             return path
-
+    
     def _get_current_os_save_paths(self, save_locations: Dict, steam_uid: Optional[str] = None) -> List[str]:
         """
         Retorna os caminhos de save apropriados para o sistema operacional atual.
@@ -478,55 +616,6 @@ class PCGamingWikiService(GameInfoService):
         
         return []
     
-    def get_game_info_by_name(self, game_name: str) -> Optional[Dict]:
-        """
-        Busca informações de um jogo pelo nome na PCGamingWiki.
-        
-        Args:
-            game_name: Nome do jogo
-            
-        Returns:
-            dict: Informações do jogo ou None se não encontrado
-        """
-        try:
-            # Preparar a consulta
-            params = {
-                "action": "askargs",
-                "format": "json",
-                "conditions": f"Steam AppID::+",  # Buscar jogos com AppID definido
-                "printouts": "Steam AppID|Save game data location|Save game cloud syncing|Save game cloud location",
-                "parameters": f"|~*{game_name}*"  # Busca parcial pelo nome
-            }
-            
-            # Fazer a consulta
-            headers = {'User-Agent': self.user_agent}
-            response = requests.get(self.base_url, params=params, headers=headers, timeout=10)
-            
-            if response.status_code != 200:
-                write_log(f"Resposta inválida da PCGamingWiki: {response.status_code}", level='WARNING')
-                return None
-                
-            data = response.json()
-            results = data.get('query', {}).get('results', {})
-            
-            if not results:
-                write_log(f"Nenhum resultado encontrado para: {game_name}", level='INFO')
-                return None
-            
-            # Processar o primeiro resultado encontrado
-            for page_id, info in results.items():
-                game_info = {
-                    "title": info.get("fulltext", ""),
-                    "save_locations": self._extract_save_locations(info.get("printouts", {}))
-                }
-                write_log(f"Informação encontrada na PCGamingWiki para: {game_name}")
-                return game_info
-            
-            return None
-        except Exception as e:
-            write_log(f"Erro ao consultar PCGamingWiki por nome: {str(e)}", level='ERROR')
-            return None
-
     def find_save_locations(self, app_id: str, steam_uid: Optional[str] = None) -> Optional[Dict]:
         """
         Encontra possíveis localizações de saves para um jogo.
@@ -556,7 +645,12 @@ class PCGamingWikiService(GameInfoService):
                 
                 # Expandir variáveis nos caminhos
                 for path in save_locations:
-                    expanded = self._expand_path_variables(path, app_id, steam_uid)
+                    # Expandir os caminhos usando o sistema operacional atual
+                    if platform.system() == "Windows":
+                        expanded = self._expand_windows_path(path, steam_uid)
+                    else:
+                        expanded = self._expand_unix_path(path, steam_uid)
+                    
                     if expanded:
                         result["expanded_paths"].append(expanded)
                         
@@ -670,51 +764,6 @@ class PCGamingWikiService(GameInfoService):
                     save_locations.append(path)
         
         return save_locations
-    
-    def _expand_path_variables(self, path: str, app_id: str, steam_uid: Optional[str] = None) -> Optional[str]:
-        """
-        Expande variáveis em um caminho de save.
-        
-        Args:
-            path: Caminho com variáveis
-            app_id: ID do aplicativo na Steam
-            steam_uid: ID do usuário da Steam
-            
-        Returns:
-            str: Caminho expandido ou None se não for possível expandir
-        """
-        if not path:
-            return None
-            
-        try:
-            # Remover tags HTML
-            path = re.sub(r'<[^>]+>', '', path)
-            
-            # Expandir variáveis comuns
-            path = path.replace("%AppData%", os.environ.get("APPDATA", ""))
-            path = path.replace("%LocalAppData%", os.environ.get("LOCALAPPDATA", ""))
-            path = path.replace("%UserProfile%", os.environ.get("USERPROFILE", ""))
-            path = path.replace("%ProgramFiles%", os.environ.get("ProgramFiles", ""))
-            path = path.replace("%ProgramFiles(x86)%", os.environ.get("ProgramFiles(x86)", ""))
-            path = path.replace("%Documents%", str(Path(os.environ.get("USERPROFILE", "")) / "Documents"))
-            path = path.replace("%Public%", os.environ.get("PUBLIC", ""))
-            
-            # Expandir variáveis específicas
-            path = path.replace("<Steam-id>", steam_uid if steam_uid else "<userid>")
-            path = path.replace("<UserID>", steam_uid if steam_uid else "<userid>")
-            path = path.replace("<Steam-folder>", self._get_steam_path())
-            
-            # Substituir AppID
-            path = path.replace("<Steam-app-id>", app_id)
-            path = path.replace("<AppID>", app_id)
-            
-            # Se ainda contém variáveis não resolvidas, retornar None
-            if "%" in path or "<" in path:
-                return None
-                
-            return path
-        except Exception:
-            return None
     
     def _get_steam_path(self) -> str:
         """

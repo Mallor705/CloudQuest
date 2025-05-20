@@ -84,7 +84,6 @@ class QuestConfigView:
         self.local_dir = tk.StringVar()
         self.cloud_dir = tk.StringVar()
         self.game_process = tk.StringVar()
-        self.steam_uid = tk.StringVar()
         
         # Variáveis de controle
         self.game_name_internal = ""
@@ -111,7 +110,6 @@ class QuestConfigView:
         """Carrega valores padrões para os campos."""
         defaults = self.config_service.get_default_values()
         self.rclone_path.set(defaults['rclone_path'])
-        self.steam_uid.set(defaults.get('steam_uid', ''))
     
     def create_widgets(self):
         """Cria todos os widgets da interface."""
@@ -149,39 +147,26 @@ class QuestConfigView:
         header = ttk.Label(tab, text="Informações do Jogo", style='Header.TLabel')
         header.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
         
-        # Steam UID
-        ttk.Label(tab, text="Steam UID:").grid(row=1, column=0, sticky="w", pady=2)
-        uid_frame = ttk.Frame(tab)
-        uid_frame.grid(row=1, column=1, sticky="ew", pady=2)
-        ttk.Entry(uid_frame, textvariable=self.steam_uid, width=50).pack(side=tk.LEFT, fill=tk.X, expand=True)
-        ToolTip(uid_frame, "Seu UserID numérico da Steam\nSubstitui <userid> nos caminhos de save")
-        
         # Executável
-        ttk.Label(tab, text="Executável do Jogo:").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(tab, text="Executável do Jogo:").grid(row=1, column=0, sticky="w", pady=2)
         exe_frame = ttk.Frame(tab)
-        exe_frame.grid(row=2, column=1, sticky="ew", pady=2)
+        exe_frame.grid(row=1, column=1, sticky="ew", pady=2)
         
         ttk.Entry(exe_frame, textvariable=self.executable_path, width=50).pack(side=tk.LEFT, fill=tk.X, expand=True)
         ttk.Button(exe_frame, text="Procurar...", command=self.browse_executable).pack(side=tk.RIGHT, padx=(5, 0))
         
         # AppID
-        ttk.Label(tab, text="AppID Steam:").grid(row=3, column=0, sticky="w", pady=2)
+        ttk.Label(tab, text="AppID Steam:").grid(row=2, column=0, sticky="w", pady=2)
         appid_frame = ttk.Frame(tab)
-        appid_frame.grid(row=3, column=1, sticky="ew", pady=2)
+        appid_frame.grid(row=2, column=1, sticky="ew", pady=2)
         
         ttk.Entry(appid_frame, textvariable=self.app_id, width=20).pack(side=tk.LEFT)
         ttk.Button(appid_frame, text="Detectar", command=self.detect_appid).pack(side=tk.LEFT, padx=(5, 0))
         ttk.Button(appid_frame, text="Consultar Steam", command=self.query_steam_api).pack(side=tk.LEFT, padx=(5, 0))
         
         # Nome do Jogo
-        ttk.Label(tab, text="Nome do Jogo:").grid(row=4, column=0, sticky="w", pady=2)
-        ttk.Entry(tab, textvariable=self.game_name, width=50).grid(row=4, column=1, sticky="ew", pady=2)
-        
-        # Plataforma
-        ttk.Label(tab, text="Plataforma:").grid(row=5, column=0, sticky="w", pady=2)
-        self.platform_combo = ttk.Combobox(tab, values=["Steam", "Epic", "GOG", "EA", "Ubisoft"], width=15)
-        self.platform_combo.grid(row=5, column=1, sticky="w")
-        self.platform_combo.current(0)  # Seleciona Steam por padrão
+        ttk.Label(tab, text="Nome do Jogo:").grid(row=3, column=0, sticky="w", pady=2)
+        ttk.Entry(tab, textvariable=self.game_name, width=50).grid(row=3, column=1, sticky="ew", pady=2)
     
     def create_sync_config_tab(self):
         """Cria a aba de configuração de sincronização."""
@@ -229,7 +214,7 @@ class QuestConfigView:
         # Processo do jogo
         ttk.Label(tab, text="Processo do Jogo:").grid(row=5, column=0, sticky="w", pady=2)
         ttk.Entry(tab, textvariable=self.game_process, width=50).grid(row=5, column=1, sticky="ew", pady=2)
-        ttk.Label(tab, text="(Nome do .exe, ex: Skyrim.exe)").grid(row=5, column=2, sticky="w", padx=(5, 0), pady=2)
+        ttk.Label(tab, text="(Nome do executavel do jogo, ex: eldenring)").grid(row=5, column=2, sticky="w", padx=(5, 0), pady=2)
     
     def create_finish_tab(self):
         """Cria a aba de finalização."""
@@ -319,7 +304,7 @@ class QuestConfigView:
                 if app_id:
                     try:
                         # Usar PCGamingWikiService para encontrar saves
-                        save_info = self.pcgamingwiki_service.find_save_locations(app_id, self.steam_uid.get())
+                        save_info = self.pcgamingwiki_service.find_save_locations(app_id)
                         if save_info:
                             if save_info.get("existing_paths"):
                                 paths.extend(save_info["existing_paths"])
@@ -502,9 +487,6 @@ class QuestConfigView:
         if game_info.get('save_location'):
             self.local_dir.set(game_info['save_location'])
         
-        # Definir plataforma
-        self.platform_combo.set(game_info.get('platform', 'Steam'))
-        
         self.status_var.set(f"Informações obtidas para {game_info['name']}")
         
         # Atualizar diretório cloud
@@ -552,8 +534,17 @@ class QuestConfigView:
         if not self.game_name_internal:
             self.game_name_internal = normalize_game_name(game_name)
         
-        # Montar o caminho cloud baseado no nome interno do jogo
-        cloud_path = f"saves/{self.game_name_internal}"
+        # Extrair o último segmento do caminho local (geralmente o ID do usuário)
+        path = Path(local_dir.rstrip('/\\'))
+        last_segment = path.parts[-1] if path.parts else None
+        
+        # Montar o caminho cloud baseado no nome interno do jogo e no último segmento
+        cloud_path = f"CloudQuest/{self.game_name_internal}/"
+        
+        # Se tiver um último segmento (ID do usuário), adicioná-lo ao caminho na nuvem
+        if last_segment:
+            cloud_path = f"CloudQuest/{self.game_name_internal}/{last_segment}/"
+        
         self.cloud_dir.set(cloud_path)
     
     def update_summary(self):
@@ -563,7 +554,6 @@ class QuestConfigView:
         
         summary = f"Nome do Jogo: {game_data.get('name', 'Não definido')}\n"
         summary += f"AppID Steam: {game_data.get('app_id', 'N/A')}\n"
-        summary += f"Plataforma: {game_data.get('platform', 'Steam')}\n"
         summary += f"Executável: {game_data.get('executable_path', 'Não definido')}\n"
         summary += f"Processo: {game_data.get('process_name', 'Não definido')}\n"
         summary += f"Diretório Local: {game_data.get('save_location', 'Não definido')}\n"
@@ -636,13 +626,12 @@ class QuestConfigView:
             name=self.game_name.get(),
             internal_name=self.game_name_internal,
             app_id=self.app_id.get(),
-            platform=self.platform_combo.get(),
+            platform="Steam",
             executable_path=self.executable_path.get(),
             process_name=self.game_process.get(),
             save_location=self.local_dir.get(),
             cloud_remote=self.cloud_remote.get(),
-            cloud_dir=self.cloud_dir.get(),
-            steam_user_id=self.steam_uid.get()
+            cloud_dir=self.cloud_dir.get()
         )
         
         return game.to_dict()
@@ -668,4 +657,4 @@ class QuestConfigView:
             self.summary_text.insert(tk.END, "Configure as abas anteriores e clique em 'Atualizar Resumo'")
             self.summary_text.config(state=tk.DISABLED)
             
-            self.status_var.set("Formulário resetado") 
+            self.status_var.set("Formulário resetado")
