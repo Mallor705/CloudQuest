@@ -288,6 +288,7 @@ def compile_cloudquest():
         "PIL.ImageTk",
         "PIL.ImageDraw",
         "PIL.ImageFont",
+        "PIL._tkinter_finder",
         "psutil",
         "requests",  # Biblioteca para requisições HTTP
         "watchdog",  # Biblioteca para monitoramento de arquivos

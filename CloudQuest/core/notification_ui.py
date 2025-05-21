@@ -100,12 +100,8 @@ class NotificationWindow:
         # Caminho da aplicação atual
         if getattr(sys, 'frozen', False):
             # Executando como aplicativo compilado
-            base_dir = Path(sys.executable).parent
-            
-            # Caminhos possíveis em ordem de prioridade (priorizar pasta externa)
+            # BASE_DIR aqui se refere ao diretório _MEIPASS onde os assets estão embutidos
             possible_dirs = [
-                base_dir / "assets" / "icons",  # Primeira opção: pasta ao lado do EXE
-                base_dir / "icons",
                 BASE_DIR / "assets" / "icons",
             ]
         else:
