@@ -112,22 +112,22 @@ class SteamService:
                 return save_info["expanded_paths"][0]
             
             # Se nao encontrou via PCGamingWiki, tentar caminhos comuns
-            write_log(f"PCGamingWiki nao retornou locais de save, tentando caminhos comuns", level='INFO')
+            # write_log(f"PCGamingWiki nao retornou locais de save, tentando caminhos comuns", level='INFO')
             
             # Caminhos comuns para saves de jogos Steam
-            common_paths = [
-                Path(os.environ['USERPROFILE']) / "Documents" / f"My Games" / f"Steam_{app_id}",
-                Path(os.environ['PROGRAMFILES(X86)']) / "Steam" / "userdata" / 
-                    (user_id if user_id else "<userid>") / app_id / "remote",
-                Path(os.environ['APPDATA']) / f"Steam_{app_id}",
-                Path(os.environ['LOCALAPPDATA']) / f"Steam_{app_id}"
-            ]
+            # common_paths = [
+            #     Path(os.environ['USERPROFILE']) / "Documents" / f"My Games" / f"Steam_{app_id}",
+            #     Path(os.environ['PROGRAMFILES(X86)']) / "Steam" / "userdata" / 
+            #         (user_id if user_id else "<userid>") / app_id / "remote",
+            #     Path(os.environ['APPDATA']) / f"Steam_{app_id}",
+            #     Path(os.environ['LOCALAPPDATA']) / f"Steam_{app_id}"
+            # ]
             
             # Verificar se algum caminho existe
-            for path in common_paths:
-                if path.exists():
-                    write_log(f"Local de save encontrado para AppID {app_id}: {path}")
-                    return str(path)
+            # for path in common_paths:
+            #     if path.exists():
+            #         write_log(f"Local de save encontrado para AppID {app_id}: {path}")
+            #         return str(path)
                     
             write_log(f"Nenhum local de save encontrado para AppID {app_id}", level='INFO')
             return None
