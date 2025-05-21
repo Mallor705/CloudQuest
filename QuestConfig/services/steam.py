@@ -108,17 +108,16 @@ class SteamService:
                 return save_info["existing_paths"][0]
             
             # Se nao encontrou caminho existente mas tem caminhos expandidos, retornar o primeiro
-            if save_info and save_info.get("expanded_paths"):
+            elif save_info and save_info.get("expanded_paths"):
                 return save_info["expanded_paths"][0]
             
-            # Se não obteve nenhuma informação do PCGamingWiki, tentar caminhos comuns
-            if not save_info:
-                write_log(f"PCGamingWiki nao retornou locais de save, tentando caminhos comuns", level='INFO')
-                
+            # Se não obteve nenhuma informação do PCGamingWiki ou não encontrou caminhos, tentar caminhos comuns
+            else:
+                write_log(f"PCGamingWiki nao retornou locais de save validos ou nao foi encontrado, tentando caminhos comuns para AppID {app_id}", level='INFO')
                 # Caminhos comuns para saves de jogos Steam
                 common_paths = [
                     Path(os.environ['USERPROFILE']) / "Documents" / f"My Games" / f"Steam_{app_id}",
-                    Path(os.environ['PROGRAMFILES(X86)']) / "Steam" / "userdata" / 
+                    Path(os.environ['PROGRAMFILES(X86)']) / "Steam" / "userdata" /
                         (user_id if user_id else "<userid>") / app_id / "remote",
                     Path(os.environ['APPDATA']) / f"Steam_{app_id}",
                     Path(os.environ['LOCALAPPDATA']) / f"Steam_{app_id}"

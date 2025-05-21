@@ -545,58 +545,204 @@ class PCGamingWikiService(GameInfoService):
                 expanded = expanded.replace('\\\\', '\\')
             
             return expanded
+            
         except Exception as e:
             write_log(f"Erro ao expandir caminho: {str(e)}", level='WARNING')
             return path
 
-    def _expand_unix_path(self, path: str, steam_uid: Optional[str] = None) -> str:
+    def _expand_unix_path(self, path: str, steam_uid: Optional[str] = None, steam_app_id: Optional[str] = None) -> str:
         """
         Expande caminhos no estilo Unix com ~ ou variaveis de ambiente.
+        Para Linux, transforma o caminho do Windows no formato Proton.
         
         Args:
-            path: Caminho com ~ ou variaveis
+            path: Caminho com ~ ou variaveis (originalmente para Windows)
             steam_uid: Steam UserID do jogador (opcional, agora detecta automaticamente)
+            steam_app_id: Steam AppID do jogo (obrigatorio para Linux)
         
         Returns:
             str: Caminho expandido
         """
         if not path:
             return path
-            
+
         try:
-            # Expandir ~ primeiro
-            expanded = os.path.expanduser(path)
-            
-            # Detectar pastas de usuario do Steam se necessario
-            if '<steamid>' in expanded:
-                # Encontrar a parte do caminho antes do marcador de steamid
-                parts = expanded.split('<steamid>', 1)
-                if len(parts) == 2:
-                    base_path = parts[0].rstrip('/ ')
-                    remainder = parts[1].lstrip('/ ')
+            # Para Linux, o 'path' recebido e o caminho do Windows.
+            # Precisamos transforma-lo para o formato do Proton.
+            # <SteamLibrary-folder>/steamapps/compatdata/<steam-appid>/pfx/<path listed for Windows>
+
+            if platform.system() == "Linux":
+                if not steam_app_id:
+                    write_log("Steam AppID é necessário para expandir o caminho no Linux.", level='WARNING')
+                    return path # Retorna o caminho original se o app_id nao for fornecido
+
+                # Tenta encontrar a pasta da biblioteca Steam
+                # Isso pode ser complexo pois podem existir varias bibliotecas
+                # Por enquanto, vamos assumir uma localizacao padrao ou a primeira encontrada
+                steam_library_paths = [
+                    Path.home() / ".steam/steam",
+                    Path.home() / ".local/share/Steam"
+                ]
+                
+                # Adiciona caminhos de bibliotecas customizadas, se existirem
+                # Esta parte pode precisar de uma logica mais robusta para encontrar todas as bibliotecas
+                library_folders_vdf = Path.home() / ".steam/steam/steamapps/libraryfolders.vdf"
+                if library_folders_vdf.exists():
+                    try:
+                        with open(library_folders_vdf, 'r') as f:
+                            content = f.read()
+                            # Regex para encontrar caminhos de bibliotecas adicionais
+                            # Exemplo: "path" "/mnt/extra_steam_drive"
+                            custom_paths = re.findall(r'\"path\"\s+\"([^\"]+)\"', content)
+                            for cp in custom_paths:
+                                steam_library_paths.append(Path(cp))
+                    except Exception as e:
+                        write_log(f"Erro ao ler libraryfolders.vdf: {e}", level='WARNING')
+
+                proton_path_found = False
+                for lib_path in steam_library_paths:
+                    potential_proton_path = lib_path / "steamapps" / "compatdata" / steam_app_id / "pfx"
+                    # O 'path' original e do Windows, precisamos adaptar
+                    # Removendo a unidade (ex: C:) e ajustando as barras
+                    current_windows_path_segment = re.sub(r'^[A-Za-z]:', '', path).replace('\\\\', '/').lstrip('/')
                     
-                    # Tentar encontrar a pasta do usuario automaticamente
-                    user_dir = self._find_steam_user_dir(base_path)
-                    if user_dir:
-                        expanded = os.path.join(user_dir, remainder)
-                        write_log(f"Pasta de usuario Steam detectada: {user_dir}")
+                    # Tratar variaveis de ambiente comuns do Windows no caminho
+                    # %USERPROFILE% se torna /users/steamuser/
+                    # %APPDATA% se torna /users/steamuser/AppData/Roaming/
+                    # %LOCALAPPDATA% se torna /users/steamuser/AppData/Local/
+                    # %DOCUMENTS% se torna /users/steamuser/Documents/
+                    # %SAVEDGAMES% se torna /users/steamuser/Saved Games/
+                    # Outras variaveis podem precisar de tratamento especifico
+                    
+                    current_windows_path_segment = current_windows_path_segment.replace('%USERPROFILE%', 'users/steamuser')
+                    current_windows_path_segment = current_windows_path_segment.replace('%APPDATA%', 'users/steamuser/AppData/Roaming')
+                    current_windows_path_segment = current_windows_path_segment.replace('%LOCALAPPDATA%', 'users/steamuser/AppData/Local')
+                    current_windows_path_segment = current_windows_path_segment.replace('%DOCUMENTS%', 'users/steamuser/Documents')
+                    current_windows_path_segment = current_windows_path_segment.replace('%SAVEDGAMES%', 'users/steamuser/Saved Games')
+                    current_windows_path_segment = current_windows_path_segment.replace('%PROGRAMDATA%', 'ProgramData') # Geralmente mapeado para /ProgramData
+
+                    # --- BEGIN Steam User ID detection for Proton path ---
+                    steam_id_markers = ['<steamid>', '<userid>', '<USERID>']
+                    path_before_steamid_resolution = current_windows_path_segment
+
+                    for marker in steam_id_markers:
+                        if marker in path_before_steamid_resolution:
+                            parts = path_before_steamid_resolution.split(marker, 1)
+                            if len(parts) == 2:
+                                windows_path_prefix_to_marker = parts[0]
+                                windows_path_suffix_from_marker = parts[1]
+                                
+                                # Constroi o caminho base para _find_steam_user_dir dentro do pfx.
+                                # Ex: .../compatdata/APPID/pfx/drive_c/Steam/userdata
+                                # Assumimos que windows_path_prefix_to_marker contem o caminho ate a pasta userdata.
+                                base_proton_userdata_path_str = str(potential_proton_path / "drive_c" / windows_path_prefix_to_marker.rstrip('/'))
+                                
+                                found_steam_user_dir_full_path_in_pfx = self._find_steam_user_dir(base_proton_userdata_path_str)
+                                
+                                if found_steam_user_dir_full_path_in_pfx:
+                                    actual_user_id_folder_name = Path(found_steam_user_dir_full_path_in_pfx).name
+                                    # Atualiza current_windows_path_segment com o ID resolvido
+                                    current_windows_path_segment = windows_path_prefix_to_marker + actual_user_id_folder_name + windows_path_suffix_from_marker
+                                    write_log(f"Steam UserID folder '{actual_user_id_folder_name}' resolvido no prefixo Proton em: {base_proton_userdata_path_str}")
+                                    break # Marcador resolvido, sair do loop de marcadores
+                    # --- END Steam User ID detection ---
+                    
+                    # Remover outros templates <...> nao explicitamente resolvidos (ex: <username>)
+                    # Isso deve ser feito apos a tentativa de resolucao do steamid, para nao remover o ID numerico.
+                    current_windows_path_segment = re.sub(r'<[^>]+>', '', current_windows_path_segment).strip()
+                    
+                    # Montar o caminho completo do Proton
+                    # O pfx geralmente simula o 'drive_c'
+                    full_proton_path = potential_proton_path / "drive_c" / current_windows_path_segment.lstrip('/')
+                    
+                    # Normalizar o caminho (remove ../, // etc)
+                    normalized_path = Path(os.path.normpath(full_proton_path))
+                    
+                    # A PCGamingWiki as vezes fornece caminhos que ja incluem 'drive_c' ou 'users/steamuser'
+                    # Vamos tentar ser flexiveis
+                    if "drive_c" in path.lower():
+                         # Se drive_c ja esta no path original, removemos do nosso prefixo
+                        path_suffix = path.lower().split("drive_c", 1)[-1].lstrip('/').lstrip('\\\\')
+                        full_proton_path = potential_proton_path / "drive_c" / path_suffix
+                        normalized_path = Path(os.path.normpath(full_proton_path))
+
+                    elif "users/steamuser" in path.lower():
+                        path_suffix = path.lower().split("users/steamuser", 1)[-1].lstrip('/').lstrip('\\\\')
+                        full_proton_path = potential_proton_path / "drive_c/users/steamuser" / path_suffix
+                        normalized_path = Path(os.path.normpath(full_proton_path))
+                        
+                    # Verificar se este caminho potencial existe
+                    # if normalized_path.exists(): # A existencia sera verificada depois
+                    expanded = str(normalized_path)
+                    proton_path_found = True
+                    
+                    write_log(f"Caminho Proton expandido para Linux: {expanded}")
+                    break # Usa a primeira biblioteca Steam valida encontrada
+
+                if not proton_path_found:
+                    # Fallback se nenhum caminho Proton foi construido (ex: jogo nativo Linux)
+                    # ou se o steam_app_id nao foi fornecido
+                    expanded = os.path.expanduser(path) # Comportamento antigo para jogos nativos
+                    if '<steamid>' in expanded and steam_uid: # Manter expansao de <steamid> se presente
+                        expanded = expanded.replace('<steamid>', steam_uid)
+                    elif '<steamid>' in expanded:
+                         # Se steam_uid nao foi fornecido, tentar encontrar automaticamente
+                        parts = expanded.split('<steamid>', 1)
+                        if len(parts) == 2:
+                            base_path_steamid = parts[0].rstrip('/ ')
+                            remainder_steamid = parts[1].lstrip('/ ')
+                            user_dir_steamid = self._find_steam_user_dir(base_path_steamid)
+                            if user_dir_steamid:
+                                expanded = os.path.join(user_dir_steamid, remainder_steamid)
+                                write_log(f"Pasta de usuario Steam detectada para <steamid>: {user_dir_steamid}")
+                            else:
+                                write_log(f"Nao foi possivel encontrar o diretorio do usuario Steam para {base_path_steamid}", level='WARNING')
+                                # Nao substitui <steamid> se nao encontrar
+                    
+                    # Tratar outras variaveis comuns do Linux, se houver
+                    expanded = os.path.expandvars(expanded)
+                    
+
+                    write_log(f"Caminho Unix expandido (fallback/nativo): {expanded}")
+
+            else: # Para outros sistemas Unix (ex: macOS)
+                expanded = os.path.expanduser(path)
+                if '<steamid>' in expanded and steam_uid:
+                    expanded = expanded.replace('<steamid>', steam_uid)
+                elif '<steamid>' in expanded:
+                     # Se steam_uid nao foi fornecido, tentar encontrar automaticamente
+                    parts = expanded.split('<steamid>', 1)
+                    if len(parts) == 2:
+                        base_path_steamid = parts[0].rstrip('/ ')
+                        remainder_steamid = parts[1].lstrip('/ ')
+                        user_dir_steamid = self._find_steam_user_dir(base_path_steamid)
+                        if user_dir_steamid:
+                            expanded = os.path.join(user_dir_steamid, remainder_steamid)
+                            write_log(f"Pasta de usuario Steam detectada para <steamid>: {user_dir_steamid}")
+                        else:
+                            # Nao substitui <steamid> se nao encontrar
+                            write_log(f"Nao foi possivel encontrar o diretorio do usuario Steam para {base_path_steamid}", level='WARNING')
+
+                expanded = os.path.expandvars(expanded)
             
-            # Converter caminhos do Proton para estrutura Linux se necessario
-            if 'drive_c/users/steamuser' in expanded:
-                expanded = expanded.replace('drive_c/users/steamuser', 'pfx/drive_c/users/steamuser')
+            # Normalizar barras duplicadas no final
+            while '//' in expanded:
+                expanded = expanded.replace('//', '/')
             
-            return os.path.expandvars(expanded)
+            return expanded
+            
         except Exception as e:
-            write_log(f"Erro ao expandir caminho Unix: {str(e)}", level='WARNING')
+            write_log(f"Erro ao expandir caminho Unix: {str(e)}\nPath original: {path}", level='ERROR')
             return path
     
-    def _get_current_os_save_paths(self, save_locations: Dict, steam_uid: Optional[str] = None) -> List[str]:
+    def _get_current_os_save_paths(self, save_locations: Dict, steam_uid: Optional[str] = None, steam_app_id: Optional[str] = None) -> List[str]:
         """
         Retorna os caminhos de save apropriados para o sistema operacional atual.
         
         Args:
             save_locations: Dicionario com caminhos por OS
             steam_uid: ID do usuario da Steam
+            steam_app_id: ID do aplicativo Steam (necessario para Linux/Proton)
         
         Returns:
             list: Lista de caminhos expandidos para o OS atual
@@ -604,17 +750,37 @@ class PCGamingWikiService(GameInfoService):
         current_os = platform.system()
         
         if current_os == "Windows":
-            paths = save_locations["Windows"]
+            paths = save_locations.get("Windows", [])
             if paths:
                 return [self._expand_windows_path(path, steam_uid) for path in paths]
-        elif current_os == "Darwin":  # macOS
-            paths = save_locations["macOS"]
-            if paths:
-                return [self._expand_unix_path(path, steam_uid) for path in paths]
+        
         elif current_os == "Linux":
-            paths = save_locations["Linux"]
+            # Para Linux, PCGamingWiki geralmente lista o caminho do Windows.
+            # Precisamos usa-lo e converter para o formato Proton.
+            windows_paths = save_locations.get("Windows", [])
+            linux_native_paths = save_locations.get("Linux", []) # Tambem considerar caminhos nativos
+            
+            expanded_linux_paths = []
+            if windows_paths:
+                if not steam_app_id:
+                    write_log("Steam AppID nao fornecido, nao foi possivel expandir caminhos Proton para Linux.", level='WARNING')
+                else:
+                    for path in windows_paths:
+                        expanded_linux_paths.append(self._expand_unix_path(path, steam_uid, steam_app_id))
+            
+            if linux_native_paths:
+                 for path in linux_native_paths:
+                    # Para caminhos nativos, steam_app_id nao e usado diretamente na conversao,
+                    # mas pode ser necessario para resolver <steamid> se steam_uid nao for fornecido.
+                    expanded_linux_paths.append(self._expand_unix_path(path, steam_uid, steam_app_id)) # Passar app_id pode ser util para _find_steam_user_dir
+            
+            # Remover duplicatas se houver
+            return list(dict.fromkeys(expanded_linux_paths))
+
+        elif current_os == "Darwin": # macOS
+            paths = save_locations.get("macOS", [])
             if paths:
-                return [self._expand_unix_path(path, steam_uid) for path in paths]
+                return [self._expand_unix_path(path, steam_uid) for path in paths] # macOS nao precisa de steam_app_id para essa logica
         
         return []
     
@@ -631,42 +797,8 @@ class PCGamingWikiService(GameInfoService):
             dict: Dicionario com caminhos de saves ou None
         """
         write_log(f"Buscando locais de save para AppID Steam: {app_id}")
-
-        # Primeiro tenta usando a API simples (metodo original)
-        try:
-            game_info = self.get_game_info_by_steam_appid(app_id)
-            if game_info and game_info.get("save_locations"):
-                save_locations = game_info["save_locations"]
-                
-                # Processar os caminhos de save
-                result = {
-                    "original_paths": save_locations,
-                    "expanded_paths": [],
-                    "existing_paths": []
-                }
-                
-                # Expandir variaveis nos caminhos
-                for path in save_locations:
-                    # Expandir os caminhos usando o sistema operacional atual
-                    if platform.system() == "Windows":
-                        expanded = self._expand_windows_path(path, steam_uid)
-                    else:
-                        expanded = self._expand_unix_path(path, steam_uid)
-                    
-                    if expanded:
-                        result["expanded_paths"].append(expanded)
-                        
-                        # Verificar se o caminho existe
-                        if Path(expanded).exists():
-                            result["existing_paths"].append(expanded)
-                            write_log(f"Localizacao de save encontrada: {expanded}")
-                
-                if result["existing_paths"] or result["expanded_paths"]:
-                    return result
-        except Exception as e:
-            write_log(f"Erro no metodo API simples: {str(e)}", level='WARNING')
         
-        # Se nao encontrou pelo metodo simples, tenta o metodo avancado com wikitext
+        # Metodo avancado com wikitext
         try:
             # Passo 1: Obter o ID da pagina
             page_id = self.get_page_id_by_app_id(app_id)
@@ -680,9 +812,11 @@ class PCGamingWikiService(GameInfoService):
             
             # Passo 3: Extrair locais de save
             save_info = self.extract_save_game_locations(wikitext)
-            
+            write_log(f"Caminhos de save encontrados: {save_info}")
             # Passo 4: Processar para o OS atual e verificar quais existem
-            expanded_paths = self._get_current_os_save_paths(save_info["save_locations"], steam_uid)
+            # Passar app_id para _get_current_os_save_paths
+            expanded_paths = self._get_current_os_save_paths(save_info["save_locations"], steam_uid, app_id)
+            write_log(f"Caminhos expandidos: {expanded_paths}")
             if expanded_paths:
                 current_os = platform.system()
                 os_mapping = {"Windows": "Windows", "Darwin": "macOS", "Linux": "Linux"}
