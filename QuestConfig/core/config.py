@@ -10,6 +10,7 @@ import configparser
 import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+import platform # Adicionado para verificar o SO
 
 from ..interfaces.services import ConfigService
 from ..utils.logger import setup_logger, write_log
@@ -23,10 +24,15 @@ class AppConfigService:
     
     def load_rclone_remotes(self) -> List[str]:
         """Carrega os remotes configurados no Rclone."""
-        rclone_conf_path = os.path.join(os.environ.get('APPDATA', ''), r"rclone\rclone.conf")
+        if platform.system() == "Windows":
+            rclone_conf_path_str = os.path.join(os.environ.get('APPDATA', ''), r"rclone\rclone.conf")
+        else: # Linux, macOS, etc.
+            rclone_conf_path_str = os.path.expanduser("~/.config/rclone/rclone.conf")
+            
+        rclone_conf_path = Path(rclone_conf_path_str) # Converter para Path para consistência, embora os.path.isfile funcione com str
         remotes = []
         
-        if os.path.isfile(rclone_conf_path):
+        if rclone_conf_path.is_file(): # Usar .is_file() de Path
             try:
                 config = configparser.ConfigParser()
                 config.read(rclone_conf_path)
@@ -95,7 +101,12 @@ class AppConfigService:
     
     def get_default_values(self) -> Dict[str, Any]:
         """Retorna valores padrao para os campos do formulario."""
+        if platform.system() == "Windows":
+            default_rclone_path = os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), r"Rclone\rclone.exe")
+        else: # Linux, macOS, etc.
+            default_rclone_path = "rclone"
+            
         return {
-            'rclone_path': os.path.join(os.environ.get('ProgramFiles', r'C:\Program Files'), r"Rclone\rclone.exe"),
+            'rclone_path': default_rclone_path,
             'steam_uid': ''
         } 

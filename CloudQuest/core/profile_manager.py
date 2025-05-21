@@ -7,6 +7,7 @@ Este modulo centraliza as operacoes relacionadas aos perfis de jogos.
 
 import json
 from pathlib import Path
+import platform
 
 from CloudQuest.config.settings import PROFILES_DIR
 from CloudQuest.utils.logger import log
@@ -68,8 +69,12 @@ def load_profile(profile_name):
                 
         # Se não há RclonePath, adiciona um valor padrão
         if 'RclonePath' not in normalized_profile:
-            normalized_profile['RclonePath'] = "C:\\Program Files\\rclone\\rclone.exe"
-            log.info(f"RclonePath não encontrado, usando valor padrão")
+            if platform.system() == "Windows":
+                normalized_profile['RclonePath'] = "C:\\Program Files\\rclone\\rclone.exe"
+                log.info(f"RclonePath não encontrado, usando valor padrão do Windows.")
+            else: # Linux, macOS, etc.
+                normalized_profile['RclonePath'] = "rclone"
+                log.info(f"RclonePath não encontrado, usando valor padrão 'rclone' (esperado no PATH).")
             
         # Verifica se todas as chaves obrigatórias estão presentes
         missing_keys = []
