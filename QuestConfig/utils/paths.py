@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Dict, Union
+import platform # Adicionado para verificar o sistema operacional
 
 
 def get_app_paths() -> Dict[str, Path]:
@@ -48,12 +49,19 @@ def get_app_paths() -> Dict[str, Path]:
             app_root = script_dir
         
         app_dir_for_batch = app_root
+
+        # Define o diretório de perfis com base no sistema operacional para o fallback
+        if platform.system() == "Linux":
+            profiles_dir_fallback = Path.home() / ".config" / "cloudquest"
+        else:
+            profiles_dir_fallback = app_root / "config" / "profiles"
+
         paths = {
             'app_root': app_root,
             'script_dir': script_dir,
             'log_dir': app_root / "logs",
             'config_dir': app_root / "config",
-            'profiles_dir': app_root / "config" / "profiles",
+            'profiles_dir': profiles_dir_fallback, # Usar o fallback definido
             'assets_dir': app_root / "assets",
             # Considerar um ícone .png ou .svg para Linux/outros SO
             'icon_path': app_root / "assets" / "icons" / ("app_icon.png" if sys.platform.startswith("linux") else "app_icon.ico"),

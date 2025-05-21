@@ -195,6 +195,7 @@ def compile_cloudquest():
         # (str(current_dir / "assets" / "icons" / "*.png"), "assets/icons"),
         # (str(current_dir / "CloudQuest" / "config" / "profiles"), "CloudQuest/config/profiles"),
         # (str(current_dir / "config" / "profiles"), "config/profiles"),
+        (str(current_dir / "assets"), "assets"), # Incluir toda a pasta assets
         (str(current_dir / "CloudQuest"), "CloudQuest"),
         (str(current_dir / "QuestConfig"), "QuestConfig"),
         (str(current_dir / "logs"), "logs"),
@@ -226,7 +227,7 @@ def compile_cloudquest():
     if icon_path and icon_path.exists():
         pyinstaller_args.extend([
             f"--icon={icon_path}",
-            f"--add-data={icon_path}:assets{os.path.sep}icons{os.path.sep}",
+            # f"--add-data={icon_path}:assets{os.path.sep}icons{os.path.sep}", # Removido pois 'assets' já é adicionado
         ])
     
     # Adicionar importações ocultas obrigatórias - Módulos da biblioteca padrão

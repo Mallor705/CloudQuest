@@ -69,22 +69,23 @@ class ShortcutCreatorService:
         """Cria um arquivo .desktop para o jogo no Linux."""
         try:
             game_name = shortcut_data.get('name', '')
+            game_executable_path = shortcut_data.get('executable_path', '')
+            icon_path = shortcut_data.get('icon_path', '')
             game_name_internal = shortcut_data.get('internal_name', '')
-            game_executable = shortcut_data.get('executable_path', '')
-            icon_path_data = shortcut_data.get('icon_path', '')
 
-            if not self.batch_path:
-                write_log("Caminho do batch não fornecido para atalho do Linux.", level='ERROR')
+            if not game_executable_path:
+                write_log("Caminho do executável do jogo (executable_path) não fornecido. Não é possível criar atalho no Linux.", level='ERROR')
+                return False
+            
+            if not game_name_internal:
+                write_log("Nome interno do jogo (internal_name) não fornecido. Não é possível criar atalho no Linux.", level='ERROR')
                 return False
 
-            exec_command = f'"{str(self.batch_path)}" "{game_name_internal}"'
+            game_exe_str = str(game_executable_path) if isinstance(game_executable_path, Path) else game_executable_path
             
-            final_working_dir = ""
-            if game_executable:
-                game_exe_path_str = str(game_executable) if isinstance(game_executable, Path) else game_executable
-                final_working_dir = os.path.dirname(game_exe_path_str)
-            elif self.batch_path:
-                final_working_dir = os.path.dirname(str(self.batch_path) if isinstance(self.batch_path, Path) else self.batch_path)
+            exec_command = f'"{game_exe_str}" cloudquest "{game_name_internal}"'
+            
+            final_working_dir = os.path.dirname(game_exe_str)
 
             desktop_entry_content = [
                 "[Desktop Entry]",
@@ -99,11 +100,12 @@ class ShortcutCreatorService:
             ]
             
             final_icon_path = ""
-            if game_executable and os.path.isfile(str(game_executable)):
-                final_icon_path = str(game_executable)
+            # Lógica do ícone: prioriza o ícone do executável do jogo, depois o icon_path fornecido.
+            if game_executable_path and os.path.isfile(game_exe_str): 
+                final_icon_path = game_exe_str
                 write_log(f"Usando ícone do executável do jogo (Linux): {final_icon_path}")
-            elif icon_path_data and os.path.isfile(str(icon_path_data)):
-                final_icon_path = str(icon_path_data)
+            elif icon_path and os.path.isfile(str(icon_path)):
+                final_icon_path = str(icon_path)
                 write_log(f"Usando ícone alternativo (Linux): {final_icon_path}")
             
             if final_icon_path:
@@ -112,7 +114,7 @@ class ShortcutCreatorService:
             with open(shortcut_path, 'w', encoding='utf-8') as f:
                 f.write("\n".join(desktop_entry_content) + "\n")
             
-            os.chmod(shortcut_path, 0o755)
+            os.chmod(shortcut_path, 0o755) # Garante permissões de execução para o arquivo .desktop
             return True
         except Exception as e:
             write_log(f"Erro ao criar atalho no Linux: {str(e)}", level='ERROR')

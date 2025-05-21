@@ -113,16 +113,23 @@ def main():
             log.error(f"Erro no download (continuando): {str(e)}")
             # Nao precisamos exibir erro ao usuario, pois isso nao e critico
 
-        # 3. Iniciar o launcher/jogo
+        # 3. Iniciar o launcher/jogo (apenas no Windows)
         game_process = None
-        try:
-            game_process = launch_game(profile_name)
-        except Exception as e:
-            error_msg = f"Falha ao iniciar o jogo: {str(e)}"
-            log.error(error_msg)
-            if not is_silent_mode():
-                show_error_message(error_msg)
-            sys.exit(1)
+        
+        if sys.platform == 'win32':
+            try:
+                log.info("Sistema Windows detectado: iniciando o jogo...")
+                game_process = launch_game(profile_name)
+            except Exception as e:
+                error_msg = f"Falha ao iniciar o jogo: {str(e)}"
+                log.error(error_msg)
+                if not is_silent_mode():
+                    show_error_message(error_msg)
+                sys.exit(1)
+        else:
+            profile = load_profile(profile_name)
+            game_process = profile['GameProcess']
+            log.info("Sistema Linux detectado")
 
         # 4. Aguardar o termino do jogo
         if game_process:

@@ -10,6 +10,7 @@ import sys
 import tempfile
 from pathlib import Path
 from typing import Dict
+import platform # Adicionado para verificar o sistema operacional
 
 def get_app_paths() -> Dict[str, Path]:
     """
@@ -27,13 +28,19 @@ def get_app_paths() -> Dict[str, Path]:
         BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         APP_DIR = BASE_DIR
 
+    # Define o diretório de perfis com base no sistema operacional
+    if platform.system() == "Linux":
+        PROFILES_DIR = Path.home() / ".config" / "cloudquest"
+    else:
+        PROFILES_DIR = APP_DIR / "config" / "profiles"
+
     # Diretorios do projeto
     paths = {
         'BASE_DIR': BASE_DIR,
         'APP_DIR': APP_DIR,
         'LOGS_DIR': APP_DIR / "logs",
         'CONFIG_DIR': APP_DIR / "config",
-        'PROFILES_DIR': APP_DIR / "config" / "profiles",
+        'PROFILES_DIR': PROFILES_DIR,
         'ASSETS_DIR': APP_DIR / "assets",
         'ICONS_DIR': APP_DIR / "assets" / "icons",
         'TEMP_PROFILE_FILE': Path(os.path.join(tempfile.gettempdir(), "cloudquest_profile.txt"))
