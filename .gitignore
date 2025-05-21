@@ -1,5 +1,4 @@
 profiles/
-dist/
 build/
 logs/
 __pycache__/

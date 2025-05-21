@@ -226,7 +226,7 @@ def compile_cloudquest():
     if icon_path and icon_path.exists():
         pyinstaller_args.extend([
             f"--icon={icon_path}",
-            f"--add-data={icon_path};assets/icons/",
+            f"--add-data={icon_path}:assets{os.path.sep}icons{os.path.sep}",
         ])
     
     # Adicionar importações ocultas obrigatórias - Módulos da biblioteca padrão
@@ -314,7 +314,7 @@ def compile_cloudquest():
     
     # Adicionar recursos adicionais
     for resource, destination in additional_resources:
-        pyinstaller_args.append(f"--add-data={resource};{destination}")
+        pyinstaller_args.append(f"--add-data={resource}:{destination}")
     
     # Adicionar o script principal
     pyinstaller_args.append("app.py")
