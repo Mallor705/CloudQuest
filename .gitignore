@@ -7,3 +7,5 @@ create_steam_shortcut.py
 questconfig.exe
 *.log
 *.spec
+.venv/
+myvenv/
