@@ -78,12 +78,86 @@ class NotificationWindow:
         return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
     
     def _position_window(self):
-        """Posiciona a janela no canto inferior direito da tela."""
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        
-        x_position = screen_width - NOTIFICATION_WIDTH - 00 # 0px de margem
-        y_position = screen_height - NOTIFICATION_HEIGHT - 48  # 48px de altura
+        """Posiciona a janela no canto inferior direito do monitor principal."""
+        try:
+            # Se estamos no Windows, vamos usar a API Win32 para detectar o monitor principal
+            if sys.platform == "win32":
+                try:
+                    # Tenta importar a biblioteca win32
+                    import win32api
+                    
+                    # Obtém informações do monitor principal (monitor com flags = 1)
+                    monitors = win32api.EnumDisplayMonitors()
+                    monitor_info = win32api.GetMonitorInfo(monitors[0][0])
+                    
+                    # Para cada monitor, verifica se é o primário
+                    for monitor in monitors:
+                        info = win32api.GetMonitorInfo(monitor[0])
+                        if info['Flags'] == 1:  # Primary monitor
+                            monitor_info = info
+                            break
+                    
+                    # Obtém as coordenadas da área de trabalho (sem a barra de tarefas)
+                    work_area = monitor_info['Work']
+                    
+                    # Calcula a posição no canto inferior direito
+                    x_position = work_area[2] - NOTIFICATION_WIDTH - 00
+                    y_position = work_area[3] - NOTIFICATION_HEIGHT - 48
+                    
+                    self.root.geometry(f"+{x_position}+{y_position}")
+                    return
+                except ImportError:
+                    log.warning("Módulo win32api não encontrado. Usando método padrão.")
+                except Exception as e:
+                    log.warning(f"Erro ao obter monitor primário no Windows: {e}")
+            
+            # Se estamos no Linux, vamos tentar obter informação específica do X11
+            elif sys.platform.startswith('linux'):
+                try:
+                    import subprocess
+                    
+                    # Obtém a string de configuração do Xrandr
+                    xrandr_output = subprocess.check_output(['xrandr', '--query']).decode()
+                    
+                    # Procura pelo monitor marcado como "primary"
+                    import re
+                    primary_info = re.search(r'(\d+x\d+\+\d+\+\d+) primary', xrandr_output)
+                    
+                    if primary_info:
+                        geometry = primary_info.group(1)
+                        # Formato: 1920x1080+0+0
+                        width, rest = geometry.split('x')
+                        height, x_offset, y_offset = rest.split('+')
+                        
+                        primary_screen_width = int(width)
+                        primary_screen_height = int(height)
+                        x_offset = int(x_offset)
+                        y_offset = int(y_offset)
+                        
+                        # Calcular posição no monitor principal
+                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 00
+                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 48
+                        
+                        self.root.geometry(f"+{x_position}+{y_position}")
+                        return
+                except Exception as e:
+                    log.warning(f"Não foi possível detectar o monitor primário via xrandr: {e}")
+            
+            # Método padrão do Tkinter (fallback)
+            # Isso deve funcionar para a maioria dos casos simples onde o monitor primário é o único ou o primeiro
+            primary_screen_width = self.root.winfo_screenwidth()
+            primary_screen_height = self.root.winfo_screenheight()
+            
+            x_position = primary_screen_width - NOTIFICATION_WIDTH - 00
+            y_position = primary_screen_height - NOTIFICATION_HEIGHT - 48
+            
+        except Exception as e:
+            log.warning(f"Erro ao determinar monitor primário: {e}")
+            # Fallback absoluto para o comportamento mais simples possível
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
+            x_position = screen_width - NOTIFICATION_WIDTH - 00
+            y_position = screen_height - NOTIFICATION_HEIGHT - 48
         
         self.root.geometry(f"+{x_position}+{y_position}")
     
