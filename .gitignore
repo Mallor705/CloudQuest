@@ -8,4 +8,4 @@ questconfig.exe
 *.log
 *.spec
 .venv/
-myvenv/
+myenv/
