@@ -141,8 +141,8 @@ class NotificationWindow:
                                 primary_screen_height = int(height)
                                 
                                 # Calcular posição
-                                x_position = primary_screen_width - NOTIFICATION_WIDTH - 10
-                                y_position = primary_screen_height - NOTIFICATION_HEIGHT - 10
+                                x_position = primary_screen_width - NOTIFICATION_WIDTH - 00
+                                y_position = primary_screen_height - NOTIFICATION_HEIGHT - 60
                                 
                                 self.root.geometry(f"+{x_position}+{y_position}")
                                 log.debug(f"Posição definida via wlr-randr: {x_position}x{y_position}")
@@ -167,8 +167,8 @@ class NotificationWindow:
                                         y_offset = rect.get('y', 0)
                                         
                                         # Calcular posição
-                                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 10
-                                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 10
+                                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 00
+                                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 60
                                         
                                         self.root.geometry(f"+{x_position}+{y_position}")
                                         log.debug(f"Posição definida via swaymsg: {x_position}x{y_position}")
@@ -189,8 +189,8 @@ class NotificationWindow:
                                     y = monitor.get('y', 0)
                                     
                                     # Calcular posição
-                                    x_position = x + width - NOTIFICATION_WIDTH - 10
-                                    y_position = y + height - NOTIFICATION_HEIGHT - 10
+                                    x_position = x + width - NOTIFICATION_WIDTH - 00
+                                    y_position = y + height - NOTIFICATION_HEIGHT - 60
                                     
                                     self.root.geometry(f"+{x_position}+{y_position}")
                                     log.debug(f"Posição definida via hyprctl: {x_position}x{y_position}")
@@ -211,8 +211,8 @@ class NotificationWindow:
                                     y = output.get('pos', {}).get('y', 0)
                                     
                                     # Calcular posição
-                                    x_position = x + width - NOTIFICATION_WIDTH - 10
-                                    y_position = y + height - NOTIFICATION_HEIGHT - 10
+                                    x_position = x + width - NOTIFICATION_WIDTH - 00
+                                    y_position = y + height - NOTIFICATION_HEIGHT - 60
                                     
                                     self.root.geometry(f"+{x_position}+{y_position}")
                                     log.debug(f"Posição definida via kscreen-doctor: {x_position}x{y_position}")
@@ -228,8 +228,8 @@ class NotificationWindow:
                                 screen_width = self.root.winfo_screenwidth()
                                 screen_height = self.root.winfo_screenheight()
                                 
-                                x_position = screen_width - NOTIFICATION_WIDTH - 10
-                                y_position = screen_height - NOTIFICATION_HEIGHT - 30  # Mais espaço para a barra inferior
+                                x_position = screen_width - NOTIFICATION_WIDTH - 00
+                                y_position = screen_height - NOTIFICATION_HEIGHT - 60  # Mais espaço para a barra inferior
                                 
                                 self.root.geometry(f"+{x_position}+{y_position}")
                                 log.debug(f"Posição definida para GNOME Wayland: {x_position}x{y_position}")
@@ -242,8 +242,8 @@ class NotificationWindow:
                         screen_height = self.root.winfo_screenheight()
                         
                         if screen_width > 0 and screen_height > 0:
-                            x_position = screen_width - NOTIFICATION_WIDTH - 10
-                            y_position = screen_height - NOTIFICATION_HEIGHT - 10
+                            x_position = screen_width - NOTIFICATION_WIDTH - 00
+                            y_position = screen_height - NOTIFICATION_HEIGHT - 60
                             
                             self.root.geometry(f"+{x_position}+{y_position}")
                             log.debug(f"Posição definida via Tkinter em Wayland: {x_position}x{y_position}")
@@ -273,21 +273,21 @@ class NotificationWindow:
                         y_offset = int(y_offset)
                         
                         # Calcular posição no monitor principal
-                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 0
-                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 0
+                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 00
+                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 60
                         
                         self.root.geometry(f"+{x_position}+{y_position}")
                         return
                 except Exception as e:
                     log.warning(f"Não foi possível detectar o monitor primário via xrandr: {e}")
             
-            # Método padrão do Tkinter (fallback)
-            # Isso deve funcionar para a maioria dos casos simples onde o monitor primário é o único ou o primeiro
-            primary_screen_width = self.root.winfo_screenwidth()
-            primary_screen_height = self.root.winfo_screenheight()
+            # # Método padrão do Tkinter (fallback)
+            # # Isso deve funcionar para a maioria dos casos simples onde o monitor primário é o único ou o primeiro
+            # primary_screen_width = self.root.winfo_screenwidth()
+            # primary_screen_height = self.root.winfo_screenheight()
             
-            x_position = primary_screen_width - NOTIFICATION_WIDTH - 0
-            y_position = primary_screen_height - NOTIFICATION_HEIGHT - 0
+            # x_position = primary_screen_width - NOTIFICATION_WIDTH - 0
+            # y_position = primary_screen_height - NOTIFICATION_HEIGHT - 0
             
         except Exception as e:
             log.warning(f"Erro ao determinar monitor primário: {e}")

@@ -263,15 +263,34 @@ def compile_cloudquest():
     
     # Adicionar importações ocultas obrigatórias - Módulos de terceiros
     third_party_modules = [
-        # Importações do Tkinter
-        "tkinter",
-        "tkinter.ttk",
-        "tkinter.filedialog",
-        "tkinter.messagebox",
-        "tkinter.simpledialog",
-        "tkinter.constants",
-        "tkinter.font",
-        "_tkinter",
+        # # Importações do Tkinter
+        # "tkinter",
+        # "tkinter.ttk",
+        # "tkinter.filedialog",
+        # "tkinter.messagebox",
+        # "tkinter.simpledialog",
+        # "tkinter.constants",
+        # "tkinter.font",
+        # "_tkinter",
+        
+        # Importações CustomTkinter
+        "customtkinter",
+        "customtkinter.windows.ctk_tk",
+        "customtkinter.windows.widgets",
+        "customtkinter.windows.widgets.theme",
+        "customtkinter.windows.widgets.core_widget_classes",
+        "customtkinter.windows.widgets.core_rendering",
+        "customtkinter.windows.widgets.appearance_mode",
+        "customtkinter.windows.widgets.scaling",
+        "customtkinter.windows.widgets.font",
+        "customtkinter.windows.ctk_toplevel",
+        "customtkinter.windows.ctk_frame",
+        "customtkinter.windows.ctk_label",
+        "customtkinter.windows.ctk_button",
+        "customtkinter.windows.ctk_entry",
+        "customtkinter.windows.ctk_progressbar",
+        "customtkinter.windows.ctk_image",
+        "customtkinter.windows.ctk_combobox",
         
         # Importações dos pacotes CloudQuest e QuestConfig
         "CloudQuest",
