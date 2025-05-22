@@ -101,8 +101,8 @@ class NotificationWindow:
                     work_area = monitor_info['Work']
                     
                     # Calcula a posição no canto inferior direito
-                    x_position = work_area[2] - NOTIFICATION_WIDTH - 00
-                    y_position = work_area[3] - NOTIFICATION_HEIGHT - 48
+                    x_position = work_area[2] - NOTIFICATION_WIDTH - 0
+                    y_position = work_area[3] - NOTIFICATION_HEIGHT - 0
                     
                     self.root.geometry(f"+{x_position}+{y_position}")
                     return
@@ -135,8 +135,8 @@ class NotificationWindow:
                         y_offset = int(y_offset)
                         
                         # Calcular posição no monitor principal
-                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 00
-                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 48
+                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 0
+                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 0
                         
                         self.root.geometry(f"+{x_position}+{y_position}")
                         return
@@ -148,16 +148,16 @@ class NotificationWindow:
             primary_screen_width = self.root.winfo_screenwidth()
             primary_screen_height = self.root.winfo_screenheight()
             
-            x_position = primary_screen_width - NOTIFICATION_WIDTH - 00
-            y_position = primary_screen_height - NOTIFICATION_HEIGHT - 48
+            x_position = primary_screen_width - NOTIFICATION_WIDTH - 0
+            y_position = primary_screen_height - NOTIFICATION_HEIGHT - 0
             
         except Exception as e:
             log.warning(f"Erro ao determinar monitor primário: {e}")
             # Fallback absoluto para o comportamento mais simples possível
             screen_width = self.root.winfo_screenwidth()
             screen_height = self.root.winfo_screenheight()
-            x_position = screen_width - NOTIFICATION_WIDTH - 00
-            y_position = screen_height - NOTIFICATION_HEIGHT - 48
+            x_position = screen_width - NOTIFICATION_WIDTH - 0
+            y_position = screen_height - NOTIFICATION_HEIGHT - 0
         
         self.root.geometry(f"+{x_position}+{y_position}")
     

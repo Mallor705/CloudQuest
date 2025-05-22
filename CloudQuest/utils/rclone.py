@@ -107,7 +107,7 @@ def create_remote_dir(rclone_path, cloud_remote, cloud_dir):
         log.info(f"Diretorio remoto verificado/criado: {cloud_remote}:{cloud_dir}")
         return True
     except subprocess.CalledProcessError as e:
-        log.warning(f"Falha ao criar diretorio remoto: {e}")
+        log.warning(f"Falha ao criar diretorio remoto: {e}. Stderr: {e.stderr.decode('utf-8', errors='ignore') if e.stderr else 'N/A'}")
         return False
     except Exception as e:
         log.warning(f"Erro ao criar diretorio remoto: {str(e)}")
