@@ -8,7 +8,7 @@ import os
 import sys
 import threading
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from PIL import Image
 import time
 from pathlib import Path
 
@@ -110,16 +110,155 @@ class NotificationWindow:
                 except Exception as e:
                     log.warning(f"Erro ao obter monitor primário no Windows: {e}")
             
-            # Se estamos no Linux, vamos tentar obter informação específica do X11
+            # Se estamos no Linux, vamos tentar obter informação do Wayland primeiro, depois X11
             elif sys.platform.startswith('linux'):
+                import subprocess
+                import re
+                import json
+                
+                # Primeiro, tente obter informações via Wayland
                 try:
-                    import subprocess
+                    # Verificar se estamos rodando em uma sessão Wayland
+                    wayland_session = (
+                        os.environ.get('WAYLAND_DISPLAY') or 
+                        os.environ.get('XDG_SESSION_TYPE') == 'wayland' or
+                        os.environ.get('DESKTOP_SESSION', '').lower().find('wayland') >= 0
+                    )
                     
+                    if wayland_session:
+                        log.debug("Detectada sessão Wayland, tentando obter informações de monitor")
+                        
+                        # Método 1: Tenta usar wlr-randr para obter informações de monitor (para compositors baseados em wlroots)
+                        try:
+                            wlr_output = subprocess.check_output(['wlr-randr'], stderr=subprocess.DEVNULL).decode()
+                            
+                            # Procura por linhas como "HDMI-A-1 2560x1440@59.951000Hz (preferred)"
+                            monitors = re.findall(r'(\S+)\s+(\d+)x(\d+)@.+?\s+\(preferred\)', wlr_output)
+                            
+                            if monitors:
+                                display_name, width, height = monitors[0]
+                                primary_screen_width = int(width)
+                                primary_screen_height = int(height)
+                                
+                                # Calcular posição
+                                x_position = primary_screen_width - NOTIFICATION_WIDTH - 10
+                                y_position = primary_screen_height - NOTIFICATION_HEIGHT - 10
+                                
+                                self.root.geometry(f"+{x_position}+{y_position}")
+                                log.debug(f"Posição definida via wlr-randr: {x_position}x{y_position}")
+                                return
+                        except (subprocess.SubprocessError, FileNotFoundError):
+                            log.debug("wlr-randr não encontrado ou falhou")
+                        
+                        # Método 2: Tenta usar swaymsg para obter informações de monitor (para Sway WM)
+                        try:
+                            sway_output = subprocess.check_output(['swaymsg', '-t', 'get_outputs'], stderr=subprocess.DEVNULL).decode()
+                            
+                            # Se conseguiu obter as informações, tenta extrair dimensões do monitor principal
+                            if 'focused' in sway_output:
+                                outputs = json.loads(sway_output)
+                                
+                                for output in outputs:
+                                    if output.get('focused', False):
+                                        rect = output.get('rect', {})
+                                        primary_screen_width = rect.get('width', 0)
+                                        primary_screen_height = rect.get('height', 0)
+                                        x_offset = rect.get('x', 0)
+                                        y_offset = rect.get('y', 0)
+                                        
+                                        # Calcular posição
+                                        x_position = x_offset + primary_screen_width - NOTIFICATION_WIDTH - 10
+                                        y_position = y_offset + primary_screen_height - NOTIFICATION_HEIGHT - 10
+                                        
+                                        self.root.geometry(f"+{x_position}+{y_position}")
+                                        log.debug(f"Posição definida via swaymsg: {x_position}x{y_position}")
+                                        return
+                        except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError):
+                            log.debug("swaymsg não encontrado ou falhou")
+                        
+                        # Método 3: Tenta usar hyprctl para obter informações de monitor (para Hyprland)
+                        try:
+                            hypr_output = subprocess.check_output(['hyprctl', 'monitors', '-j'], stderr=subprocess.DEVNULL).decode()
+                            monitors = json.loads(hypr_output)
+                            
+                            for monitor in monitors:
+                                if monitor.get('focused', False):
+                                    width = monitor.get('width', 0)
+                                    height = monitor.get('height', 0)
+                                    x = monitor.get('x', 0)
+                                    y = monitor.get('y', 0)
+                                    
+                                    # Calcular posição
+                                    x_position = x + width - NOTIFICATION_WIDTH - 10
+                                    y_position = y + height - NOTIFICATION_HEIGHT - 10
+                                    
+                                    self.root.geometry(f"+{x_position}+{y_position}")
+                                    log.debug(f"Posição definida via hyprctl: {x_position}x{y_position}")
+                                    return
+                        except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError):
+                            log.debug("hyprctl não encontrado ou falhou")
+                        
+                        # Método 4: Para KDE Plasma Wayland
+                        try:
+                            kscreen_output = subprocess.check_output(['kscreen-doctor', '-j'], stderr=subprocess.DEVNULL).decode()
+                            kscreen_data = json.loads(kscreen_output)
+                            
+                            for output in kscreen_data.get('outputs', []):
+                                if output.get('enabled', False):
+                                    width = output.get('size', {}).get('width', 0)
+                                    height = output.get('size', {}).get('height', 0)
+                                    x = output.get('pos', {}).get('x', 0)
+                                    y = output.get('pos', {}).get('y', 0)
+                                    
+                                    # Calcular posição
+                                    x_position = x + width - NOTIFICATION_WIDTH - 10
+                                    y_position = y + height - NOTIFICATION_HEIGHT - 10
+                                    
+                                    self.root.geometry(f"+{x_position}+{y_position}")
+                                    log.debug(f"Posição definida via kscreen-doctor: {x_position}x{y_position}")
+                                    return
+                        except (subprocess.SubprocessError, FileNotFoundError, json.JSONDecodeError):
+                            log.debug("kscreen-doctor não encontrado ou falhou")
+                        
+                        # Método 5: Para GNOME Wayland
+                        try:
+                            gnome_output = subprocess.check_output(['gnome-shell', '--version'], stderr=subprocess.DEVNULL).decode()
+                            if 'GNOME Shell' in gnome_output:
+                                # Se é GNOME, usamos o método padrão do Tkinter, mas ajustamos para GNOME
+                                screen_width = self.root.winfo_screenwidth()
+                                screen_height = self.root.winfo_screenheight()
+                                
+                                x_position = screen_width - NOTIFICATION_WIDTH - 10
+                                y_position = screen_height - NOTIFICATION_HEIGHT - 30  # Mais espaço para a barra inferior
+                                
+                                self.root.geometry(f"+{x_position}+{y_position}")
+                                log.debug(f"Posição definida para GNOME Wayland: {x_position}x{y_position}")
+                                return
+                        except (subprocess.SubprocessError, FileNotFoundError):
+                            log.debug("Detecção GNOME falhou")
+                            
+                        # Se todos os métodos específicos falharam, usar o método Tkinter com ajustes para Wayland
+                        screen_width = self.root.winfo_screenwidth()
+                        screen_height = self.root.winfo_screenheight()
+                        
+                        if screen_width > 0 and screen_height > 0:
+                            x_position = screen_width - NOTIFICATION_WIDTH - 10
+                            y_position = screen_height - NOTIFICATION_HEIGHT - 10
+                            
+                            self.root.geometry(f"+{x_position}+{y_position}")
+                            log.debug(f"Posição definida via Tkinter em Wayland: {x_position}x{y_position}")
+                            return
+                        
+                        log.warning("Não foi possível obter informações do monitor via métodos Wayland")
+                except Exception as e:
+                    log.warning(f"Erro ao detectar informações de monitor via Wayland: {e}")
+                
+                # Se Wayland falhou, tenta via X11
+                try:
                     # Obtém a string de configuração do Xrandr
                     xrandr_output = subprocess.check_output(['xrandr', '--query']).decode()
                     
                     # Procura pelo monitor marcado como "primary"
-                    import re
                     primary_info = re.search(r'(\d+x\d+\+\d+\+\d+) primary', xrandr_output)
                     
                     if primary_info:
@@ -215,7 +354,7 @@ class NotificationWindow:
             try:
                 icon_img = Image.open(icon_path)
                 icon_img = icon_img.resize((55, 44), Image.LANCZOS)
-                icon_photo = ImageTk.PhotoImage(icon_img)
+                icon_photo = ctk.CTkImage(light_image=icon_img, dark_image=icon_img, size=(55, 44))
                 
                 icon_label = ctk.CTkLabel(self.frame, image=icon_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 icon_label.image = icon_photo  # Manter referencia
@@ -230,7 +369,7 @@ class NotificationWindow:
             try:
                 bg_img = Image.open(bg_path)
                 bg_img = bg_img.resize((103, 83), Image.LANCZOS)
-                bg_photo = ImageTk.PhotoImage(bg_img)
+                bg_photo = ctk.CTkImage(light_image=bg_img, dark_image=bg_img, size=(103, 83))
                 
                 bg_label = ctk.CTkLabel(self.frame, image=bg_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 bg_label.image = bg_photo  # Manter referencia
