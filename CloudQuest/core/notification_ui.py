@@ -358,7 +358,7 @@ class NotificationWindow:
                 
                 icon_label = ctk.CTkLabel(self.frame, image=icon_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 icon_label.image = icon_photo  # Manter referencia
-                icon_label.place(x=10, y=15)
+                icon_label.place(x=10, y=28)
             except Exception as e:
                 log.error(f"Erro ao carregar icone {icon_path}: {e}")
         else:
@@ -373,7 +373,7 @@ class NotificationWindow:
                 
                 bg_label = ctk.CTkLabel(self.frame, image=bg_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 bg_label.image = bg_photo  # Manter referencia
-                bg_label.place(x=201, y=-4)
+                bg_label.place(x=201, y=8)
             except Exception as e:
                 log.error(f"Erro ao carregar background {bg_path}: {e}")
         else:
@@ -387,7 +387,7 @@ class NotificationWindow:
             text_color=self._rgb_to_hex(COLORS["text_secondary"]),
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        title_label.place(x=75, y=10)
+        title_label.place(x=75, y=23)
         
         # Adicionar nome do jogo
         game_label = ctk.CTkLabel(
@@ -397,7 +397,7 @@ class NotificationWindow:
             text_color=self._rgb_to_hex(COLORS["text_primary"]),
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        game_label.place(x=75, y=27)
+        game_label.place(x=75, y=40)
         
         # Adicionar mensagem de status
         # Determinar mensagem de status com base no tipo e direcao
@@ -415,7 +415,7 @@ class NotificationWindow:
             text_color=status_color,
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        status_label.place(x=75, y=45)
+        status_label.place(x=75, y=58)
     
     def _fade_in(self):
         """Anima a janela com efeito de fade-in."""
