@@ -121,6 +121,16 @@ main() {
         log_info "CloudQuest instalado com sucesso em $INSTALL_PATH_USER/$FINAL_EXEC_NAME"
         FINAL_EXEC_PATH="$INSTALL_PATH_USER/$FINAL_EXEC_NAME"
         
+        # Criar/atualizar symlink em /usr/local/bin
+        log_info "Tentando criar link simbólico global em /usr/local/bin/$FINAL_EXEC_NAME (requer sudo)..."
+        if sudo ln -sf "$INSTALL_PATH_USER/$FINAL_EXEC_NAME" "/usr/local/bin/$FINAL_EXEC_NAME"; then
+            log_info "Link simbólico global criado/atualizado com sucesso em /usr/local/bin/$FINAL_EXEC_NAME."
+        else
+            log_warn "Falha ao criar/atualizar link simbólico global em /usr/local/bin/$FINAL_EXEC_NAME."
+            log_warn "Verifique se você tem permissões sudo ou se o diretório /usr/local/bin existe e é gravável com sudo."
+            log_warn "A instalação local em $INSTALL_PATH_USER/$FINAL_EXEC_NAME foi bem-sucedida, mas o comando pode não ser globalmente acessível."
+        fi
+        
         # Verificar se $INSTALL_PATH_USER está no PATH
         if [[ ":$PATH:" != *":$INSTALL_PATH_USER:"* ]]; then
             log_warn "$INSTALL_PATH_USER não está no seu PATH."
