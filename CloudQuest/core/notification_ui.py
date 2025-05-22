@@ -248,7 +248,7 @@ class NotificationWindow:
             text_color=self._rgb_to_hex(COLORS["text_secondary"]),
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        title_label.place(x=75, y=15)
+        title_label.place(x=75, y=10)
         
         # Adicionar nome do jogo
         game_label = ctk.CTkLabel(
@@ -258,7 +258,7 @@ class NotificationWindow:
             text_color=self._rgb_to_hex(COLORS["text_primary"]),
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        game_label.place(x=75, y=30)
+        game_label.place(x=75, y=27)
         
         # Adicionar mensagem de status
         # Determinar mensagem de status com base no tipo e direcao
@@ -276,7 +276,7 @@ class NotificationWindow:
             text_color=status_color,
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        status_label.place(x=75, y=52)
+        status_label.place(x=75, y=45)
     
     def _fade_in(self):
         """Anima a janela com efeito de fade-in."""
