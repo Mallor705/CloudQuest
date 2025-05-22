@@ -7,8 +7,7 @@ CloudQuest - Interface de notificacoes personalizadas.
 import os
 import sys
 import threading
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
 from PIL import Image, ImageTk
 import time
 from pathlib import Path
@@ -38,14 +37,14 @@ class NotificationWindow:
             direction (str): Direcao da sincronizacao ('down' ou 'up')
             notification_type (str): Tipo da notificacao ('info' ou 'error')
         """
-        self.root = tk.Tk()
+        self.root = ctk.CTk()
         self.root.withdraw()  # Esconde a janela principal
         self.root.title("CloudQuest Notification")
         
         # Configuracoes da janela
         self.root.overrideredirect(True)  # Remove bordas e titulo
         self.root.geometry(f"{NOTIFICATION_WIDTH}x{NOTIFICATION_HEIGHT}")
-        self.root.configure(bg=self._rgb_to_hex(COLORS["background"]))
+        self.root.configure(fg_color=self._rgb_to_hex(COLORS["background"]))
         
         # Garantir que a janela fique sempre no topo
         self.root.attributes("-topmost", True)
@@ -198,8 +197,8 @@ class NotificationWindow:
     def _setup_ui(self, title, message, game_name, direction, notification_type):
         """Configura os elementos visuais da notificacao."""
         # Frame principal com gradiente
-        self.frame = tk.Frame(self.root, bg=self._rgb_to_hex(COLORS["background"]), width=NOTIFICATION_WIDTH, height=NOTIFICATION_HEIGHT)
-        self.frame.pack(fill=tk.BOTH, expand=True)
+        self.frame = ctk.CTkFrame(self.root, fg_color=self._rgb_to_hex(COLORS["background"]), width=NOTIFICATION_WIDTH, height=NOTIFICATION_HEIGHT)
+        self.frame.pack(fill="both", expand=True)
         self.frame.pack_propagate(False)  # Impede que o frame se redimensione
         
         # Determinar icones baseado no tipo e direcao
@@ -218,7 +217,7 @@ class NotificationWindow:
                 icon_img = icon_img.resize((55, 44), Image.LANCZOS)
                 icon_photo = ImageTk.PhotoImage(icon_img)
                 
-                icon_label = tk.Label(self.frame, image=icon_photo, bg=self._rgb_to_hex(COLORS["background"]))
+                icon_label = ctk.CTkLabel(self.frame, image=icon_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 icon_label.image = icon_photo  # Manter referencia
                 icon_label.place(x=10, y=15)
             except Exception as e:
@@ -233,7 +232,7 @@ class NotificationWindow:
                 bg_img = bg_img.resize((103, 83), Image.LANCZOS)
                 bg_photo = ImageTk.PhotoImage(bg_img)
                 
-                bg_label = tk.Label(self.frame, image=bg_photo, bg=self._rgb_to_hex(COLORS["background"]))
+                bg_label = ctk.CTkLabel(self.frame, image=bg_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 bg_label.image = bg_photo  # Manter referencia
                 bg_label.place(x=201, y=-4)
             except Exception as e:
@@ -242,22 +241,22 @@ class NotificationWindow:
             log.warning(f"Nao foi possivel encontrar o background: {bg_name}")
         
         # Adicionar titulo
-        title_label = tk.Label(
+        title_label = ctk.CTkLabel(
             self.frame, 
             text="CloudQuest",
             font=("Segoe UI", 7, "bold"),
-            fg=self._rgb_to_hex(COLORS["text_secondary"]),
-            bg=self._rgb_to_hex(COLORS["background"])
+            text_color=self._rgb_to_hex(COLORS["text_secondary"]),
+            fg_color=self._rgb_to_hex(COLORS["background"])
         )
         title_label.place(x=75, y=15)
         
         # Adicionar nome do jogo
-        game_label = tk.Label(
+        game_label = ctk.CTkLabel(
             self.frame, 
             text=game_name,
             font=("Segoe UI", 11, "bold"),
-            fg=self._rgb_to_hex(COLORS["text_primary"]),
-            bg=self._rgb_to_hex(COLORS["background"])
+            text_color=self._rgb_to_hex(COLORS["text_primary"]),
+            fg_color=self._rgb_to_hex(COLORS["background"])
         )
         game_label.place(x=75, y=30)
         
@@ -270,12 +269,12 @@ class NotificationWindow:
             status_message = "Atualizando seu progresso..." if direction == "down" else "Sincronizando a nuvem..."
             status_color = self._rgb_to_hex(COLORS["text_secondary"])
         
-        status_label = tk.Label(
+        status_label = ctk.CTkLabel(
             self.frame, 
             text=status_message,
             font=("Segoe UI", 7),
-            fg=status_color,
-            bg=self._rgb_to_hex(COLORS["background"])
+            text_color=status_color,
+            fg_color=self._rgb_to_hex(COLORS["background"])
         )
         status_label.place(x=75, y=52)
     

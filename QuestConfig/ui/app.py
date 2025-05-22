@@ -5,7 +5,7 @@ Aplicacao principal do QuestConfig.
 """
 
 import os
-import tkinter as tk
+import customtkinter as ctk
 from pathlib import Path
 
 from ..utils.logger import setup_logger, write_log
@@ -32,7 +32,7 @@ class QuestConfigApp:
     
     def run(self) -> None:
         """Executa a aplicacao."""
-        root = tk.Tk()
+        root = ctk.CTk()
         root.title("QuestConfig Game Configurator")
         
         # Configurar icone

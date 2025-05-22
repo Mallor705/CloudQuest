@@ -6,8 +6,8 @@ Views para a interface grafica do QuestConfig.
 
 import os
 import threading
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+import customtkinter as ctk
+from tkinter import messagebox, filedialog
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 
@@ -34,11 +34,11 @@ class ToolTip:
         x += self.widget.winfo_rootx() + 25
         y += self.widget.winfo_rooty() + 20
         
-        self.tw = tk.Toplevel(self.widget)
+        self.tw = ctk.CTkToplevel(self.widget)
         self.tw.wm_overrideredirect(True)
         self.tw.wm_geometry(f"+{x}+{y}")
         
-        label = tk.Label(self.tw, text=self.text, background="#ffffe0", relief="solid", borderwidth=1)
+        label = ctk.CTkLabel(self.tw, text=self.text, fg_color="#ffffe0", corner_radius=0)
         label.pack()
 
     def close(self, event=None):
@@ -56,7 +56,7 @@ class QuestConfigView:
         Inicializa a interface grafica.
         
         Args:
-            root (tk.Tk): Objeto raiz do Tkinter
+            root (ctk.CTk): Objeto raiz do CustomTkinter
             app_paths (dict): Dicionario com os caminhos da aplicacao
             config_service: Servico de configuracao
             steam_service: Servico para informacoes da Steam
@@ -78,22 +78,22 @@ class QuestConfigView:
         self.shortcut_service = shortcut_service or factory.create_shortcut_service(app_paths.get('batch_path'))
         
         # Variaveis de entrada
-        self.executable_path = tk.StringVar()
-        self.app_id = tk.StringVar()
-        self.game_name = tk.StringVar()
-        self.rclone_path = tk.StringVar()
-        self.cloud_remote = tk.StringVar()
-        self.local_dir = tk.StringVar()
-        self.cloud_dir = tk.StringVar()
-        self.game_process = tk.StringVar()
+        self.executable_path = ctk.StringVar()
+        self.app_id = ctk.StringVar()
+        self.game_name = ctk.StringVar()
+        self.rclone_path = ctk.StringVar()
+        self.cloud_remote = ctk.StringVar()
+        self.local_dir = ctk.StringVar()
+        self.cloud_dir = ctk.StringVar()
+        self.game_process = ctk.StringVar()
         
         # Variaveis de controle
         self.game_name_internal = ""
-        self.current_section = tk.StringVar(value="game_info")  # Seção atual selecionada
-        self.current_item = tk.StringVar()  # Item atual selecionado dentro da seção
+        self.current_section = ctk.StringVar(value="game_info")  # Seção atual selecionada
+        self.current_item = ctk.StringVar()  # Item atual selecionado dentro da seção
         
         # Status
-        self.status_var = tk.StringVar()
+        self.status_var = ctk.StringVar()
         self.status_var.set("Pronto")
         
         # Carregar valores padroes
@@ -156,62 +156,52 @@ class QuestConfigView:
     
     def create_widgets(self):
         """Cria todos os widgets da interface."""
-        # Estilo
-        self.style = ttk.Style()
-        self.style.configure('TLabel', font=('Segoe UI', 10))
-        self.style.configure('TButton', font=('Segoe UI', 10))
-        self.style.configure('TEntry', font=('Segoe UI', 10))
-        self.style.configure('Header.TLabel', font=('Segoe UI', 12, 'bold'))
-        self.style.configure('Section.TButton', font=('Segoe UI', 11))
-        self.style.configure('SideItem.TButton', font=('Segoe UI', 10))
-        self.style.configure('NavButton.TButton', font=('Segoe UI', 10))
-        self.style.configure('WhiteFrame.TFrame', background='white')
-        self.style.configure('DarkFrame.TFrame', background='#292929')
-        self.style.configure('DarkLabel.TLabel', font=('Segoe UI', 10), background='#292929', foreground='white')
-        self.style.configure('DarkHeader.TLabel', font=('Segoe UI', 16, 'bold'), background='#292929', foreground='white')
-        
-        # Frame principal com divisor
-        self.main_frame = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+        # Frame principal - usamos um grid layout para organizar dois frames lado a lado
+        self.main_container = ctk.CTkFrame(self.root)
+        self.main_container.pack(fill="both", expand=True)
+        self.main_container.grid_rowconfigure(0, weight=1)
+        self.main_container.grid_columnconfigure(0, weight=3)
+        self.main_container.grid_columnconfigure(1, weight=2)
         
         # Frame esquerdo (escuro - contém o formulário)
-        self.left_frame = ttk.Frame(self.main_frame, style='DarkFrame.TFrame', padding=(20, 20))
-        self.main_frame.add(self.left_frame, weight=3)
+        self.left_frame = ctk.CTkFrame(self.main_container, fg_color="#292929", corner_radius=0)
+        self.left_frame.grid(row=0, column=0, sticky="nsew")
         
         # Frame direito (branco - descrições)
-        self.right_frame = ttk.Frame(self.main_frame, style='WhiteFrame.TFrame', padding=(20, 20))
-        self.main_frame.add(self.right_frame, weight=2)
+        self.right_frame = ctk.CTkFrame(self.main_container, fg_color="white", corner_radius=0)
+        self.right_frame.grid(row=0, column=1, sticky="nsew")
         
         # Criar conteúdo do painel direito (descrição)
-        self.description_title = ttk.Label(self.right_frame, text="Executável do Jogo", style="Header.TLabel")
-        self.description_title.pack(anchor=tk.W, pady=(0, 10))
+        self.description_title = ctk.CTkLabel(self.right_frame, text="Executável do Jogo", 
+                                           font=("Segoe UI", 16, "bold"), anchor="w")
+        self.description_title.pack(anchor="w", pady=(20, 10), padx=20)
         
-        self.description_text = ttk.Label(self.right_frame, 
-                                         text="Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.", 
-                                         wraplength=250)
-        self.description_text.pack(anchor=tk.W)
+        self.description_text = ctk.CTkLabel(self.right_frame, 
+                                       text="Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.", 
+                                       wraplength=250, anchor="w")
+        self.description_text.pack(anchor="w", padx=20)
         
         # Criar seções
         self.create_section_frames()
         
         # Barra de status
-        status_frame = ttk.Frame(self.root)
-        status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5)
+        status_frame = ctk.CTkFrame(self.root, fg_color="transparent")
+        status_frame.pack(fill="x", side="bottom", pady=5)
         
-        ttk.Label(status_frame, textvariable=self.status_var).pack(side=tk.LEFT, padx=10)
+        ctk.CTkLabel(status_frame, textvariable=self.status_var).pack(side="left", padx=10)
         
         # Progresso e botões de navegação
-        self.progress_frame = ttk.Frame(self.root)
-        self.progress_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=20, pady=10)
+        self.progress_frame = ctk.CTkFrame(self.root, fg_color="transparent")
+        self.progress_frame.pack(fill="x", side="bottom", padx=20, pady=10)
         
         # Barra de progresso horizontal
-        self.progress_bar = ttk.Progressbar(self.progress_frame, orient=tk.HORIZONTAL, length=100, mode='determinate')
-        self.progress_bar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 20))
+        self.progress_bar = ctk.CTkProgressBar(self.progress_frame, orientation="horizontal")
+        self.progress_bar.pack(side="left", fill="x", expand=True, padx=(0, 20))
         
         # Botões de navegação
-        self.next_button = ttk.Button(self.progress_frame, text="Próximo", 
-                                     command=self.navigate_next, style="NavButton.TButton", width=15)
-        self.next_button.pack(side=tk.RIGHT)
+        self.next_button = ctk.CTkButton(self.progress_frame, text="Próximo", 
+                                     command=self.navigate_next, width=120)
+        self.next_button.pack(side="right")
     
     def create_section_frames(self):
         """Cria os frames de seção com o conteúdo principal."""
@@ -219,120 +209,102 @@ class QuestConfigView:
         self.section_frames = {}
         
         # Seção 1: Informações do Jogo
-        game_frame = ttk.Frame(self.left_frame, style="DarkFrame.TFrame")
+        game_frame = ctk.CTkFrame(self.left_frame, fg_color="#292929", corner_radius=0)
         
         # Título
-        ttk.Label(game_frame, text="Informações do Jogo", style="DarkHeader.TLabel").grid(row=0, column=0, sticky=tk.W, pady=(0, 20))
+        ctk.CTkLabel(game_frame, text="Informações do Jogo", 
+                 font=("Segoe UI", 16, "bold"), text_color="white").pack(anchor="w", pady=(20, 20), padx=20)
         
-        row = 1
+        # Container para os campos do formulário
+        form_frame = ctk.CTkFrame(game_frame, fg_color="transparent")
+        form_frame.pack(fill="both", expand=True, padx=20)
+        
         # Executável
-        ttk.Label(game_frame, text="Executável do Jogo", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        exe_frame = ttk.Frame(game_frame)
-        exe_frame.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
-        exe_entry = ttk.Entry(exe_frame, textvariable=self.executable_path, width=50)
-        exe_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ctk.CTkLabel(form_frame, text="Executável do Jogo", text_color="white").pack(anchor="w", pady=(0, 5))
+        exe_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
+        exe_frame.pack(fill="x", pady=(0, 15))
+        exe_entry = ctk.CTkEntry(exe_frame, textvariable=self.executable_path, width=400)
+        exe_entry.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(exe_entry, "executable")
-        ttk.Button(exe_frame, text="Procurar...", command=self.browse_executable).pack(side=tk.RIGHT, padx=(5, 0))
-        row += 1
+        ctk.CTkButton(exe_frame, text="Procurar...", command=self.browse_executable).pack(side="right", padx=(5, 0))
         
         # AppID
-        ttk.Label(game_frame, text="Steam AppID", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        appid_frame = ttk.Frame(game_frame)
-        appid_frame.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
-        appid_entry = ttk.Entry(appid_frame, textvariable=self.app_id, width=20)
-        appid_entry.pack(side=tk.LEFT)
+        ctk.CTkLabel(form_frame, text="Steam AppID", text_color="white").pack(anchor="w", pady=(0, 5))
+        appid_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
+        appid_frame.pack(fill="x", pady=(0, 15))
+        appid_entry = ctk.CTkEntry(appid_frame, textvariable=self.app_id, width=150)
+        appid_entry.pack(side="left")
         self.bind_click_and_focus(appid_entry, "appid")
-        ttk.Button(appid_frame, text="Detectar", command=self.detect_appid).pack(side=tk.LEFT, padx=(5, 0))
-        ttk.Button(appid_frame, text="Consultar Steam API", command=self.query_steam_api).pack(side=tk.RIGHT)
-        row += 1
+        ctk.CTkButton(appid_frame, text="Detectar", command=self.detect_appid).pack(side="left", padx=(5, 0))
+        ctk.CTkButton(appid_frame, text="Consultar Steam API", command=self.query_steam_api).pack(side="right")
         
         # Nome do Jogo
-        ttk.Label(game_frame, text="Nome do Jogo", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        name_entry = ttk.Entry(game_frame, textvariable=self.game_name, width=50)
-        name_entry.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
+        ctk.CTkLabel(form_frame, text="Nome do Jogo", text_color="white").pack(anchor="w", pady=(0, 5))
+        name_entry = ctk.CTkEntry(form_frame, textvariable=self.game_name, width=400)
+        name_entry.pack(fill="x", pady=(0, 15))
         self.bind_click_and_focus(name_entry, "game_name")
-        row += 1
         
         # Diretório do Save
-        ttk.Label(game_frame, text="Diretório do Local do Save", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        save_frame = ttk.Frame(game_frame)
-        save_frame.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
-        save_entry = ttk.Entry(save_frame, textvariable=self.local_dir, width=50)
-        save_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ctk.CTkLabel(form_frame, text="Diretório do Local do Save", text_color="white").pack(anchor="w", pady=(0, 5))
+        save_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
+        save_frame.pack(fill="x", pady=(0, 15))
+        save_entry = ctk.CTkEntry(save_frame, textvariable=self.local_dir, width=400)
+        save_entry.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(save_entry, "save_dir")
-        ttk.Button(save_frame, text="Procurar...", command=self.browse_local_dir).pack(side=tk.RIGHT, padx=(5, 0))
-        row += 1
+        ctk.CTkButton(save_frame, text="Procurar...", command=self.browse_local_dir).pack(side="right", padx=(5, 0))
         
         # Processo do Jogo
-        ttk.Label(game_frame, text="Processo do Jogo", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        process_entry = ttk.Entry(game_frame, textvariable=self.game_process, width=50)
-        process_entry.grid(row=row, column=0, sticky=tk.EW)
+        ctk.CTkLabel(form_frame, text="Processo do Jogo", text_color="white").pack(anchor="w", pady=(0, 5))
+        process_entry = ctk.CTkEntry(form_frame, textvariable=self.game_process, width=400)
+        process_entry.pack(fill="x")
         self.bind_click_and_focus(process_entry, "process")
-        
-        # Configurar grid do frame de jogo
-        game_frame.grid_columnconfigure(0, weight=1)
         
         # Adicionar aos dicionários
         self.section_frames["game_info"] = game_frame
         
         # Seção 2: Configuração Rclone
-        # -- Frame central (conteúdo)
-        rclone_frame = ttk.Frame(self.left_frame, style="DarkFrame.TFrame")
+        rclone_frame = ctk.CTkFrame(self.left_frame, fg_color="#292929", corner_radius=0)
         
-        row = 0
         # Título
-        ttk.Label(rclone_frame, text="Configuração Rclone", style="DarkHeader.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 20))
-        row += 1
+        ctk.CTkLabel(rclone_frame, text="Configuração Rclone", 
+                 font=("Segoe UI", 16, "bold"), text_color="white").pack(anchor="w", pady=(20, 20), padx=20)
+        
+        # Container para os campos do formulário
+        rform_frame = ctk.CTkFrame(rclone_frame, fg_color="transparent")
+        rform_frame.pack(fill="both", expand=True, padx=20)
         
         # Caminho do Rclone
-        ttk.Label(rclone_frame, text="Caminho do Rclone", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        rclone_path_frame = ttk.Frame(rclone_frame)
-        rclone_path_frame.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
-        rclone_entry = ttk.Entry(rclone_path_frame, textvariable=self.rclone_path, width=50)
-        rclone_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ctk.CTkLabel(rform_frame, text="Caminho do Rclone", text_color="white").pack(anchor="w", pady=(0, 5))
+        rclone_path_frame = ctk.CTkFrame(rform_frame, fg_color="transparent")
+        rclone_path_frame.pack(fill="x", pady=(0, 15))
+        rclone_entry = ctk.CTkEntry(rclone_path_frame, textvariable=self.rclone_path, width=400)
+        rclone_entry.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(rclone_entry, "rclone_path")
-        ttk.Button(rclone_path_frame, text="Procurar...", command=self.browse_rclone).pack(side=tk.RIGHT, padx=(5, 0))
-        row += 1
+        ctk.CTkButton(rclone_path_frame, text="Procurar...", command=self.browse_rclone).pack(side="right", padx=(5, 0))
         
         # Cloud Remote
-        ttk.Label(rclone_frame, text="Cloud Remote", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        remote_frame = ttk.Frame(rclone_frame)
-        remote_frame.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
-        self.remote_combo = ttk.Combobox(remote_frame, textvariable=self.cloud_remote, width=30)
-        self.remote_combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        ctk.CTkLabel(rform_frame, text="Cloud Remote", text_color="white").pack(anchor="w", pady=(0, 5))
+        remote_frame = ctk.CTkFrame(rform_frame, fg_color="transparent")
+        remote_frame.pack(fill="x", pady=(0, 15))
+        self.remote_combo = ctk.CTkComboBox(remote_frame, variable=self.cloud_remote, width=300, values=[])
+        self.remote_combo.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(self.remote_combo, "cloud_remote")
-        ttk.Button(remote_frame, text="Detectar", command=self.detect_remotes).pack(side=tk.RIGHT, padx=(5, 0))
-        row += 1
+        ctk.CTkButton(remote_frame, text="Detectar", command=self.detect_remotes).pack(side="right", padx=(5, 0))
         
         # Diretório do Save na Nuvem
-        ttk.Label(rclone_frame, text="Diretório do Save na Nuvem", style="DarkLabel.TLabel").grid(row=row, column=0, sticky=tk.W, pady=(0, 5))
-        row += 1
-        cloud_entry = ttk.Entry(rclone_frame, textvariable=self.cloud_dir, width=50)
-        cloud_entry.grid(row=row, column=0, sticky=tk.EW, pady=(0, 15))
+        ctk.CTkLabel(rform_frame, text="Diretório do Save na Nuvem", text_color="white").pack(anchor="w", pady=(0, 5))
+        cloud_entry = ctk.CTkEntry(rform_frame, textvariable=self.cloud_dir, width=400)
+        cloud_entry.pack(fill="x", pady=(0, 15))
         self.bind_click_and_focus(cloud_entry, "cloud_dir")
-        row += 1
         
         # Checkbox para atalhos
-        self.create_shortcut_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(rclone_frame, text="Atalho na Área de Trabalho", 
-                       variable=self.create_shortcut_var,
-                       style="TCheckbutton").grid(row=row, column=0, sticky=tk.W, pady=(10, 0))
-        row += 1
+        self.create_shortcut_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(rform_frame, text="Atalho na Área de Trabalho", 
+                       variable=self.create_shortcut_var).pack(anchor="w", pady=(10, 0))
         
-        self.create_steam_shortcut_var = tk.BooleanVar(value=True)
-        ttk.Checkbutton(rclone_frame, text="Atalho na Steam", 
-                       variable=self.create_steam_shortcut_var,
-                       style="TCheckbutton").grid(row=row, column=0, sticky=tk.W)
-        
-        # Configurar grid do frame de rclone
-        rclone_frame.grid_columnconfigure(0, weight=1)
+        self.create_steam_shortcut_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(rform_frame, text="Atalho na Steam", 
+                       variable=self.create_steam_shortcut_var).pack(anchor="w")
         
         # Adicionar aos dicionários
         self.section_frames["rclone_config"] = rclone_frame
@@ -351,7 +323,7 @@ class QuestConfigView:
         widget.bind("<Return>", update_callback)
         
         # Para combobox, adicionar binding especial para quando o menu dropdown é exibido
-        if isinstance(widget, ttk.Combobox):
+        if isinstance(widget, ctk.CTkComboBox):
             widget.bind("<<ComboboxSelected>>", update_callback)
     
     def update_description_for_field(self, field_name):
@@ -366,13 +338,11 @@ class QuestConfigView:
         
         # Esconder todos os frames de seção
         for frame in self.section_frames.values():
-            frame.grid_forget()
+            frame.pack_forget()
         
         # Mostrar a seção selecionada
         if section_id in self.section_frames:
-            self.section_frames[section_id].grid(row=0, column=0, sticky=tk.NSEW)
-            self.left_frame.grid_rowconfigure(0, weight=1)
-            self.left_frame.grid_columnconfigure(0, weight=1)
+            self.section_frames[section_id].pack(fill="both", expand=True)
             
         # Atualizar descrição inicial para a seção
         if section_id == "game_info":
@@ -386,21 +356,21 @@ class QuestConfigView:
         if hasattr(self, 'progress_bar'):
             section_order = ["game_info", "rclone_config"]
             progress = (section_order.index(section_id) + 1) * 100 / len(section_order)
-            self.progress_bar['value'] = progress
+            self.progress_bar.set(progress / 100)
         
         # Atualizar texto do botão
         if hasattr(self, 'next_button'):
             section_order = ["game_info", "rclone_config"]
             if section_id == section_order[-1]:  # Se for a última seção
-                self.next_button.config(text="Salvar")
+                self.next_button.configure(text="Salvar")
             else:
-                self.next_button.config(text="Próximo")
+                self.next_button.configure(text="Próximo")
     
     def update_description(self, title, description_text):
         """Atualiza o título e o texto de descrição no painel direito."""
         # Atualizar o conteúdo
-        self.description_title.config(text=title)
-        self.description_text.config(text=description_text)
+        self.description_title.configure(text=title)
+        self.description_text.configure(text=description_text)
     
     def navigate_next(self):
         """Navega para a próxima seção."""
@@ -482,14 +452,14 @@ class QuestConfigView:
     def update_remotes_result(self, remotes):
         """Atualiza o resultado da deteccao de remotes."""
         if remotes:
-            self.remote_combo['values'] = remotes
+            self.remote_combo.configure(values=remotes)
             
             if remotes and not self.cloud_remote.get():
                 self.cloud_remote.set(remotes[0])
             
             self.status_var.set(f"{len(remotes)} remotes detectados")
         else:
-            self.remote_combo['values'] = []
+            self.remote_combo.configure(values=[])
             self.status_var.set("Nenhum remote detectado")
             messagebox.showwarning("Aviso", "Nenhum remote Rclone foi encontrado. Verifique a configuracao do Rclone.")
     
@@ -681,10 +651,11 @@ class QuestConfigView:
             self.rclone_path.set(defaults['rclone_path'])
             
             # Resetar resumo
-            self.summary_text.config(state=tk.NORMAL)
-            self.summary_text.delete(1.0, tk.END)
-            self.summary_text.insert(tk.END, "Clique em 'Atualizar Resumo' para ver as configurações")
-            self.summary_text.config(state=tk.DISABLED)
+            if hasattr(self, 'summary_text'):
+                self.summary_text.configure(state="normal")
+                self.summary_text.delete(1.0, "end")
+                self.summary_text.insert("end", "Clique em 'Atualizar Resumo' para ver as configurações")
+                self.summary_text.configure(state="disabled")
             
             self.status_var.set("Formulário resetado")
             
