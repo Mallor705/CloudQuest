@@ -202,6 +202,11 @@ class QuestConfigView:
         self.next_button = ctk.CTkButton(self.progress_frame, text="Próximo", 
                                      command=self.navigate_next, width=120)
         self.next_button.pack(side="right")
+        
+        self.back_button = ctk.CTkButton(self.progress_frame, text="Voltar", 
+                                     command=self.navigate_back, width=120)
+        self.back_button.pack(side="right", padx=(0, 10))
+        self.back_button.configure(state="disabled")  # Inicialmente desabilitado na primeira tela
     
     def create_section_frames(self):
         """Cria os frames de seção com o conteúdo principal."""
@@ -348,9 +353,13 @@ class QuestConfigView:
         if section_id == "game_info":
             self.update_description("Executável do Jogo", 
                                    "Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.")
+            # Desabilitar botão de voltar na primeira tela
+            self.back_button.configure(state="disabled")
         elif section_id == "rclone_config":
             self.update_description("Caminho do Rclone", 
                                    "Especifique o caminho para o executável do Rclone que será utilizado para sincronizar seus saves de jogos com a nuvem.")
+            # Habilitar botão de voltar na segunda tela
+            self.back_button.configure(state="normal")
         
         # Atualizar barra de progresso se existir
         if hasattr(self, 'progress_bar'):
