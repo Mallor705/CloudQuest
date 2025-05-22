@@ -345,15 +345,18 @@ class QuestConfigView:
         self.description_title = ctk.CTkLabel(self.right_frame, text="Executável do Jogo", 
                                            font=(AppTheme.FONT_MAIN, 16, "bold"), 
                                            text_color=AppTheme.TEXT_DARK, 
-                                           anchor="w")
-        self.description_title.pack(anchor="w", pady=(20, 10), padx=20)
+                                           anchor="w",
+                                           justify="left")
+        self.description_title.pack(anchor="w", pady=(20, 10), padx=20, fill="x")
         
         self.description_text = ctk.CTkLabel(self.right_frame, 
                                        text="Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.", 
                                        font=(AppTheme.FONT_SECONDARY, 13),
                                        text_color=AppTheme.TEXT_DARK,
-                                       wraplength=250, anchor="w")
-        self.description_text.pack(anchor="w", padx=20)
+                                       wraplength=280,
+                                       anchor="w",
+                                       justify="left")
+        self.description_text.pack(anchor="w", padx=20, fill="x")
         
         # Adicionar botões de navegação ao frame direito
         nav_buttons_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
@@ -647,8 +650,8 @@ class QuestConfigView:
     def update_description(self, title, description_text):
         """Atualiza o título e o texto de descrição no painel direito."""
         # Atualizar o conteúdo
-        self.description_title.configure(text=title)
-        self.description_text.configure(text=description_text)
+        self.description_title.configure(text=title, justify="left", anchor="w")
+        self.description_text.configure(text=description_text, justify="left", anchor="w")
     
     def navigate_next(self):
         """Navega para a próxima seção."""
