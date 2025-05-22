@@ -220,7 +220,131 @@ main() {
     log_info "Use o comando '$FINAL_EXEC_NAME --config' para iniciar a configuração ou '$FINAL_EXEC_NAME NOME_DO_PERFIL' para jogar."
 }
 
+# Função para desinstalar o CloudQuest
+uninstall_main() {
+    log_info "Iniciando a desinstalação do CloudQuest..."
+    echo
+
+    INSTALL_PATH_USER="$HOME/.local/bin"
+    INSTALL_PATH_SYSTEM="/usr/local/bin"
+    FINAL_EXEC_NAME="cloudquest"
+    SHELL_CONFIG_MODIFIED=false
+
+    # Remover do diretório local do usuário
+    USER_EXEC_PATH="$INSTALL_PATH_USER/$FINAL_EXEC_NAME"
+    if [ -f "$USER_EXEC_PATH" ]; then
+        log_info "Removendo $USER_EXEC_PATH..."
+        if rm -f "$USER_EXEC_PATH"; then
+            log_info "$USER_EXEC_PATH removido com sucesso."
+        else
+            log_warn "Falha ao remover $USER_EXEC_PATH. Verifique as permissões."
+        fi
+    else
+        log_info "$USER_EXEC_PATH não encontrado."
+    fi
+    echo
+
+    # Remover do diretório do sistema (executável ou link simbólico)
+    SYSTEM_EXEC_PATH="$INSTALL_PATH_SYSTEM/$FINAL_EXEC_NAME"
+    if [ -L "$SYSTEM_EXEC_PATH" ] || [ -f "$SYSTEM_EXEC_PATH" ]; then
+        log_info "Tentando remover $SYSTEM_EXEC_PATH (pode requerer sudo)..."
+        if sudo rm -f "$SYSTEM_EXEC_PATH"; then
+            log_info "$SYSTEM_EXEC_PATH removido com sucesso."
+        else
+            log_warn "Falha ao remover $SYSTEM_EXEC_PATH. Verifique as permissões (sudo) e se o arquivo existe."
+        fi
+    else
+        log_info "$SYSTEM_EXEC_PATH não encontrado (nem arquivo, nem link simbólico)."
+    fi
+    echo
+
+    # Remover do PATH nos arquivos de configuração do shell
+    log_info "Tentando remover CloudQuest do PATH nos arquivos de configuração do shell..."
+    INSTALL_PATH_USER_EXPANDED=$(eval echo "$INSTALL_PATH_USER") # Expande $HOME
+    CURRENT_SHELL_BASENAME=$(basename "$SHELL")
+    SHELL_CONFIG_FILE=""
+
+    if [ "$CURRENT_SHELL_BASENAME" = "bash" ]; then
+        SHELL_CONFIG_FILE="$HOME/.bashrc"
+    elif [ "$CURRENT_SHELL_BASENAME" = "zsh" ]; then
+        SHELL_CONFIG_FILE="$HOME/.zshrc"
+    elif [ "$CURRENT_SHELL_BASENAME" = "fish" ]; then
+        SHELL_CONFIG_FILE="$HOME/.config/fish/config.fish"
+    fi
+
+    if [ -n "$SHELL_CONFIG_FILE" ] && [ -f "$SHELL_CONFIG_FILE" ]; then
+        log_info "Verificando $SHELL_CONFIG_FILE..."
+        
+        TEMP_FILE=$(mktemp)
+        cp "$SHELL_CONFIG_FILE" "$TEMP_FILE"
+        LINES_REMOVED=false
+
+        if [ "$CURRENT_SHELL_BASENAME" = "fish" ]; then
+            LINE_COMMENT_FISH="# Adicionado pelo instalador do CloudQuest"
+            LINE_PATH_FISH="fish_add_path \\"$INSTALL_PATH_USER_EXPANDED\\"" # Aspas duplas são literais aqui
+
+            # Remove Path Line
+            if grep -q -F -x "$LINE_PATH_FISH" "$TEMP_FILE"; then
+                grep -v -F -x "$LINE_PATH_FISH" "$TEMP_FILE" > "${TEMP_FILE}.next" && mv "${TEMP_FILE}.next" "$TEMP_FILE"
+                LINES_REMOVED=true
+            fi
+            # Remove Comment Line
+            if grep -q -F -x "$LINE_COMMENT_FISH" "$TEMP_FILE"; then
+                grep -v -F -x "$LINE_COMMENT_FISH" "$TEMP_FILE" > "${TEMP_FILE}.next" && mv "${TEMP_FILE}.next" "$TEMP_FILE"
+                LINES_REMOVED=true
+            fi
+        else # bash or zsh
+            LINE_COMMENT_BASH_ZSH="# Adicionado pelo instalador do CloudQuest para incluir $INSTALL_PATH_USER_EXPANDED"
+            LINE_PATH_BASH_ZSH="export PATH=\\"$INSTALL_PATH_USER_EXPANDED:\\$PATH\\"" # Aspas e $PATH literal
+
+            # Remove Path Line
+            if grep -q -F -x "$LINE_PATH_BASH_ZSH" "$TEMP_FILE"; then
+                grep -v -F -x "$LINE_PATH_BASH_ZSH" "$TEMP_FILE" > "${TEMP_FILE}.next" && mv "${TEMP_FILE}.next" "$TEMP_FILE"
+                LINES_REMOVED=true
+            fi
+            # Remove Comment Line
+            if grep -q -F -x "$LINE_COMMENT_BASH_ZSH" "$TEMP_FILE"; then
+                grep -v -F -x "$LINE_COMMENT_BASH_ZSH" "$TEMP_FILE" > "${TEMP_FILE}.next" && mv "${TEMP_FILE}.next" "$TEMP_FILE"
+                LINES_REMOVED=true
+            fi
+        fi
+
+        if [ "$LINES_REMOVED" = true ]; then
+            # Check if actual changes were made before overwriting and backing up
+            if ! cmp -s "$SHELL_CONFIG_FILE" "$TEMP_FILE"; then
+                cp "$SHELL_CONFIG_FILE" "$SHELL_CONFIG_FILE.bak_cq_uninstall_$(date +%F_%T)"
+                log_info "Backup de $SHELL_CONFIG_FILE criado em $SHELL_CONFIG_FILE.bak_cq_uninstall_$(date +%F_%T)"
+                mv "$TEMP_FILE" "$SHELL_CONFIG_FILE"
+                log_info "Configuração do CloudQuest removida de $SHELL_CONFIG_FILE."
+                log_warn "Uma linha em branco previamente adicionada pelo instalador pode permanecer. Você pode removê-la manualmente, se desejar."
+                log_warn "Para aplicar as mudanças, recarregue a configuração do seu shell (ex: 'source $SHELL_CONFIG_FILE') ou abra um novo terminal."
+                SHELL_CONFIG_MODIFIED=true
+            else
+                log_info "As linhas de configuração do CloudQuest já não estavam presentes ou foram removidas de forma que o arquivo não mudou."
+                rm -f "$TEMP_FILE"
+            fi
+        else
+            log_info "Nenhuma linha de configuração específica do CloudQuest encontrada em $SHELL_CONFIG_FILE."
+            rm -f "$TEMP_FILE"
+        fi
+        rm -f "${TEMP_FILE}.next" # Limpeza final do .next caso exista
+    elif [ -n "$SHELL_CONFIG_FILE" ]; then
+        log_warn "Arquivo de configuração do shell $SHELL_CONFIG_FILE não encontrado."
+    else
+        log_warn "Não foi possível determinar automaticamente o arquivo de configuração do seu shell ($CURRENT_SHELL_BASENAME)."
+        log_warn "Verifique manualmente seus arquivos de configuração para remover referências a $INSTALL_PATH_USER_EXPANDED do seu PATH, se necessário."
+    fi
+    echo
+
+    log_info "${GREEN}Desinstalação do CloudQuest concluída.${NC}"
+    if [ "$SHELL_CONFIG_MODIFIED" = true ]; then
+        log_info "Lembre-se de recarregar seu shell ou abrir um novo terminal para que as mudanças no PATH tenham efeito."
+    fi
+}
+
 # Ponto de entrada do script
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "$1" == "uninstall" ]]; then
+    uninstall_main
+elif [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi 
