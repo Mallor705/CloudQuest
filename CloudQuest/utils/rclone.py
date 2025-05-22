@@ -7,6 +7,7 @@ CloudQuest - Wrapper para o Rclone.
 import os
 import subprocess
 import time
+import platform
 
 from CloudQuest.utils.logger import log, setup_logger
 from CloudQuest.config.settings import RCLONE_TIMEOUT, RCLONE_MAX_RETRIES, RCLONE_RETRY_WAIT
@@ -31,10 +32,31 @@ def test_rclone_config(rclone_path, cloud_remote):
     """
     log.info("Verificando configuracao do Rclone...")
     
-    # Verificar se o executavel do Rclone existe
-    if not os.path.exists(rclone_path):
-        raise FileNotFoundError(f"Arquivo do Rclone nao encontrado: {rclone_path}")
-    
+    # Verificar se o Rclone está disponível no sistema
+    if platform.system() == "Windows":
+        # Para Windows, verifica se o executável existe
+        if not os.path.exists(rclone_path):
+            raise FileNotFoundError(f"Arquivo do Rclone nao encontrado: {rclone_path}")
+        
+    else:
+        # No Linux, verifica se o rclone está instalado e disponível no PATH
+        try:
+            # Tenta executar o comando 'which rclone' para verificar se está instalado
+            result = subprocess.run(
+                ["which", rclone_path] if rclone_path == "rclone" else ["which", "rclone"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            
+            if result.returncode != 0:
+                raise FileNotFoundError(f"Rclone não instalado ou não encontrado no PATH")
+                
+            log.info(f"Rclone encontrado em: {result.stdout.strip()}")
+        except Exception as e:
+            log.error(f"Erro ao verificar instalação do Rclone: {str(e)}")
+            raise FileNotFoundError(f"Não foi possível verificar a instalação do Rclone: {str(e)}")
+        
     # Listar remotes disponiveis
     try:
         result = subprocess.run(
