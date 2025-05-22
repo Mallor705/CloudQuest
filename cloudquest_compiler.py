@@ -329,20 +329,20 @@ def compile_cloudquest():
         subprocess.run(pyinstaller_args, check=True)
         
         # Após compilar, copiar os ícones para o diretório de distribuição
-        print("\nCopiando ícones para o diretório de distribuição...")
+        # print("\nCopiando ícones para o diretório de distribuição...") # Removido
         
         # Criar diretório de ícones ao lado do executável
-        icons_dir = dist_dir / "assets" / "icons"
-        icons_dir.mkdir(parents=True, exist_ok=True)
-        print(f"Diretório de ícones criado: {icons_dir}")
+        # icons_dir = dist_dir / "assets" / "icons" # Removido
+        # icons_dir.mkdir(parents=True, exist_ok=True) # Removido
+        # print(f"Diretório de ícones criado: {icons_dir}") # Removido
         
         # Copiar todos os ícones PNG e ICO
-        for icon_file in glob.glob(str(current_dir / "assets" / "icons" / "*.png")) + \
-                          glob.glob(str(current_dir / "assets" / "icons" / "*.ico")):
-            icon_path = Path(icon_file)
-            dest_path = icons_dir / icon_path.name
-            shutil.copy2(icon_path, dest_path)
-            print(f"Ícone copiado: {icon_path.name}")
+        # for icon_file in glob.glob(str(current_dir / "assets" / "icons" / "*.png")) + \ # Removido
+        #                   glob.glob(str(current_dir / "assets" / "icons" / "*.ico")): # Removido
+        #     icon_path = Path(icon_file) # Removido
+        #     dest_path = icons_dir / icon_path.name # Removido
+        #     shutil.copy2(icon_path, dest_path) # Removido
+        #     print(f"Ícone copiado: {icon_path.name}") # Removido
         
         print("\nCompilação concluída com sucesso!")
         print(f"Executável gerado em: {dist_dir / 'CloudQuest.exe'}")
