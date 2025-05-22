@@ -51,10 +51,10 @@ def get_app_paths() -> Dict[str, Path]:
         app_dir_for_batch = app_root
 
         # Define o diretório de perfis com base no sistema operacional para o fallback
-        if platform.system() == "Linux":
-            profiles_dir_fallback = Path.home() / ".config" / "cloudquest"
+        if platform.system() == "Windows":
+            profiles_dir_fallback = Path(os.environ.get("APPDATA")) / "cloudquest" / "profiles"
         else:
-            profiles_dir_fallback = app_root / "config" / "profiles"
+            profiles_dir_fallback = Path.home() / ".config" / "cloudquest" / "profiles"
 
         paths = {
             'app_root': app_root,

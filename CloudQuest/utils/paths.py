@@ -29,10 +29,10 @@ def get_app_paths() -> Dict[str, Path]:
         APP_DIR = BASE_DIR
 
     # Define o diretório de perfis com base no sistema operacional
-    if platform.system() == "Linux":
-        PROFILES_DIR = Path.home() / ".config" / "cloudquest"
+    if platform.system() == "Windows":
+        PROFILES_DIR = Path(os.environ.get("APPDATA")) / "cloudquest" / "profiles"
     else:
-        PROFILES_DIR = APP_DIR / "config" / "profiles"
+        PROFILES_DIR = Path.home() / ".config" / "cloudquest" / "profiles"
 
     # Diretorios do projeto
     paths = {
