@@ -355,31 +355,21 @@ class QuestConfigView:
                                        wraplength=250, anchor="w")
         self.description_text.pack(anchor="w", padx=20)
         
-        # Criar seções
-        self.create_section_frames()
+        # Adicionar botões de navegação ao frame direito
+        nav_buttons_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
+        nav_buttons_frame.pack(side="bottom", fill="x", padx=20, pady=20)
         
-        # Barra de status
-        status_frame = ctk.CTkFrame(self.root, fg_color="transparent")
-        status_frame.pack(fill="x", side="bottom", pady=5)
+        self.back_button = ctk.CTkButton(nav_buttons_frame, text="Voltar", 
+                                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
+                                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
+                                     text_color=AppTheme.TEXT_DARK,
+                                     corner_radius=AppTheme.RADIUS_MD,
+                                     font=(AppTheme.FONT_MAIN, 13, "bold"),
+                                     command=self.navigate_back, width=120)
+        self.back_button.pack(side="left", padx=(0, 10))
+        self.back_button.configure(state="disabled")  # Inicialmente desabilitado na primeira tela
         
-        ctk.CTkLabel(status_frame, textvariable=self.status_var, 
-                   text_color=AppTheme.TEXT_MUTED,
-                   font=(AppTheme.FONT_SECONDARY, 12)).pack(side="left", padx=10)
-        
-        # Progresso e botões de navegação
-        self.progress_frame = ctk.CTkFrame(self.root, fg_color="transparent")
-        self.progress_frame.pack(fill="x", side="bottom", padx=20, pady=10)
-        
-        # Barra de progresso horizontal
-        self.progress_bar = ctk.CTkProgressBar(self.progress_frame, 
-                                            orientation="horizontal",
-                                            fg_color=AppTheme.PROGRESS_BG,
-                                            progress_color=AppTheme.PROGRESS_FILL,
-                                            height=7)
-        self.progress_bar.pack(side="left", fill="x", expand=True, padx=(0, 20))
-        
-        # Botões de navegação
-        self.next_button = ctk.CTkButton(self.progress_frame, text="Próximo", 
+        self.next_button = ctk.CTkButton(nav_buttons_frame, text="Próximo", 
                                      fg_color=AppTheme.PRIMARY_COLOR,
                                      hover_color=AppTheme.BUTTON_HOVER,
                                      text_color=AppTheme.TEXT_LIGHT,
@@ -388,20 +378,30 @@ class QuestConfigView:
                                      command=self.navigate_next, width=120)
         self.next_button.pack(side="right")
         
-        self.back_button = ctk.CTkButton(self.progress_frame, text="Voltar", 
-                                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
-                                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
-                                     text_color=AppTheme.TEXT_DARK,
-                                     corner_radius=AppTheme.RADIUS_MD,
-                                     font=(AppTheme.FONT_MAIN, 13, "bold"),
-                                     command=self.navigate_back, width=120)
-        self.back_button.pack(side="right", padx=(0, 10))
-        self.back_button.configure(state="disabled")  # Inicialmente desabilitado na primeira tela
+        # Adicionar barra de status abaixo dos botões de navegação
+        status_label = ctk.CTkLabel(self.right_frame, textvariable=self.status_var, 
+                                 text_color=AppTheme.TEXT_MUTED,
+                                 font=(AppTheme.FONT_SECONDARY, 12))
+        status_label.pack(side="bottom", padx=20, pady=(0, 10), anchor="w")
+        
+        # Criar seções
+        self.create_section_frames()
     
     def create_section_frames(self):
         """Cria os frames de seção com o conteúdo principal."""
         # Dicionário para armazenar os frames de seção
         self.section_frames = {}
+        
+        # Adicionar barra de progresso na parte inferior do frame esquerdo
+        progress_container = ctk.CTkFrame(self.left_frame, fg_color="transparent")
+        progress_container.pack(side="bottom", fill="x", padx=20, pady=15)
+        
+        self.progress_bar = ctk.CTkProgressBar(progress_container, 
+                                         orientation="horizontal",
+                                         fg_color=AppTheme.PROGRESS_BG,
+                                         progress_color=AppTheme.PROGRESS_FILL,
+                                         height=7)
+        self.progress_bar.pack(fill="x", expand=True)
         
         # Seção 1: Informações do Jogo
         game_frame = ctk.CTkFrame(self.left_frame, fg_color=AppTheme.BACKGROUND_DARK, corner_radius=0)
@@ -631,11 +631,10 @@ class QuestConfigView:
             # Habilitar botão de voltar na segunda tela
             self.back_button.configure(state="normal")
         
-        # Atualizar barra de progresso se existir
-        if hasattr(self, 'progress_bar'):
-            section_order = ["game_info", "rclone_config"]
-            progress = (section_order.index(section_id) + 1) * 100 / len(section_order)
-            self.progress_bar.set(progress / 100)
+        # Atualizar barra de progresso
+        section_order = ["game_info", "rclone_config"]
+        progress = (section_order.index(section_id) + 1) * 100 / len(section_order)
+        self.progress_bar.set(progress / 100)
         
         # Atualizar texto do botão
         if hasattr(self, 'next_button'):
