@@ -29,7 +29,7 @@ from CloudQuest.utils.paths import APP_PATHS
 from CloudQuest.config.settings import TEMP_PROFILE_PATH
 from CloudQuest.core.profile_manager import load_profile
 from CloudQuest.core.sync_manager import sync_saves
-from CloudQuest.core.game_launcher import launch_game, wait_for_game
+from CloudQuest.core.game_launcher import launch_game, wait_for_game, unix_launch_game
 from CloudQuest.utils.logger import setup_logger, log
 
 def main():
@@ -127,9 +127,15 @@ def main():
                     show_error_message(error_msg)
                 sys.exit(1)
         else:
-            profile = load_profile(profile_name)
-            game_process = profile['GameProcess']
-            log.info("Sistema Linux detectado")
+            try:
+                log.info("Sistema Linux detectado: procurando processo do jogo...")
+                game_process = unix_launch_game(profile_name)
+            except Exception as e:
+                error_msg = f"Falha ao iniciar o jogo: {str(e)}"
+                log.error(error_msg)
+                if not is_silent_mode():
+                    show_error_message(error_msg)
+                sys.exit(1)
 
         # 4. Aguardar o termino do jogo
         if game_process:

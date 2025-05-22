@@ -122,3 +122,61 @@ def wait_for_game(game_process):
         log.error(f"Erro ao monitorar processo: {str(e)}")
         
     log.info(f"Processo finalizado (PID: {game_process.pid})")
+
+
+def unix_launch_game(profile_name):
+    """
+    Encontra o processo do jogo no Linux sem iniciar um launcher.
+    
+    Args:
+        profile_name (str): Nome do perfil a ser usado
+        
+    Returns:
+        process: Objeto do processo do jogo
+    """
+    profile = load_profile(profile_name)
+    game_process_name = profile['GameProcess']
+    
+    # Procurar pelo processo do jogo
+    try:
+        log.info(f"Procurando pelo processo do jogo no Linux: {game_process_name}")
+        timeout = 60  # segundos
+        start_time = time.time()
+        game_process = None
+        
+        while not game_process and (time.time() - start_time) < timeout:
+            # Procurar pelo processo do jogo
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    # Verificar se o nome do processo corresponde, independente da extensao
+                    base_name = os.path.splitext(proc.info['name'])[0].lower()
+                    if base_name == game_process_name.lower():
+                        game_process = proc
+                        log.info(f"Processo do jogo encontrado (PID: {proc.pid})")
+                        break
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    pass
+                    
+            if not game_process:
+                time.sleep(1)
+        
+        if not game_process:
+            raise TimeoutError(f"Processo do jogo '{game_process_name}' nao encontrado apos {timeout} segundos")
+            
+        return game_process
+        
+    except Exception as e:
+        log.error(f"Erro ao procurar pelo processo do jogo: {str(e)}")
+        
+        # Mostrar notificacao de erro
+        error_notification = show_notification(
+            title="Erro Critico",
+            message="Falha ao encontrar o processo do jogo",
+            game_name=profile.get('GameName', 'Erro'),
+            notification_type="error"
+        )
+        time.sleep(5)
+        if error_notification:
+            error_notification.close()
+            
+        raise
