@@ -38,7 +38,7 @@ def get_app_paths() -> Dict[str, Path]:
     paths = {
         'BASE_DIR': BASE_DIR,
         'APP_DIR': APP_DIR,
-        'LOGS_DIR': Path.home() / ".cache" / "cloudquest" / "logs",
+        'LOGS_DIR': Path(os.environ.get("APPDATA")) / "cloudquest" / "logs" if platform.system() == "Windows" else Path.home() / ".cache" / "cloudquest" / "logs",
         'CONFIG_DIR': APP_DIR / "config",
         'PROFILES_DIR': PROFILES_DIR,
         'ASSETS_DIR': APP_DIR / "assets",

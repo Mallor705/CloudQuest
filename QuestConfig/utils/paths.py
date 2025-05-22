@@ -59,7 +59,7 @@ def get_app_paths() -> Dict[str, Path]:
         paths = {
             'app_root': app_root,
             'script_dir': script_dir,
-            'log_dir': Path.home() / ".cache" / "cloudquest" / "logs",
+            'log_dir': Path(os.environ.get("APPDATA")) / "cloudquest" / "logs" if platform.system() == "Windows" else Path.home() / ".cache" / "cloudquest" / "logs",
             'config_dir': app_root / "config",
             'profiles_dir': profiles_dir_fallback, # Usar o fallback definido
             'assets_dir': app_root / "assets",
