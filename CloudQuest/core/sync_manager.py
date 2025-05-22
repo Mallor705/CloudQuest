@@ -44,7 +44,7 @@ def sync_saves(direction, profile_name):
                 game_name=profile['GameName'],
                 direction="down"
             )
-            source = f"{profile['CloudRemote']}:{profile['CloudDir']}/"
+            source = f"{profile['CloudRemote']}:{profile['CloudDir']}"
             destination = profile['LocalDir']
         else:
             # Local → Nuvem
@@ -55,7 +55,7 @@ def sync_saves(direction, profile_name):
                 direction="up"
             )
             source = profile['LocalDir']
-            destination = f"{profile['CloudRemote']}:{profile['CloudDir']}/"
+            destination = f"{profile['CloudRemote']}:{profile['CloudDir']}"
         
         # Executar sincronizacao
         execute_rclone_sync(profile['RclonePath'], source, destination)
