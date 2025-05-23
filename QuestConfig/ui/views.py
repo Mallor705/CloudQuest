@@ -134,7 +134,7 @@ class AppTheme:
     
     # Cores principais - Material Design
     PRIMARY_COLOR = "#1a73e8"     # Azul Google
-    PRIMARY_DARK = "#0d47a1"      # Azul escuro
+    PRIMARY_DARK = "#202124"      # Azul escuro
     PRIMARY_LIGHT = "#e8f0fe"     # Azul claro
     SECONDARY_COLOR = "#ea4335"   # Vermelho Google
     ACCENT_COLOR = "#fbbc04"      # Amarelo Google
@@ -173,6 +173,9 @@ class AppTheme:
     RADIUS_MD = 8.0               # Cantos médios (botões)
     RADIUS_LG = 16.0              # Cantos grandes (cards)
     
+    # Raio específico para inputs (proporcionais à altura)
+    INPUT_RADIUS = 6.0            # Raio para inputs de 36px de altura
+    
     # Fontes - Google Sans e Roboto
     FONT_MAIN = "Google Sans, Arial, sans-serif"
     FONT_SECONDARY = "Roboto, Arial, sans-serif"
@@ -185,6 +188,12 @@ class AppTheme:
     PADDING_SM = 8
     PADDING_MD = 16
     PADDING_LG = 24
+    
+    # Alturas padrão para elementos de UI (Material Design)
+    BUTTON_HEIGHT = 36      # Altura padrão para botões
+    BUTTON_HEIGHT_SMALL = 32  # Altura para botões pequenos/secundários
+    INPUT_HEIGHT = 36       # Altura total para componentes de input (com label)
+    INPUT_FIELD_HEIGHT = 36 # Altura para o campo de texto em si
 
     @classmethod
     def setup_theme(cls):
@@ -201,13 +210,20 @@ class AppTheme:
         ctk.CTkButton._corner_radius = cls.RADIUS_MD
         ctk.CTkButton._text_color = cls.TEXT_LIGHT
         ctk.CTkButton._border_width = 0  # Botões Material geralmente não têm borda
+        ctk.CTkButton._height = cls.BUTTON_HEIGHT  # Altura padrão para botões
         
         # Estilo moderno para os campos de entrada
         ctk.CTkEntry._fg_color = cls.BACKGROUND_DARK
         ctk.CTkEntry._border_color = cls.INPUT_BORDER
-        ctk.CTkEntry._corner_radius = cls.RADIUS_SM
-        ctk.CTkEntry._border_width = 1
+        ctk.CTkEntry._corner_radius = cls.INPUT_RADIUS
+        ctk.CTkEntry._border_width = 1.5  # Aumentar ligeiramente para melhorar a renderização das bordas
         ctk.CTkEntry._text_color = cls.TEXT_DARK
+        ctk.CTkEntry._height = cls.INPUT_FIELD_HEIGHT  # Altura padrão para campos de entrada
+        
+        # ComboBox
+        ctk.CTkComboBox._height = cls.INPUT_FIELD_HEIGHT
+        ctk.CTkComboBox._corner_radius = cls.INPUT_RADIUS
+        ctk.CTkComboBox._border_width = 1.5  # Aumentar para corresponder ao Entry
         
         # Barra de progresso
         ctk.CTkProgressBar._fg_color = cls.PROGRESS_BG
@@ -266,8 +282,8 @@ class QuestConfigView:
         """
         self.root = root
         self.app_paths = app_paths
-        self.root.geometry("1000x600")
-        self.root.resizable(True, True)
+        self.root.geometry("1080x720")
+        self.root.resizable(False, False)
         
         # Configurar tema
         AppTheme.setup_theme()
@@ -403,7 +419,7 @@ class QuestConfigView:
                                      corner_radius=AppTheme.RADIUS_MD,
                                      font=(AppTheme.FONT_MAIN, 13),
                                      border_width=0,
-                                     height=36,
+                                     height=AppTheme.BUTTON_HEIGHT,
                                      command=self.navigate_back, width=120)
         self.back_button.pack(side="left", padx=(0, 10))
         self.back_button.configure(state="disabled")  # Inicialmente desabilitado na primeira tela
@@ -415,7 +431,7 @@ class QuestConfigView:
                                      corner_radius=AppTheme.RADIUS_MD,
                                      font=(AppTheme.FONT_MAIN, 13),
                                      border_width=0,
-                                     height=36,
+                                     height=AppTheme.BUTTON_HEIGHT,
                                      command=self.navigate_next, width=120)
         self.next_button.pack(side="right")
         
@@ -460,7 +476,7 @@ class QuestConfigView:
         game_center_frame.pack(fill="both", expand=True)
         
         # Título com estilo Material Design
-        title_frame = ctk.CTkFrame(game_center_frame, fg_color=AppTheme.PRIMARY_COLOR, corner_radius=0, height=48)
+        title_frame = ctk.CTkFrame(game_center_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=48)
         title_frame.pack(fill="x", pady=(0, AppTheme.PADDING_MD))
         ctk.CTkLabel(title_frame, text="Informações do Jogo", 
                  font=(AppTheme.FONT_MAIN, 16),
@@ -491,7 +507,7 @@ class QuestConfigView:
                     corner_radius=AppTheme.RADIUS_MD,
                     font=(AppTheme.FONT_MAIN, 12),
                     border_width=0,
-                    height=32,
+                    height=AppTheme.BUTTON_HEIGHT,
                     command=self.browse_executable).pack(side="right", padx=(5, 0))
         
         # AppID
@@ -504,24 +520,15 @@ class QuestConfigView:
         appid_entry = self.apply_modern_entry_style(appid_entry)
         appid_entry.pack(side="left")
         self.bind_click_and_focus(appid_entry, "appid")
-        ctk.CTkButton(appid_frame, text="Detectar", 
-                    fg_color=AppTheme.BUTTON_SECONDARY_BG,
-                    hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
-                    text_color=AppTheme.TEXT_SECONDARY,
-                    corner_radius=AppTheme.RADIUS_MD,
-                    font=(AppTheme.FONT_MAIN, 12),
-                    border_width=0,
-                    height=32,
-                    command=self.detect_appid).pack(side="left", padx=(5, 0))
-        ctk.CTkButton(appid_frame, text="Consultar API", 
+        ctk.CTkButton(appid_frame, text="Detectar e Consultar", 
                     fg_color=AppTheme.PRIMARY_COLOR,
                     hover_color=AppTheme.PRIMARY_DARK,
                     text_color=AppTheme.TEXT_LIGHT,
                     corner_radius=AppTheme.RADIUS_MD,
-                    font=(AppTheme.FONT_MAIN, 12),
+                    font=(AppTheme.FONT_MAIN, 12, "bold"),
                     border_width=0,
-                    height=32,
-                    command=self.query_steam_api).pack(side="right")
+                    height=AppTheme.BUTTON_HEIGHT,
+                    command=self.detect_and_query_appid).pack(side="right")
         
         # Nome do Jogo
         ctk.CTkLabel(form_frame, text="Nome do Jogo", 
@@ -549,7 +556,7 @@ class QuestConfigView:
                     corner_radius=AppTheme.RADIUS_MD,
                     font=(AppTheme.FONT_MAIN, 12),
                     border_width=0,
-                    height=32,
+                    height=AppTheme.BUTTON_HEIGHT,
                     command=self.browse_local_dir).pack(side="right", padx=(5, 0))
         
         # Processo do Jogo
@@ -573,7 +580,7 @@ class QuestConfigView:
         rclone_center_frame.pack(fill="both", expand=True)
         
         # Título com estilo Material Design
-        title_frame = ctk.CTkFrame(rclone_center_frame, fg_color=AppTheme.PRIMARY_COLOR, corner_radius=0, height=48)
+        title_frame = ctk.CTkFrame(rclone_center_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=48)
         title_frame.pack(fill="x", pady=(0, AppTheme.PADDING_MD))
         ctk.CTkLabel(title_frame, text="Configuração Rclone", 
                  font=(AppTheme.FONT_MAIN, 16),
@@ -604,7 +611,7 @@ class QuestConfigView:
                     corner_radius=AppTheme.RADIUS_MD,
                     font=(AppTheme.FONT_MAIN, 12),
                     border_width=0,
-                    height=32,
+                    height=AppTheme.BUTTON_HEIGHT,
                     command=self.browse_rclone).pack(side="right", padx=(5, 0))
         
         # Cloud Remote
@@ -616,14 +623,15 @@ class QuestConfigView:
         self.remote_combo = ctk.CTkComboBox(remote_frame, variable=self.cloud_remote, width=260, values=[],
                                          button_color=AppTheme.PRIMARY_COLOR,
                                          button_hover_color=AppTheme.PRIMARY_DARK,
-                                         corner_radius=AppTheme.RADIUS_SM,
+                                         corner_radius=AppTheme.INPUT_RADIUS,
                                          border_color=AppTheme.INPUT_BORDER,
                                          fg_color=AppTheme.BACKGROUND_DARK,
                                          text_color=AppTheme.TEXT_LIGHT,
                                          dropdown_fg_color=AppTheme.BACKGROUND_DARK,
                                          dropdown_text_color=AppTheme.TEXT_LIGHT,
                                          dropdown_hover_color=AppTheme.PRIMARY_LIGHT,
-                                         border_width=1)
+                                         height=AppTheme.INPUT_FIELD_HEIGHT,
+                                         border_width=1.5)
         self.remote_combo.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(self.remote_combo, "cloud_remote")
         ctk.CTkButton(remote_frame, text="Detectar", 
@@ -633,7 +641,7 @@ class QuestConfigView:
                     corner_radius=AppTheme.RADIUS_MD,
                     font=(AppTheme.FONT_MAIN, 12),
                     border_width=0,
-                    height=32,
+                    height=AppTheme.BUTTON_HEIGHT,
                     command=self.detect_remotes).pack(side="right", padx=(5, 0))
         
         # Diretório do Save na Nuvem
@@ -829,27 +837,45 @@ class QuestConfigView:
             self.status_var.set("Nenhum remote detectado")
             messagebox.showwarning("Aviso", "Nenhum remote Rclone foi encontrado. Verifique a configuracao do Rclone.")
     
-    def query_steam_api(self):
-        """Consulta a API da Steam para obter informacoes do jogo."""
-        app_id = self.app_id.get()
+    def detect_and_query_appid(self):
+        """Detecta o AppID do jogo e depois consulta a API Steam para obter informações adicionais."""
+        exe_path = self.executable_path.get()
         
-        if not app_id:
-            messagebox.showwarning("Aviso", "Insira um AppID valido primeiro.")
+        if not exe_path or not Path(exe_path).exists():
+            messagebox.showwarning("Aviso", "Selecione um executável válido primeiro.")
             return
         
-        self.status_var.set("Consultando API Steam...")
+        self.status_var.set("Detectando AppID...")
         self.root.update_idletasks()
         
-        def run_query():
+        def run_detection_and_query():
             try:
-                game_info = self.steam_service.fetch_game_info(app_id)
-                self.root.after(0, lambda: self.update_steam_info(game_info))
+                # Primeiro detecta o AppID
+                app_id = self.steam_service.detect_appid_from_file(exe_path)
+                
+                if app_id:
+                    # Se detectou com sucesso, atualiza o campo
+                    self.app_id.set(app_id)
+                    self.status_var.set(f"AppID detectado: {app_id}. Consultando API Steam...")
+                    self.root.update_idletasks()
+                    
+                    # Em seguida, consulta a API Steam
+                    try:
+                        game_info = self.steam_service.fetch_game_info(app_id)
+                        self.root.after(0, lambda: self.update_steam_info(game_info))
+                    except Exception as e:
+                        self.status_var.set(f"AppID detectado, mas erro na consulta à API")
+                        messagebox.showerror("Erro", f"Falha na consulta à API Steam: {str(e)}")
+                else:
+                    # Se não foi possível detectar o AppID
+                    self.status_var.set("AppID não detectado")
+                    messagebox.showinfo("Informação", "Não foi possível detectar o AppID automaticamente. Por favor, insira manualmente.")
             except Exception as e:
-                self.status_var.set("Erro na consulta")
-                messagebox.showerror("Erro", f"Falha na consulta a API Steam: {str(e)}")
+                self.status_var.set("Erro na detecção")
+                messagebox.showerror("Erro", f"Falha ao detectar AppID: {str(e)}")
         
         # Executar em thread separada
-        threading.Thread(target=run_query, daemon=True).start()
+        threading.Thread(target=run_detection_and_query, daemon=True).start()
     
     def update_steam_info(self, game_info):
         """Atualiza as informacoes do jogo com dados da Steam."""
@@ -870,37 +896,6 @@ class QuestConfigView:
         
         # Atualizar diretorio cloud
         self.update_cloud_dir()
-    
-    def detect_appid(self):
-        """Detecta o AppID do jogo a partir do executavel."""
-        exe_path = self.executable_path.get()
-        
-        if not exe_path or not Path(exe_path).exists():
-            messagebox.showwarning("Aviso", "Selecione um executavel valido primeiro.")
-            return
-        
-        self.status_var.set("Detectando AppID...")
-        self.root.update_idletasks()
-        
-        def run_detection():
-            try:
-                app_id = self.steam_service.detect_appid_from_file(exe_path)
-                self.root.after(0, lambda: self.update_appid_result(app_id))
-            except Exception as e:
-                self.status_var.set("Erro na deteccao")
-                messagebox.showerror("Erro", f"Falha ao detectar AppID: {str(e)}")
-        
-        # Executar em thread separada
-        threading.Thread(target=run_detection, daemon=True).start()
-    
-    def update_appid_result(self, app_id):
-        """Atualiza o resultado da deteccao de AppID."""
-        if app_id:
-            self.app_id.set(app_id)
-            self.status_var.set(f"AppID detectado: {app_id}")
-        else:
-            self.status_var.set("AppID nao detectado")
-            messagebox.showinfo("Informacao", "Nao foi possivel detectar o AppID automaticamente. Por favor, insira manualmente.")
     
     def update_cloud_dir(self):
         """Atualiza o diretorio cloud com base no diretorio local."""
@@ -1033,9 +1028,10 @@ class QuestConfigView:
         entry_widget.configure(
             fg_color=AppTheme.BACKGROUND_DARK,
             border_color=AppTheme.INPUT_BORDER,
-            corner_radius=AppTheme.RADIUS_SM,
-            border_width=1,
-            text_color=AppTheme.TEXT_LIGHT  # Texto claro para o fundo escuro
+            corner_radius=AppTheme.INPUT_RADIUS,
+            border_width=1.5,
+            text_color=AppTheme.TEXT_LIGHT,  # Texto claro para o fundo escuro
+            height=AppTheme.INPUT_FIELD_HEIGHT  # Altura do campo de texto padrão Material Design
         )
         
         # Efeitos interativos estilo Material Design
@@ -1050,14 +1046,14 @@ class QuestConfigView:
             # Efeito de destaque quando focado
             entry_widget.configure(
                 border_color=AppTheme.PRIMARY_COLOR,
-                border_width=2  # Aumenta a espessura da borda quando em foco
+                border_width=2.0  # Aumentar a espessura da borda quando em foco para evitar lacunas
             )
         
         def on_focus_out(e):
             # Restaura o estado normal
             entry_widget.configure(
                 border_color=AppTheme.INPUT_BORDER,
-                border_width=1
+                border_width=1.5
             )
         
         # Bindings para eventos de interação
@@ -1067,3 +1063,25 @@ class QuestConfigView:
         entry_widget.bind("<FocusOut>", on_focus_out)
         
         return entry_widget
+
+    def query_steam_api(self):
+        """Consulta a API da Steam para obter informacoes do jogo."""
+        app_id = self.app_id.get()
+        
+        if not app_id:
+            messagebox.showwarning("Aviso", "Insira um AppID valido primeiro.")
+            return
+        
+        self.status_var.set("Consultando API Steam...")
+        self.root.update_idletasks()
+        
+        def run_query():
+            try:
+                game_info = self.steam_service.fetch_game_info(app_id)
+                self.root.after(0, lambda: self.update_steam_info(game_info))
+            except Exception as e:
+                self.status_var.set("Erro na consulta")
+                messagebox.showerror("Erro", f"Falha na consulta a API Steam: {str(e)}")
+        
+        # Executar em thread separada
+        threading.Thread(target=run_query, daemon=True).start()
