@@ -238,9 +238,13 @@ def compile_cloudquest():
         "--noupx",
         "--clean",
         f"--name={app_name}",
-        "--onefile",  # Criar um único executável
+        "--onefile",
     ]
     
+    # Adicionar caminhos dos pacotes locais ao pathex do PyInstaller
+    pyinstaller_args.append(f"--paths={current_dir / 'CloudQuest'}")
+    pyinstaller_args.append(f"--paths={current_dir / 'QuestConfig'}")
+
     # Adicionar o ícone se encontrado
     if icon_path and icon_path.exists():
         pyinstaller_args.extend([
@@ -311,13 +315,9 @@ def compile_cloudquest():
         "customtkinter.windows.ctk_combobox",
         
         # Importações dos pacotes CloudQuest e QuestConfig
-        "CloudQuest",
-        "CloudQuest.main",
-        "CloudQuest.core",
-        "CloudQuest.utils",
-        "CloudQuest.config",
-        "QuestConfig",
-        "QuestConfig.ui.app",
+        # Estes serão cobertos pela variável all_modules que é adicionada aos hidden_imports
+        # "CloudQuest", 
+        # "QuestConfig",
         
         # Bibliotecas externas
         "PIL",
@@ -331,6 +331,7 @@ def compile_cloudquest():
         "watchdog",  # Biblioteca para monitoramento de arquivos
         "watchdog.events",
         "watchdog.observers",
+        "pywin32",
         "win32com",
         "win32gui",
         "win32con",
@@ -351,6 +352,11 @@ def compile_cloudquest():
     for hidden_import in hidden_imports:
         pyinstaller_args.append(f"--hidden-import={hidden_import}")
     
+    # Adicionar o diretório do customtkinter
+    # customtkinter_path = "C:\\Users\\messi\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\customtkinter"
+    # # Usar ':' como separador explícito para o destino, e 'customtkinter' como nome da pasta no bundle
+    # pyinstaller_args.append(f"--add-data={customtkinter_path}:customtkinter")
+
     # Adicionar recursos adicionais
     for resource, destination in additional_resources:
         pyinstaller_args.append(f"--add-data={resource}:{destination}")
@@ -381,11 +387,11 @@ def compile_cloudquest():
         #     shutil.copy2(icon_path, dest_path) # Removido
         #     print(f"Ícone copiado: {icon_path.name}") # Removido
         
-        print("\nCompilação concluída com sucesso!")
+        # print("\nCompilação concluída com sucesso!")
         executable_final_name = f"{app_name}.exe" if os.name == 'nt' else app_name
         final_executable_path = dist_dir / executable_final_name
-        print(f"Executável gerado em: {final_executable_path}")
-        print(f"Caminho completo: {final_executable_path.resolve()}")
+        # print(f"Executável gerado em: {final_executable_path}")
+        # print(f"Caminho completo: {final_executable_path.resolve()}")
     
     except subprocess.CalledProcessError as e:
         print(f"\nErro durante a compilação: {e}")

@@ -70,7 +70,7 @@ def get_app_paths() -> Dict[str, Path]:
         for path_name in ['log_dir', 'config_dir', 'profiles_dir']:
             paths[path_name].mkdir(parents=True, exist_ok=True)
         
-        (app_root / "assets" / "icons").mkdir(parents=True, exist_ok=True)
+        # (app_root / "assets" / "icons").mkdir(parents=True, exist_ok=True) # Removido para evitar criação de pasta vazia
 
     # Definir batch_path com base no SO e existência do arquivo
     if batch_executable_name:

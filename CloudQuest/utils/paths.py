@@ -49,7 +49,7 @@ def get_app_paths() -> Dict[str, Path]:
     # Garantir que diretorios importantes existam
     paths['LOGS_DIR'].mkdir(exist_ok=True, parents=True)
     paths['PROFILES_DIR'].mkdir(exist_ok=True, parents=True)
-    paths['ICONS_DIR'].mkdir(exist_ok=True, parents=True)
+    # paths['ICONS_DIR'].mkdir(exist_ok=True, parents=True) # Removido para evitar criação de pasta vazia
     
     return paths
 
