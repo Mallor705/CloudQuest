@@ -57,7 +57,7 @@ O projeto segue os princípios **SOLID** para garantir um código manutenável, 
 
 1.  Baixe o arquivo `.zip` da release mais recente.
 2.  Extraia o conteúdo para um diretório de sua preferência (ex: `C:\CloudQuest`).
-3.  Execute `CloudQuest.exe --config` ou diretamente `CloudQuest.exe` (que abrirá a interface de configuração se nenhum perfil for encontrado) para começar a configurar seus jogos.
+3.  Execute `CloudQuest.exe --config` ou diretamente `CloudQuest.exe` (que abrirá a interface de configuração) para começar a configurar seus jogos.
 
 ### Linux/macOS
 
@@ -70,24 +70,27 @@ O projeto segue os princípios **SOLID** para garantir um código manutenável, 
     ./install.sh
     ```
     O script tentará instalar o CloudQuest em `$HOME/.local/bin` e criar um link simbólico em `/usr/local/bin`.
-4.  Após a instalação, você pode executar `cloudquest --config` para iniciar a interface de configuração.
 
 ## 🕹 Como Usar
 
 ### 1. Configuração Inicial (Interface Gráfica - QuestConfig)
 
+**Importante**: Para que o CloudQuest localize corretamente os saves, o jogo deve ter sido executado ao menos uma vez para que seus diretórios de saves existam em seu sistema.
+**Importante**: Certifique-se de que você já configurou um "remote" no Rclone antes desta etapa.
+
 1.  Inicie a interface de configuração:
-    *   **Windows**: Execute `CloudQuest.exe --config` ou `CloudQuest.exe`.
-    *   **Linux/macOS**: Execute `cloudquest --config` no terminal.
+    *   **Windows**: Execute `CloudQuest.exe` ou `CloudQuest.exe --config`.
+    *   **Linux/macOS**: Execute `cloudquest` ou `cloudquest --config` no terminal.
 2.  Na interface do QuestConfig:
     *   **Adicionar Novo Perfil**: Clique para criar uma nova configuração para um jogo.
     *   **Caminho do Executável**: Selecione o arquivo executável principal do jogo.
+    *   **Steam AppID**: Insira o AppID Steam do jogo (mesmo que não seja da Steam), se for um jogo Steam basta detectar automaticamente.
     *   **Nome do Jogo**: Defina um nome para o perfil.
     *   **Caminho dos Saves**:
         *   Pode ser detectado automaticamente (usando Steam AppID ou buscando na PCGamingWiki).
         *   Pode ser inserido manualmente.
     *   **Configuração Rclone**:
-        *   Selecione o "remote" do Rclone previamente configurado.
+        *   Selecione o "remote" do Rclone previamente configurado. 
         *   Defina o caminho na nuvem onde os saves deste jogo serão armazenados (ex: `meuDrive:/CloudSaves/NomeDoJogo`).
     *   **Opções Adicionais**:
         *   Configure o nome do processo do jogo (geralmente o nome do executável).
