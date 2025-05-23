@@ -58,7 +58,7 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
 2.  Extraia o conteúdo para um diretório de sua preferência (ex: `C:\CloudQuest`).
 3.  Execute `CloudQuest.exe --config` ou diretamente `CloudQuest.exe` (que abrirá a interface de configuração) para começar a configurar seus jogos.
 
-### Linux/macOS
+### Linux
 
 1.  Baixe o arquivo `.tar.gz` ou `.zip` da release mais recente, ou clone o repositório.
 2.  Extraia o conteúdo.
