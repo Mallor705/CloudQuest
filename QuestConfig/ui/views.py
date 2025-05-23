@@ -134,30 +134,31 @@ class AppTheme:
     
     # Cores principais - Material Design
     PRIMARY_COLOR = "#1a73e8"     # Azul Google
-    PRIMARY_DARK = "#202124"      # Azul escuro
+    PRIMARY_DARK = "#333333"      # Azul escuro
     PRIMARY_LIGHT = "#e8f0fe"     # Azul claro
     SECONDARY_COLOR = "#ea4335"   # Vermelho Google
     ACCENT_COLOR = "#fbbc04"      # Amarelo Google
     
     # Cores de fundo e superfícies
     BACKGROUND_LIGHT = "#ffffff"  # Fundo claro padrão
-    BACKGROUND_DARK = "#202124"   # Fundo escuro (mais suave que o anterior)
+    BACKGROUND_DARK = "#333333"   # Fundo escuro (mais suave que o anterior)
     SURFACE_LIGHT = "#f8f9fa"     # Superfícies em tema claro
     CARD_LIGHT = "#ffffff"        # Cartões em tema claro
     
     # Cores de texto
     TEXT_LIGHT = "#ffffff"        # Texto em fundos escuros
-    TEXT_DARK = "#202124"         # Texto primário em fundos claros
-    TEXT_SECONDARY = "#5f6368"    # Texto secundário
+    TEXT_DARK = "#000000"         # Texto primário em fundos claros
+    TEXT_SECONDARY = "#000000"    # Texto secundário
+    # TEXT_SECONDARY = "#5f6368"    # Texto secundário
     TEXT_DISABLED = "#9aa0a6"     # Texto desabilitado
     TEXT_HINT = "#80868b"         # Texto de dica
     
     # Cores de borda e elementos de interface
     BORDER_COLOR = "#dadce0"      # Borda padrão
-    INPUT_BORDER = "#dadce0"      # Borda dos campos
-    BUTTON_HOVER = "#e8f0fe"      # Estado hover dos botões primários
+    INPUT_BORDER = "#747474"      # Borda dos campos
+    BUTTON_HOVER = "#8C9197"      # Estado hover dos botões primários
     BUTTON_SECONDARY_BG = "#f1f3f4"  # Fundo de botões secundários
-    BUTTON_SECONDARY_HOVER = "#e8eaed"  # Estado hover dos botões secundários
+    BUTTON_SECONDARY_HOVER = "#8C9197"  # Estado hover dos botões secundários
     
     # Cores de progresso e feedback
     PROGRESS_BG = "#e6e6e6"
@@ -392,21 +393,31 @@ class QuestConfigView:
         self.right_frame.grid(row=0, column=1, sticky="nsew")
         
         # Criar conteúdo do painel direito (descrição)
-        self.description_title = ctk.CTkLabel(self.right_frame, text="Executável do Jogo", 
+        # Container com altura fixa para descrições
+        description_container = ctk.CTkFrame(self.right_frame, fg_color="transparent", height=200)
+        description_container.pack(fill="x", expand=False, pady=(AppTheme.PADDING_LG, AppTheme.PADDING_MD), padx=AppTheme.PADDING_LG)
+        # Impedir que o container seja redimensionado automaticamente
+        description_container.pack_propagate(False)
+        
+        # Container interno para alinhar os elementos na parte superior
+        description_inner = ctk.CTkFrame(description_container, fg_color="transparent")
+        description_inner.pack(fill="both", expand=True, anchor="n")
+        
+        self.description_title = ctk.CTkLabel(description_inner, text="Executável do Jogo", 
                                            font=(AppTheme.FONT_MAIN, 18, "bold"), 
                                            text_color=AppTheme.TEXT_DARK, 
                                            anchor="w",
                                            justify="left")
-        self.description_title.pack(anchor="w", pady=(AppTheme.PADDING_LG, AppTheme.PADDING_MD), padx=AppTheme.PADDING_LG, fill="x")
+        self.description_title.pack(anchor="nw", fill="x")
         
-        self.description_text = ctk.CTkLabel(self.right_frame, 
+        self.description_text = ctk.CTkLabel(description_inner, 
                                        text="Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.", 
                                        font=(AppTheme.FONT_SECONDARY, 13),
                                        text_color=AppTheme.TEXT_SECONDARY,
                                        wraplength=280,
                                        anchor="w",
                                        justify="left")
-        self.description_text.pack(anchor="w", padx=AppTheme.PADDING_LG, fill="x")
+        self.description_text.pack(anchor="nw", fill="x", pady=(AppTheme.PADDING_SM, 0))
         
         # Adicionar botões de navegação ao frame direito
         nav_buttons_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
@@ -451,7 +462,7 @@ class QuestConfigView:
         
         # Adicionar barra de progresso na parte inferior do frame esquerdo
         progress_container = ctk.CTkFrame(self.left_frame, fg_color="transparent")
-        progress_container.pack(side="bottom", fill="x", padx=AppTheme.PADDING_LG, pady=(0, AppTheme.PADDING_SM))
+        progress_container.pack(side="bottom", fill="x", padx=AppTheme.PADDING_LG, pady=(0, AppTheme.PADDING_LG * 2))
         
         self.progress_bar = ctk.CTkProgressBar(progress_container, 
                                          orientation="horizontal",
@@ -462,38 +473,37 @@ class QuestConfigView:
         
         # Criar um contêiner centralizado para o frame esquerdo
         left_content_container = ctk.CTkFrame(self.left_frame, fg_color="transparent")
-        left_content_container.pack(side="top", fill="both", expand=True, padx=AppTheme.PADDING_LG, pady=(0, 0))
+        left_content_container.pack(side="top", fill="both", expand=True, padx=AppTheme.PADDING_LG, pady=AppTheme.PADDING_LG * 2)
         
         # Define uma largura fixa para os formulários
         form_width = 500
         
-        # Seção 1: Informações do Jogo
+        # Seção 1: Informações do Jogo - Usar grid em vez de pack para controle preciso
         game_frame = ctk.CTkFrame(left_content_container, fg_color=AppTheme.BACKGROUND_DARK, corner_radius=0)
         game_frame.pack(fill="both", expand=True)
+        game_frame.grid_rowconfigure(0, weight=0)  # Título não expande
+        game_frame.grid_rowconfigure(1, weight=1)  # Formulário expande
+        game_frame.grid_columnconfigure(0, weight=1)
         
-        # Container central para organizar os elementos
-        game_center_frame = ctk.CTkFrame(game_frame, fg_color="transparent")
-        game_center_frame.pack(fill="both", expand=True, padx=AppTheme.PADDING_MD, pady=(AppTheme.PADDING_LG, AppTheme.PADDING_MD))
-        
-        # Título com estilo Material Design
-        title_frame = ctk.CTkFrame(game_center_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=60)
-        title_frame.pack(fill="x", pady=(0, 0)) # Removido padding inferior
+        # Título com estilo Material Design - direto no grid
+        title_frame = ctk.CTkFrame(game_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=45)
+        title_frame.grid(row=0, column=0, sticky="ew", pady=(AppTheme.PADDING_LG * 1.5, 0))
         ctk.CTkLabel(title_frame, text="Informações do Jogo", 
-                 font=(AppTheme.FONT_MAIN, 24, "bold"),
-                 text_color=AppTheme.TEXT_LIGHT).pack(anchor="center", pady=15)
+                 font=(AppTheme.FONT_MAIN, 22, "bold"),
+                 text_color=AppTheme.TEXT_LIGHT).pack(anchor="center", pady=5)
         
-        # Container centralizado com largura fixa
-        form_outer_frame = ctk.CTkFrame(game_center_frame, fg_color="transparent")
-        form_outer_frame.pack(fill="both", expand=True, padx=AppTheme.PADDING_LG * 2, pady=(0, 0))
+        # Container do formulário com padding personalizado para centralização vertical
+        form_container = ctk.CTkFrame(game_frame, fg_color="transparent")
+        form_container.grid(row=1, column=0, sticky="nsew", padx=AppTheme.PADDING_LG * 2, pady=(0, AppTheme.PADDING_LG * 1.5))
         
-        # Frame interno com os campos do formulário
-        form_frame = ctk.CTkFrame(form_outer_frame, fg_color="transparent", width=form_width)
-        form_frame.pack(side="top", anchor="center", fill="x", expand=True, pady=(0, 0))
+        # Frame dos campos
+        form_frame = ctk.CTkFrame(form_container, fg_color="transparent")
+        form_frame.pack(fill="both", expand=True, pady=0)
         
-        # Executável
+        # Executável - primeiro campo abaixo do título
         ctk.CTkLabel(form_frame, text="Executável do Jogo", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(0, 3))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(0, 3))
         exe_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         exe_frame.pack(fill="x", pady=(0, 6))
         exe_entry = ctk.CTkEntry(exe_frame, textvariable=self.executable_path, width=350)
@@ -513,14 +523,20 @@ class QuestConfigView:
         # AppID
         ctk.CTkLabel(form_frame, text="Steam AppID", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(6, 3))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         appid_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         appid_frame.pack(fill="x", pady=(0, 6))
-        appid_entry = ctk.CTkEntry(appid_frame, textvariable=self.app_id, width=140)
+        
+        # Container para o campo de AppID e o botão
+        appid_input_container = ctk.CTkFrame(appid_frame, fg_color="transparent")
+        appid_input_container.pack(fill="x", expand=True)
+        
+        appid_entry = ctk.CTkEntry(appid_input_container, textvariable=self.app_id, width=140)
         appid_entry = self.apply_modern_entry_style(appid_entry)
-        appid_entry.pack(side="left")
+        appid_entry.pack(side="left", fill="none", expand=False)
         self.bind_click_and_focus(appid_entry, "appid")
-        ctk.CTkButton(appid_frame, text="Detectar e Consultar", 
+        
+        ctk.CTkButton(appid_input_container, text="Detectar e Consultar", 
                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                     text_color=AppTheme.TEXT_SECONDARY,
@@ -528,12 +544,12 @@ class QuestConfigView:
                     font=(AppTheme.FONT_MAIN, 12),
                     border_width=0,
                     height=AppTheme.BUTTON_HEIGHT,
-                    command=self.detect_and_query_appid).pack(side="right", padx=(5, 0))
+                    command=self.detect_and_query_appid).pack(side="left", padx=(10, 0))
         
         # Nome do Jogo
         ctk.CTkLabel(form_frame, text="Nome do Jogo", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(6, 3))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         name_entry = ctk.CTkEntry(form_frame, textvariable=self.game_name, width=350)
         name_entry = self.apply_modern_entry_style(name_entry)
         name_entry.pack(fill="x", pady=(0, 6))
@@ -542,7 +558,7 @@ class QuestConfigView:
         # Diretório do Save
         ctk.CTkLabel(form_frame, text="Diretório do Local do Save", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(6, 3))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         save_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         save_frame.pack(fill="x", pady=(0, 6))
         save_entry = ctk.CTkEntry(save_frame, textvariable=self.local_dir, width=350)
@@ -562,7 +578,7 @@ class QuestConfigView:
         # Processo do Jogo
         ctk.CTkLabel(form_frame, text="Processo do Jogo", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(6, 3))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         process_entry = ctk.CTkEntry(form_frame, textvariable=self.game_process, width=350)
         process_entry = self.apply_modern_entry_style(process_entry)
         process_entry.pack(fill="x", pady=(0, 0))
@@ -571,33 +587,32 @@ class QuestConfigView:
         # Adicionar aos dicionários
         self.section_frames["game_info"] = game_frame
         
-        # Seção 2: Configuração Rclone
+        # Seção 2: Configuração Rclone - Usar grid em vez de pack
         rclone_frame = ctk.CTkFrame(left_content_container, fg_color=AppTheme.BACKGROUND_DARK, corner_radius=0)
         rclone_frame.pack(fill="both", expand=True)
-        
-        # Container central para organizar os elementos
-        rclone_center_frame = ctk.CTkFrame(rclone_frame, fg_color="transparent")
-        rclone_center_frame.pack(fill="both", expand=True, padx=AppTheme.PADDING_MD, pady=(AppTheme.PADDING_LG, AppTheme.PADDING_MD))
+        rclone_frame.grid_rowconfigure(0, weight=0)  # Título não expande
+        rclone_frame.grid_rowconfigure(1, weight=1)  # Formulário expande
+        rclone_frame.grid_columnconfigure(0, weight=1)
         
         # Título com estilo Material Design
-        title_frame = ctk.CTkFrame(rclone_center_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=60)
-        title_frame.pack(fill="x", pady=(0, 0)) # Removido padding inferior
+        title_frame = ctk.CTkFrame(rclone_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=45)
+        title_frame.grid(row=0, column=0, sticky="ew", pady=(AppTheme.PADDING_LG * 1.5, 0))
         ctk.CTkLabel(title_frame, text="Configuração Rclone", 
-                 font=(AppTheme.FONT_MAIN, 24, "bold"),
-                 text_color=AppTheme.TEXT_LIGHT).pack(anchor="center", pady=15)
+                 font=(AppTheme.FONT_MAIN, 22, "bold"),
+                 text_color=AppTheme.TEXT_LIGHT).pack(anchor="center", pady=5)
         
-        # Container centralizado com largura fixa
-        rform_outer_frame = ctk.CTkFrame(rclone_center_frame, fg_color="transparent")
-        rform_outer_frame.pack(fill="both", expand=True, padx=AppTheme.PADDING_LG * 2, pady=(0, 0))
+        # Container do formulário com padding personalizado para centralização vertical
+        rform_container = ctk.CTkFrame(rclone_frame, fg_color="transparent")
+        rform_container.grid(row=1, column=0, sticky="nsew", padx=AppTheme.PADDING_LG * 2, pady=(0, AppTheme.PADDING_LG * 1.5))
         
-        # Frame interno com os campos do formulário
-        rform_frame = ctk.CTkFrame(rform_outer_frame, fg_color="transparent", width=form_width)
-        rform_frame.pack(side="top", anchor="center", fill="x", expand=True, pady=AppTheme.PADDING_MD)
+        # Frame dos campos
+        rform_frame = ctk.CTkFrame(rform_container, fg_color="transparent")
+        rform_frame.pack(fill="both", expand=True, pady=0)
         
-        # Caminho do Rclone
+        # Caminho do Rclone - primeiro campo abaixo do título
         ctk.CTkLabel(rform_frame, text="Caminho do Rclone", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(AppTheme.PADDING_MD, 5))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(0, 3))
         rclone_path_frame = ctk.CTkFrame(rform_frame, fg_color="transparent")
         rclone_path_frame.pack(fill="x", pady=(0, AppTheme.PADDING_MD))
         rclone_entry = ctk.CTkEntry(rclone_path_frame, textvariable=self.rclone_path, width=350)
@@ -617,7 +632,7 @@ class QuestConfigView:
         # Cloud Remote
         ctk.CTkLabel(rform_frame, text="Cloud Remote", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(AppTheme.PADDING_MD, 5))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(AppTheme.PADDING_MD, 5))
         remote_frame = ctk.CTkFrame(rform_frame, fg_color="transparent")
         remote_frame.pack(fill="x", pady=(0, AppTheme.PADDING_MD))
         self.remote_combo = ctk.CTkComboBox(remote_frame, variable=self.cloud_remote, width=260, values=[],
@@ -647,7 +662,7 @@ class QuestConfigView:
         # Diretório do Save na Nuvem
         ctk.CTkLabel(rform_frame, text="Diretório do Save na Nuvem", 
                    text_color=AppTheme.TEXT_LIGHT,
-                   font=(AppTheme.FONT_SECONDARY, 14, "bold")).pack(anchor="w", pady=(AppTheme.PADDING_MD, 5))
+                   font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(AppTheme.PADDING_MD, 5))
         cloud_entry = ctk.CTkEntry(rform_frame, textvariable=self.cloud_dir, width=350)
         cloud_entry = self.apply_modern_entry_style(cloud_entry)
         cloud_entry.pack(fill="x", pady=(0, AppTheme.PADDING_MD))
@@ -669,16 +684,16 @@ class QuestConfigView:
                        checkbox_width=20,
                        border_width=2).pack(anchor="w", pady=(AppTheme.PADDING_MD, AppTheme.PADDING_SM))
         
-        self.create_steam_shortcut_var = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(checkbox_container, text="Atalho na Steam", 
-                       variable=self.create_steam_shortcut_var,
-                       text_color=AppTheme.TEXT_LIGHT,
-                       font=(AppTheme.FONT_SECONDARY, 13),
-                       fg_color=AppTheme.PRIMARY_COLOR,
-                       hover_color=AppTheme.PRIMARY_DARK,
-                       checkbox_height=20,
-                       checkbox_width=20,
-                       border_width=2).pack(anchor="w")
+        # self.create_steam_shortcut_var = ctk.BooleanVar(value=True)
+        # ctk.CTkCheckBox(checkbox_container, text="Atalho na Steam", 
+        #                variable=self.create_steam_shortcut_var,
+        #                text_color=AppTheme.TEXT_LIGHT,
+        #                font=(AppTheme.FONT_SECONDARY, 13),
+        #                fg_color=AppTheme.PRIMARY_COLOR,
+        #                hover_color=AppTheme.PRIMARY_DARK,
+        #                checkbox_height=20,
+        #                checkbox_width=20,
+        #                border_width=2).pack(anchor="w")
         
         # Adicionar aos dicionários
         self.section_frames["rclone_config"] = rclone_frame
@@ -1035,7 +1050,8 @@ class QuestConfigView:
             corner_radius=AppTheme.INPUT_RADIUS,
             border_width=1.5,
             text_color=AppTheme.TEXT_LIGHT,  # Texto claro para o fundo escuro
-            height=AppTheme.INPUT_FIELD_HEIGHT  # Altura do campo de texto padrão Material Design
+            height=AppTheme.INPUT_FIELD_HEIGHT,  # Altura do campo de texto padrão Material Design
+            font=(AppTheme.FONT_SECONDARY, 14, "normal")
         )
         
         # Efeitos interativos estilo Material Design
