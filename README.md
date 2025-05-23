@@ -1,147 +1,201 @@
 # CloudQuest
 
-CloudQuest é uma aplicação Python para configurar jogos e sincronizar seus arquivos de salvamento usando Rclone.
+CloudQuest é uma aplicação Python projetada para simplificar a configuração de jogos e a sincronização de seus arquivos de salvamento (saves) entre múltiplos dispositivos. Ele utiliza o [Rclone](https://rclone.org/) para interagir com diversos serviços de armazenamento em nuvem.
 
-## Sobre a aplicação
+## Sobre a Aplicação
 
-CloudQuest permite que você sincronize arquivos de salvamento de jogos entre múltiplos dispositivos usando o serviço de nuvem de sua preferência via Rclone. A aplicação agora integra dois componentes em um único executável:
+O CloudQuest combina duas funcionalidades principais em uma única solução coesa:
 
-1. **Interface de Configuração**: Interface gráfica para configurar jogos e definir locais de salvamento
-2. **Sincronizador de Saves**: Responsável por sincronizar os saves antes e depois de jogar
+1.  **Sincronizador de Saves (CloudQuest Core)**: O coração da aplicação, responsável por:
+    *   Fazer o download dos saves da nuvem antes de iniciar um jogo.
+    *   Fazer o upload dos saves para a nuvem após o jogo ser fechado.
+    *   Monitorar o processo do jogo.
+2.  **Interface de Configuração (QuestConfig)**: Uma interface gráfica amigável (GUI) que permite aos usuários:
+    *   Adicionar e gerenciar perfis de jogos.
+    *   Configurar caminhos de executáveis de jogos, locais de salvamento e diretórios na nuvem.
+    *   Detectar automaticamente informações de jogos (ex: AppID do Steam).
+    *   Criar atalhos para facilitar o lançamento de jogos com sincronização.
 
-## Como usar
-
-### Executando a aplicação
-
-A aplicação pode ser executada de várias maneiras:
-
-1. **Modo de Configuração**:
-   ```
-   CloudQuest.exe --config
-   ```
-   ou
-   ```
-   CloudQuest.exe -c
-   ```
-   Isso inicia a interface de configuração para gerenciar seus jogos.
-
-2. **Sincronizar e Jogar** (com perfil já configurado):
-   ```
-   CloudQuest.exe nome_do_perfil
-   ```
-   Isso sincroniza o jogo especificado, executa-o e depois sincroniza novamente.
-
-3. **Modo Interativo** (sem parâmetros):
-   ```
-   CloudQuest.exe
-   ```
-   Se não for especificado um perfil, a aplicação iniciará a interface de configuração.
-
-### Fluxo de uso
-
-1. Execute a aplicação em modo de configuração (`CloudQuest.exe --config`)
-2. Configure seus jogos:
-   - Adicione o caminho executável do jogo
-   - Defina o local dos arquivos de salvamento
-   - Configure o diretório na nuvem onde os saves serão armazenados
-3. Salve a configuração (isso criará um perfil)
-4. Para jogar, execute `CloudQuest.exe nome_do_jogo` ou use os atalhos criados
-
-## Requisitos
-
-- Python 3.6 ou superior (apenas para desenvolvimento)
-- Rclone instalado e configurado com pelo menos um remote
-- Windows, macOS ou Linux
-
-## Desenvolvimento
-
-### Estrutura do projeto
-
-O projeto foi organizado seguindo princípios SOLID:
-
-- **CloudQuest/**: Componente de sincronização
-  - **core/**: Lógica principal
-  - **utils/**: Utilitários
-  - **config/**: Configurações
-
-- **QuestConfig/**: Interface de configuração
-  - **core/**: Modelo de domínio e lógica de negócio
-  - **interfaces/**: Interfaces para contratos claros
-  - **services/**: Implementações de serviços
-  - **ui/**: Interface gráfica
-  - **utils/**: Utilitários
-
-
-## Aviso
-
-CloudQuest está em desenvolvimento. É provável que tenha alguns bugs. Use por sua conta e risco.
-
----
+O projeto segue os princípios **SOLID** para garantir um código manutenável, flexível e robusto.
 
 ## 🌟 Recursos Principais
-### 🔄 Sincronização Bidirecional
-- Upload automático após fechar o jogo
-- Download pré-execução dos saves mais recentes
-- Suporte a qualquer serviço de nuvem via [Rclone](https://rclone.org/)
 
-### 🖥 Interface Inteligente
-- Configurador gráfico (`questconfig.exe`)
-- Notificações animadas com status de sincronização
-- Auto-detecção de AppID Steam
-- Gerenciamento de múltiplos perfis de jogos
-- Criação de atalhos personalizados na área de trabalho
-
-### ⚙️ Núcleo Avançado
-- Monitoramento preciso de processos
-- 3 tentativas de sincronização com backoff exponencial
-- Sistema de logging detalhado com rotação automática
+*   **🔄 Sincronização Automática e Bidirecional**:
+    *   Upload automático dos saves após fechar o jogo.
+    *   Download automático dos saves mais recentes antes de iniciar o jogo.
+    *   Suporte a uma vasta gama de serviços de nuvem através do Rclone (Google Drive, Dropbox, OneDrive, etc.).
+*   **🖥️ Interface de Configuração Intuitiva (QuestConfig)**:
+    *   Gerenciamento fácil de múltiplos perfis de jogos.
+    *   Assistente para configuração de novos jogos.
+    *   Auto-detecção de AppID do Steam para facilitar a configuração.
+    *   Busca de informações sobre locais de save na PCGamingWiki.
+    *   Criação de atalhos personalizados na área de trabalho (Windows) ou scripts (Linux/macOS) para iniciar jogos com sincronização.
+*   **⚙️ Núcleo Confiável**:
+    *   Monitoramento preciso do processo do jogo para garantir que a sincronização ocorra no momento certo.
+    *   Sistema de logging detalhado para troubleshooting.
+    *   Tratamento de erros e tentativas de sincronização.
+*   **📦 Compilação Simplificada**:
+    *   Script `cloudquest_compiler.py` para empacotar a aplicação e a interface de configuração em um único executável usando PyInstaller.
+*   **🐧 Suporte Multiplataforma**:
+    *   Funciona em Windows, Linux e macOS (a interface gráfica e a criação de atalhos podem ter funcionalidades específicas por plataforma).
+    *   Script de instalação (`install.sh`) para Linux e macOS.
 
 ## ⚙️ Pré-requisitos
-- [Rclone](https://rclone.org/) instalado e configurado com pelo menos 1 remote
-- Windows 10 ou superior
-- .NET Framework 4.8 (já incluído na maioria das instalações do Windows)
+
+*   **Rclone**: É essencial ter o [Rclone](https://rclone.org/downloads/) instalado e configurado com pelo menos um "remote" (serviço de nuvem). O CloudQuest não instala o Rclone.
+*   **Sistema Operacional**:
+    *   Windows 10 ou superior.
+    *   Distribuições Linux recentes.
+    *   macOS.
+*   **(Para Desenvolvimento/Compilação)**:
+    *   Python 3.7 ou superior.
+    *   Dependências listadas em `cloudquest_compiler.py` (PyInstaller, Pillow, psutil, requests, watchdog).
 
 ## 📥 Instalação
-1. Baixe os arquivo `.zip`
-2. Extraia em um diretório permanente (ex: `C:\CloudQuest`)
-3. Execute `questconfig.exe` para começar a configurar seus jogos
+
+### Windows
+
+1.  Baixe o arquivo `.zip` da release mais recente.
+2.  Extraia o conteúdo para um diretório de sua preferência (ex: `C:\CloudQuest`).
+3.  Execute `CloudQuest.exe --config` ou diretamente `CloudQuest.exe` (que abrirá a interface de configuração se nenhum perfil for encontrado) para começar a configurar seus jogos.
+
+### Linux/macOS
+
+1.  Baixe o arquivo `.tar.gz` ou `.zip` da release mais recente, ou clone o repositório.
+2.  Extraia o conteúdo.
+3.  Navegue até o diretório extraído e execute o script de instalação:
+    ```bash
+    cd CloudQuest
+    chmod +x install.sh
+    ./install.sh
+    ```
+    O script tentará instalar o CloudQuest em `$HOME/.local/bin` e criar um link simbólico em `/usr/local/bin`.
+4.  Após a instalação, você pode executar `cloudquest --config` para iniciar a interface de configuração.
 
 ## 🕹 Como Usar
-### Configuração Inicial
-1. Execute `questconfig.exe`
-2. Na aba **1. Executável e AppID**:
-   - Selecione o executável do jogo
-   - Detecte/insira o AppID da Steam
-3. Na aba **2. Configuração Rclone**:
-   - Indique a localização de instalação do Rclone.
-   - Selecione o remote configurado
-   - Defina diretórios local e na nuvem
-4. Na aba **3. Finalizar**:
-   - Revise o resumo
-   - Salve a configuração
 
-### Sincronização
-- Execute o atalho criado na área de trabalho para iniciar o jogo com sincronização automática
-- A sincronização ocorrerá:
-  - Antes de iniciar o jogo (download da nuvem)
-  - Após fechar o jogo (upload para nuvem)
+### 1. Configuração Inicial (Interface Gráfica - QuestConfig)
 
-## 🛠 Notas Técnicas
-- Os perfis de configuração são armazenados em `config/profiles/`
-- Formatos suportados de nuvem: Qualquer serviço configurável no rclone (Google Drive, Dropbox, OneDrive, etc)
+1.  Inicie a interface de configuração:
+    *   **Windows**: Execute `CloudQuest.exe --config` ou `CloudQuest.exe`.
+    *   **Linux/macOS**: Execute `cloudquest --config` no terminal.
+2.  Na interface do QuestConfig:
+    *   **Adicionar Novo Perfil**: Clique para criar uma nova configuração para um jogo.
+    *   **Caminho do Executável**: Selecione o arquivo executável principal do jogo.
+    *   **Nome do Jogo**: Defina um nome para o perfil.
+    *   **Caminho dos Saves**:
+        *   Pode ser detectado automaticamente (usando Steam AppID ou buscando na PCGamingWiki).
+        *   Pode ser inserido manualmente.
+    *   **Configuração Rclone**:
+        *   Selecione o "remote" do Rclone previamente configurado.
+        *   Defina o caminho na nuvem onde os saves deste jogo serão armazenados (ex: `meuDrive:/CloudSaves/NomeDoJogo`).
+    *   **Opções Adicionais**:
+        *   Configure o nome do processo do jogo (geralmente o nome do executável).
+        *   Crie um atalho (Windows) ou script de inicialização.
+3.  Salve o perfil.
 
-## ❓ Suporte
-Reporte problemas no [GitHub Issues](https://github.com/Mallor705/CloudQuest/issues)
+### 2. Sincronizar e Jogar
 
----
+Após configurar um perfil:
 
-## 📝 Créditos e Reconhecimentos
+*   **Usando Atalho/Script**: Se você criou um atalho (Windows) ou script durante a configuração, basta executá-lo.
+*   **Linha de Comando**:
+    ```bash
+    # Windows
+    CloudQuest.exe "Nome do Perfil"
 
-- **[PCGamingWiki](https://www.pcgamingwiki.com/)**  
-  Este projeto utiliza a API pública da PCGamingWiki para localizar e identificar os diretórios de saves dos jogos. Agradecemos à comunidade da PCGamingWiki por manter uma base de dados tão completa e aberta.
+    # Linux/macOS
+    cloudquest "Nome do Perfil"
+    ```
+    Substitua `"Nome do Perfil"` pelo nome exato que você deu ao perfil do jogo na configuração.
 
-- **[Rclone](https://rclone.org/)**  
-  A sincronização de arquivos com serviços de nuvem é realizada através do Rclone, uma ferramenta open source poderosa para gerenciamento de arquivos em múltiplos provedores de nuvem.
+O CloudQuest irá:
+1.  Baixar os saves mais recentes da nuvem.
+2.  Iniciar o jogo.
+3.  Aguardar o jogo ser fechado.
+4.  Fazer upload dos saves atualizados para a nuvem.
 
-**📜 Licença**  
- GNU GENERAL PUBLIC LICENSE - Consulte o arquivo [LICENSE](LICENSE) para detalhes
+### Argumentos de Linha de Comando (`CloudQuest.exe` ou `cloudquest`)
+
+*   `[nome_do_perfil]`: (Opcional) Inicia o jogo com o perfil especificado e sincroniza os saves.
+*   `--config` ou `-c`: Abre a interface de configuração (QuestConfig).
+*   `--game-path CAMINHO_DO_JOGO` ou `-g CAMINHO_DO_JOGO`: (Opcional, usado em conjunto com `nome_do_perfil`) Especifica o caminho do diretório do jogo.
+*   `--silent` ou `-s`: (Opcional) Executa em modo silencioso, suprimindo diálogos de interface gráfica (útil para scripts).
+
+Se nenhum argumento for fornecido e nenhum perfil temporário for encontrado, a interface de configuração será iniciada.
+
+## 🛠️ Desenvolvimento e Compilação
+
+### Estrutura do Projeto (Princípios SOLID)
+
+O projeto é dividido em dois componentes principais, cada um com sua própria estrutura, visando a separação de responsabilidades (Single Responsibility Principle) e a extensibilidade:
+
+*   **`CloudQuest/`**: O núcleo da aplicação, responsável pela lógica de sincronização.
+    *   `core/`: Contém a lógica central (SRP).
+        *   `profile_manager.py`: Gerencia o carregamento e manipulação de perfis (SRP).
+        *   `sync_manager.py`: Lida com as operações de sincronização via Rclone (SRP).
+        *   `game_launcher.py`: Responsável por iniciar e monitorar os processos dos jogos (SRP).
+    *   `utils/`: Utilitários compartilhados (logging, paths).
+    *   `config/`: Módulos relacionados à configuração base da aplicação.
+    *   `main.py`: Ponto de entrada e orquestrador do fluxo da aplicação CloudQuest (SRP).
+
+*   **`QuestConfig/`**: A interface gráfica para configuração de jogos.
+    *   `core/`: Lógica de negócios e modelos de dados da interface de configuração.
+    *   `services/`: Camada de serviço, abstraindo fontes de dados e lógica complexa (Interface Segregation Principle, Dependency Inversion Principle).
+        *   `config_service.py`: Gerencia a leitura e escrita de perfis.
+        *   `game_info_service.py`: Busca informações de jogos (Steam, PCGamingWiki).
+        *   `shortcut_service.py`: Cria atalhos.
+    *   `ui/`: Componentes da interface do usuário (Views, Widgets) (SRP).
+        *   `app.py`: Ponto de entrada da aplicação QuestConfig GUI.
+        *   `views.py`: Define as janelas e layouts principais.
+    *   `utils/`: Utilitários específicos do QuestConfig.
+
+*   **`assets/`**: Recursos gráficos (ícones, etc.).
+*   **`dist/`**: Diretório de saída para executáveis compilados.
+*   **`cloudquest_compiler.py`**: Script para compilar a aplicação usando PyInstaller.
+*   **`app.py`**: Ponto de entrada principal que determina se executa o CloudQuest core ou o QuestConfig.
+*   **`install.sh`**: Script de instalação para Linux/macOS.
+
+Este design promove baixo acoplamento e alta coesão, facilitando a manutenção e a adição de novas funcionalidades (Open/Closed Principle). As interfaces implícitas e a separação clara de preocupações ajudam a seguir o Liskov Substitution Principle e o Dependency Inversion Principle.
+
+### Compilando a partir do Código-Fonte
+
+1.  Clone o repositório:
+    ```bash
+    git clone https://github.com/seu-usuario/CloudQuest.git # Substitua pelo URL correto do seu repositório
+    cd CloudQuest
+    ```
+2.  Instale as dependências de compilação (principalmente PyInstaller e outras listadas no `cloudquest_compiler.py`):
+    ```bash
+    pip install pyinstaller Pillow psutil requests watchdog
+    ```
+3.  Execute o script de compilação:
+    ```bash
+    python cloudquest_compiler.py
+    ```
+    O executável será gerado no diretório `dist/CloudQuest/`.
+
+## 📝 Notas Técnicas
+
+*   Os perfis de configuração dos jogos são armazenados como arquivos JSON no diretório `CloudQuest/config/profiles/` (dentro da estrutura do projeto) ou em um local apropriado para dados de aplicação dependendo da instalação (ex: `~/.config/CloudQuest/profiles` em Linux). O local exato pode variar com a forma de execução (script vs. executável).
+*   Os logs são armazenados no diretório `logs/`.
+
+## ⚠️ Aviso
+
+CloudQuest é um projeto em desenvolvimento. Embora testado, podem existir bugs. Use por sua conta e risco. Backups regulares dos seus saves são sempre uma boa prática.
+
+## ❓ Suporte e Contribuições
+
+*   Reporte problemas ou sugira funcionalidades através das [Issues do GitHub](https://github.com/seu-usuario/CloudQuest/issues). # Substitua pelo URL correto do seu repositório
+*   Contribuições são bem-vindas! Faça um fork do projeto e envie um Pull Request.
+
+## 🙏 Créditos e Reconhecimentos
+
+*   **[Rclone](https://rclone.org/)**: Pela ferramenta essencial que torna possível a sincronização com diversos serviços de nuvem.
+*   **[PCGamingWiki](https://www.pcgamingwiki.com/)**: Pela sua vasta base de dados pública sobre jogos, que auxilia na detecção de caminhos de saves.
+*   **CustomTkinter**: Pela excelente biblioteca para criação de interfaces gráficas modernas em Python.
+*   Comunidade de desenvolvimento Python e Open Source.
+
+## 📜 Licença
+
+Este projeto é licenciado sob a GNU General Public License v3.0. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes. 
