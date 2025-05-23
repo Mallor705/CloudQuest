@@ -100,8 +100,8 @@ class NotificationWindow:
                     work_area = monitor_info['Work']
                     
                     # Calcula a posição no canto inferior direito
-                    x_position = work_area[2] - NOTIFICATION_WIDTH - 0
-                    y_position = work_area[3] - NOTIFICATION_HEIGHT - 0
+                    x_position = work_area[2] - NOTIFICATION_WIDTH - 90
+                    y_position = work_area[3] - NOTIFICATION_HEIGHT - 25
                     
                     self.root.geometry(f"+{x_position}+{y_position}")
                     return
@@ -294,8 +294,8 @@ class NotificationWindow:
             # Fallback absoluto para o comportamento mais simples possível
             screen_width = self.root.winfo_screenwidth()
             screen_height = self.root.winfo_screenheight()
-            x_position = screen_width - NOTIFICATION_WIDTH - 0
-            y_position = screen_height - NOTIFICATION_HEIGHT - 0
+            x_position = screen_width - NOTIFICATION_WIDTH - 90
+            y_position = screen_height - NOTIFICATION_HEIGHT - 25
         
         self.root.geometry(f"+{x_position}+{y_position}")
     
@@ -358,7 +358,7 @@ class NotificationWindow:
                 
                 icon_label = ctk.CTkLabel(self.frame, image=icon_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 icon_label.image = icon_photo  # Manter referencia
-                icon_label.place(x=10, y=28)
+                icon_label.place(x=10, y=16)
             except Exception as e:
                 log.error(f"Erro ao carregar icone {icon_path}: {e}")
         else:
@@ -368,12 +368,12 @@ class NotificationWindow:
         if bg_path:
             try:
                 bg_img = Image.open(bg_path)
-                bg_img = bg_img.resize((103, 83), Image.LANCZOS)
+                bg_img = bg_img.resize((103, 83), Image.LANCZOS) # o numero 103 e 83 sao a largura e altura do background
                 bg_photo = ctk.CTkImage(light_image=bg_img, dark_image=bg_img, size=(103, 83))
                 
                 bg_label = ctk.CTkLabel(self.frame, image=bg_photo, text="", fg_color=self._rgb_to_hex(COLORS["background"]))
                 bg_label.image = bg_photo  # Manter referencia
-                bg_label.place(x=201, y=8)
+                bg_label.place(x=201, y=-4)
             except Exception as e:
                 log.error(f"Erro ao carregar background {bg_path}: {e}")
         else:
@@ -383,21 +383,21 @@ class NotificationWindow:
         title_label = ctk.CTkLabel(
             self.frame, 
             text="CloudQuest",
-            font=("Segoe UI", 7, "bold"),
+            font=("Segoe UI", 9, "bold"),
             text_color=self._rgb_to_hex(COLORS["text_secondary"]),
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        title_label.place(x=75, y=23)
+        title_label.place(x=75, y=5)
         
         # Adicionar nome do jogo
         game_label = ctk.CTkLabel(
             self.frame, 
             text=game_name,
-            font=("Segoe UI", 11, "bold"),
+            font=("Segoe UI", 14, "bold"),
             text_color=self._rgb_to_hex(COLORS["text_primary"]),
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        game_label.place(x=75, y=40)
+        game_label.place(x=75, y=24)
         
         # Adicionar mensagem de status
         # Determinar mensagem de status com base no tipo e direcao
@@ -411,11 +411,11 @@ class NotificationWindow:
         status_label = ctk.CTkLabel(
             self.frame, 
             text=status_message,
-            font=("Segoe UI", 7),
+            font=("Segoe UI", 9),
             text_color=status_color,
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
-        status_label.place(x=75, y=58)
+        status_label.place(x=75, y=44)
     
     def _fade_in(self):
         """Anima a janela com efeito de fade-in."""

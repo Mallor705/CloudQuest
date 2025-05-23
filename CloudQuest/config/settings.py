@@ -26,7 +26,7 @@ RCLONE_RETRY_WAIT = 5  # segundos
 # Configuracoes de notificacao
 NOTIFICATION_DISPLAY_TIME = 5000  # milissegundos
 NOTIFICATION_WIDTH = 300
-NOTIFICATION_HEIGHT = 100
+NOTIFICATION_HEIGHT = 75
 
 # Configuracoes padrao (podem ser sobrescritas pelos perfis)
 DEFAULT_FONT = "Segoe UI"
