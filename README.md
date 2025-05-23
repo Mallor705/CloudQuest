@@ -16,7 +16,6 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
     *   Detectar automaticamente informações de jogos (ex: AppID do Steam).
     *   Criar atalhos para facilitar o lançamento de jogos com sincronização.
 
-O projeto segue os princípios **SOLID** para garantir um código manutenável, flexível e robusto.
 
 ## 🌟 Recursos Principais
 
@@ -129,7 +128,7 @@ Se nenhum argumento for fornecido e nenhum perfil temporário for encontrado, a 
 
 ## 🛠️ Desenvolvimento e Compilação
 
-### Estrutura do Projeto (Princípios SOLID)
+### Estrutura do Projeto
 
 O projeto é dividido em dois componentes principais, cada um com sua própria estrutura, visando a separação de responsabilidades (Single Responsibility Principle) e a extensibilidade:
 
