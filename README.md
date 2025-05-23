@@ -17,29 +17,29 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
     *   Criar atalhos para facilitar o lançamento de jogos com sincronização.
 
 
-## 🌟 Recursos Principais
+## Recursos Principais
 
-*   **🔄 Sincronização Automática e Bidirecional**:
+*   **Sincronização Automática e Bidirecional**:
     *   Upload automático dos saves após fechar o jogo.
     *   Download automático dos saves mais recentes antes de iniciar o jogo.
     *   Suporte a uma vasta gama de serviços de nuvem através do Rclone (Google Drive, Dropbox, OneDrive, etc.).
-*   **🖥️ Interface de Configuração Intuitiva (QuestConfig)**:
+*   **Interface de Configuração Intuitiva (QuestConfig)**:
     *   Gerenciamento fácil de múltiplos perfis de jogos.
     *   Assistente para configuração de novos jogos.
     *   Auto-detecção de AppID do Steam para facilitar a configuração.
     *   Busca de informações sobre locais de save na PCGamingWiki.
     *   Criação de atalhos personalizados na área de trabalho (Windows) ou scripts (Linux/macOS) para iniciar jogos com sincronização.
-*   **⚙️ Núcleo Confiável**:
+*   **Núcleo Confiável**:
     *   Monitoramento preciso do processo do jogo para garantir que a sincronização ocorra no momento certo.
     *   Sistema de logging detalhado para troubleshooting.
     *   Tratamento de erros e tentativas de sincronização.
-*   **📦 Compilação Simplificada**:
+*   **Compilação Simplificada**:
     *   Script `cloudquest_compiler.py` para empacotar a aplicação e a interface de configuração em um único executável usando PyInstaller.
-*   **🐧 Suporte Multiplataforma**:
+*   **Suporte Multiplataforma**:
     *   Funciona em Windows, Linux e macOS (a interface gráfica e a criação de atalhos podem ter funcionalidades específicas por plataforma).
     *   Script de instalação (`install.sh`) para Linux e macOS.
 
-## ⚙️ Pré-requisitos
+## Pré-requisitos
 
 *   **Rclone**: É essencial ter o [Rclone](https://rclone.org/downloads/) instalado e configurado com pelo menos um "remote" (serviço de nuvem). O CloudQuest não instala o Rclone.
 *   **Sistema Operacional**:
@@ -50,7 +50,7 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
     *   Python 3.7 ou superior.
     *   Dependências listadas em `cloudquest_compiler.py` (PyInstaller, Pillow, psutil, requests, watchdog).
 
-## 📥 Instalação
+## Instalação
 
 ### Windows
 
@@ -87,7 +87,7 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
     ```
     O executável será gerado no diretório `dist/CloudQuest/`.
 
-## 🕹 Como Usar
+## Como Usar
 
 ### 1. Configuração Inicial (Interface Gráfica - QuestConfig)
 
@@ -145,27 +145,27 @@ O CloudQuest irá:
 Se nenhum argumento for fornecido e nenhum perfil temporário for encontrado, a interface de configuração será iniciada.
 
 
-## 📝 Notas Técnicas
+## Notas Técnicas
 
 *   Os perfis de configuração dos jogos são armazenados como arquivos JSON no diretório `%APPDATA%/cloudquest/profiles/` (Windows) e `~/.config/cloudquest/profiles` (Linux).
 *   Os logs são armazenados no diretório `%APPDATA%/cloudquest/logs/` (Windows) e `~/.cache/cloudquest/logs/` (Linux).
 
-## ⚠️ Aviso
+## Aviso
 
 CloudQuest é um projeto em desenvolvimento. Embora testado, podem existir bugs. Use por sua conta e risco. Backups regulares dos seus saves são sempre uma boa prática.
 
-## ❓ Suporte e Contribuições
+## Suporte e Contribuições
 
 *   Reporte problemas ou sugira funcionalidades através das [Issues do GitHub](https://github.com/Mallor705/CloudQuest/issues).
 *   Contribuições são bem-vindas!
 
-## 🙏 Créditos e Reconhecimentos
+## Créditos e Reconhecimentos
 
 *   **[Rclone](https://rclone.org/)**: Pela ferramenta essencial que torna possível a sincronização com diversos serviços de nuvem.
 *   **[PCGamingWiki](https://www.pcgamingwiki.com/)**: Pela sua vasta base de dados pública sobre jogos, que auxilia na detecção de caminhos de saves.
 *   **CustomTkinter**: Pela excelente biblioteca para criação de interfaces gráficas modernas em Python.
 *   Comunidade de desenvolvimento Python e Open Source.
 
-## 📜 Licença
+## Licença
 
 Este projeto é licenciado sob a GNU General Public License v3.0. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes. 
