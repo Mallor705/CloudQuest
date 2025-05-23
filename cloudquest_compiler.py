@@ -59,7 +59,8 @@ def compile_cloudquest():
     Compila o CloudQuest e QuestConfig em um único executável.
     """
     print("Iniciando compilação do CloudQuest...")
-    
+    app_name = "CloudQuest" # Nome base do aplicativo
+
     # Verificar dependências
     dependencies = ["pyinstaller", "PIL", "psutil", "requests", "watchdog"]
     missing_deps = []
@@ -81,14 +82,31 @@ def compile_cloudquest():
     # Adicionar diretório atual ao PYTHONPATH para garantir importações
     sys.path.insert(0, str(current_dir))
     
-    # Limpar diretórios anteriores
+    # Limpar artefatos de compilação específicos do SO e diretório de build
+    # Isso evita apagar executáveis de outros sistemas operacionais em 'dist'
     if dist_dir.exists():
-        print(f"Removendo diretório anterior: {dist_dir}")
-        shutil.rmtree(dist_dir, ignore_errors=True)
+        executable_name_for_os = f"{app_name}.exe" if os.name == 'nt' else app_name
+        path_to_remove = dist_dir / executable_name_for_os
         
+        # Verifica se o caminho a ser removido existe e é um arquivo (para --onefile)
+        if path_to_remove.is_file():
+            print(f"Removendo arquivo executável anterior específico do SO: {path_to_remove}")
+            os.remove(path_to_remove)
+        # Verifica se o caminho a ser removido existe e é um diretório (para --onedir)
+        elif path_to_remove.is_dir():
+            print(f"Removendo diretório de executável anterior específico do SO: {path_to_remove}")
+            shutil.rmtree(path_to_remove, ignore_errors=True)
+            
+    # O diretório 'build' pode ser sempre removido, pois contém arquivos temporários da compilação atual.
     if build_dir.exists():
-        print(f"Removendo diretório anterior: {build_dir}")
+        print(f"Removendo diretório de build anterior: {build_dir}")
         shutil.rmtree(build_dir, ignore_errors=True)
+
+    # Remover arquivo .spec anterior, se existir, pois será gerado novamente
+    spec_file_path = current_dir / f"{app_name}.spec"
+    if spec_file_path.exists():
+        print(f"Removendo arquivo .spec anterior: {spec_file_path}")
+        os.remove(spec_file_path)
     
     # Criar estrutura de diretórios necessária
     for dir_path in [
@@ -219,7 +237,7 @@ def compile_cloudquest():
         "--noconfirm",
         "--noupx",
         "--clean",
-        "--name=CloudQuest",
+        f"--name={app_name}",
         "--onefile",  # Criar um único executável
     ]
     
@@ -364,7 +382,10 @@ def compile_cloudquest():
         #     print(f"Ícone copiado: {icon_path.name}") # Removido
         
         print("\nCompilação concluída com sucesso!")
-        print(f"Executável gerado em: {dist_dir / 'CloudQuest.exe'}")
+        executable_final_name = f"{app_name}.exe" if os.name == 'nt' else app_name
+        final_executable_path = dist_dir / executable_final_name
+        print(f"Executável gerado em: {final_executable_path}")
+        print(f"Caminho completo: {final_executable_path.resolve()}")
     
     except subprocess.CalledProcessError as e:
         print(f"\nErro durante a compilação: {e}")
