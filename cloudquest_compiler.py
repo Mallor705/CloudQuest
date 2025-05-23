@@ -235,6 +235,7 @@ def compile_cloudquest():
     pyinstaller_args = [
         "pyinstaller",
         "--noconfirm",
+        "--noconsole",
         "--noupx",
         "--clean",
         f"--name={app_name}",
