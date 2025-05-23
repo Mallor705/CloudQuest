@@ -75,6 +75,7 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
 ### 1. Configuração Inicial (Interface Gráfica - QuestConfig)
 
 **Importante**: Para que o CloudQuest localize corretamente os saves, o jogo deve ter sido executado ao menos uma vez para que seus diretórios de saves existam em seu sistema.
+
 **Importante**: Certifique-se de que você já configurou um "remote" no Rclone antes desta etapa.
 
 1.  Inicie a interface de configuração:
