@@ -71,19 +71,10 @@ O projeto foi organizado seguindo princípios SOLID:
   - **ui/**: Interface gráfica
   - **utils/**: Utilitários
 
-### Compilando o executável
-
-Para compilar a aplicação em um único executável:
-
-```bash
-python cloudquest.py
-```
-
-Isso usará PyInstaller para gerar o executável na pasta `dist/CloudQuest/`.
 
 ## Aviso
 
-CloudQuest está em desenvolvimento. Use por sua conta e risco.
+CloudQuest está em desenvolvimento. É provável que tenha alguns bugs. Use por sua conta e risco.
 
 ---
 
