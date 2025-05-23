@@ -1,6 +1,6 @@
 # CloudQuest
 
-CloudQuest é uma aplicação Python projetada para simplificar a configuração de jogos e a sincronização de seus arquivos de salvamento (saves) entre múltiplos dispositivos. Ele utiliza o [Rclone](https://rclone.org/) para interagir com diversos serviços de armazenamento em nuvem.
+CloudQuest é uma aplicação Python projetada para simplificar a sincronização de seus arquivos de salvamento (saves) entre múltiplas plataformas e dispositivos, armazenando-os em seu serviço de nuvem preferido. Ele utiliza o [Rclone](https://rclone.org/) para interagir com diversos serviços de armazenamento em nuvem.
 
 ## Sobre a Aplicação
 
@@ -70,6 +70,23 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
     ```
     O script tentará instalar o CloudQuest em `$HOME/.local/bin` e criar um link simbólico em `/usr/local/bin`.
 
+### Compilando a partir do Código-Fonte
+
+1.  Clone o repositório:
+    ```bash
+    git clone https://github.com/Mallor705/CloudQuest.git # Substitua pelo URL correto do seu repositório
+    cd CloudQuest
+    ```
+2.  Instale as dependências de compilação (principalmente PyInstaller e outras listadas no `cloudquest_compiler.py`):
+    ```bash
+    pip install pyinstaller Pillow psutil requests watchdog
+    ```
+3.  Execute o script de compilação:
+    ```bash
+    python cloudquest_compiler.py
+    ```
+    O executável será gerado no diretório `dist/CloudQuest/`.
+
 ## 🕹 Como Usar
 
 ### 1. Configuração Inicial (Interface Gráfica - QuestConfig)
@@ -127,61 +144,11 @@ O CloudQuest irá:
 
 Se nenhum argumento for fornecido e nenhum perfil temporário for encontrado, a interface de configuração será iniciada.
 
-## 🛠️ Desenvolvimento e Compilação
-
-### Estrutura do Projeto
-
-O projeto é dividido em dois componentes principais, cada um com sua própria estrutura, visando a separação de responsabilidades (Single Responsibility Principle) e a extensibilidade:
-
-*   **`CloudQuest/`**: O núcleo da aplicação, responsável pela lógica de sincronização.
-    *   `core/`: Contém a lógica central (SRP).
-        *   `profile_manager.py`: Gerencia o carregamento e manipulação de perfis (SRP).
-        *   `sync_manager.py`: Lida com as operações de sincronização via Rclone (SRP).
-        *   `game_launcher.py`: Responsável por iniciar e monitorar os processos dos jogos (SRP).
-    *   `utils/`: Utilitários compartilhados (logging, paths).
-    *   `config/`: Módulos relacionados à configuração base da aplicação.
-    *   `main.py`: Ponto de entrada e orquestrador do fluxo da aplicação CloudQuest (SRP).
-
-*   **`QuestConfig/`**: A interface gráfica para configuração de jogos.
-    *   `core/`: Lógica de negócios e modelos de dados da interface de configuração.
-    *   `services/`: Camada de serviço, abstraindo fontes de dados e lógica complexa (Interface Segregation Principle, Dependency Inversion Principle).
-        *   `config_service.py`: Gerencia a leitura e escrita de perfis.
-        *   `game_info_service.py`: Busca informações de jogos (Steam, PCGamingWiki).
-        *   `shortcut_service.py`: Cria atalhos.
-    *   `ui/`: Componentes da interface do usuário (Views, Widgets) (SRP).
-        *   `app.py`: Ponto de entrada da aplicação QuestConfig GUI.
-        *   `views.py`: Define as janelas e layouts principais.
-    *   `utils/`: Utilitários específicos do QuestConfig.
-
-*   **`assets/`**: Recursos gráficos (ícones, etc.).
-*   **`dist/`**: Diretório de saída para executáveis compilados.
-*   **`cloudquest_compiler.py`**: Script para compilar a aplicação usando PyInstaller.
-*   **`app.py`**: Ponto de entrada principal que determina se executa o CloudQuest core ou o QuestConfig.
-*   **`install.sh`**: Script de instalação para Linux/macOS.
-
-Este design promove baixo acoplamento e alta coesão, facilitando a manutenção e a adição de novas funcionalidades (Open/Closed Principle). As interfaces implícitas e a separação clara de preocupações ajudam a seguir o Liskov Substitution Principle e o Dependency Inversion Principle.
-
-### Compilando a partir do Código-Fonte
-
-1.  Clone o repositório:
-    ```bash
-    git clone https://github.com/seu-usuario/CloudQuest.git # Substitua pelo URL correto do seu repositório
-    cd CloudQuest
-    ```
-2.  Instale as dependências de compilação (principalmente PyInstaller e outras listadas no `cloudquest_compiler.py`):
-    ```bash
-    pip install pyinstaller Pillow psutil requests watchdog
-    ```
-3.  Execute o script de compilação:
-    ```bash
-    python cloudquest_compiler.py
-    ```
-    O executável será gerado no diretório `dist/CloudQuest/`.
 
 ## 📝 Notas Técnicas
 
-*   Os perfis de configuração dos jogos são armazenados como arquivos JSON no diretório `CloudQuest/config/profiles/` (dentro da estrutura do projeto) ou em um local apropriado para dados de aplicação dependendo da instalação (ex: `~/.config/CloudQuest/profiles` em Linux). O local exato pode variar com a forma de execução (script vs. executável).
-*   Os logs são armazenados no diretório `logs/`.
+*   Os perfis de configuração dos jogos são armazenados como arquivos JSON no diretório `%APPDATA%/cloudquest/profiles/` (Windows) e `~/.config/cloudquest/profiles` (Linux).
+*   Os logs são armazenados no diretório `%APPDATA%/cloudquest/logs/` (Windows) e `~/.cache/cloudquest/logs/` (Linux).
 
 ## ⚠️ Aviso
 
@@ -189,8 +156,8 @@ CloudQuest é um projeto em desenvolvimento. Embora testado, podem existir bugs.
 
 ## ❓ Suporte e Contribuições
 
-*   Reporte problemas ou sugira funcionalidades através das [Issues do GitHub](https://github.com/seu-usuario/CloudQuest/issues). # Substitua pelo URL correto do seu repositório
-*   Contribuições são bem-vindas! Faça um fork do projeto e envie um Pull Request.
+*   Reporte problemas ou sugira funcionalidades através das [Issues do GitHub](https://github.com/Mallor705/CloudQuest/issues).
+*   Contribuições são bem-vindas!
 
 ## 🙏 Créditos e Reconhecimentos
 
