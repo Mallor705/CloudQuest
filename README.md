@@ -80,7 +80,7 @@ O CloudQuest combina duas funcionalidades principais em uma única solução coe
 
 1.  Inicie a interface de configuração:
     *   **Windows**: Execute `CloudQuest.exe` ou `CloudQuest.exe --config`.
-    *   **Linux/macOS**: Execute `cloudquest` ou `cloudquest --config` no terminal.
+    *   **Linux**: Execute `cloudquest` ou `cloudquest --config` no terminal.
 2.  Na interface do QuestConfig:
     *   **Adicionar Novo Perfil**: Clique para criar uma nova configuração para um jogo.
     *   **Caminho do Executável**: Selecione o arquivo executável principal do jogo.
