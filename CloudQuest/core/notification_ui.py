@@ -388,8 +388,7 @@ class NotificationWindow:
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
         title_label.place(x=75, y=5)
-        
-        # Adicionar nome do jogo
+        # Add game name
         game_label = ctk.CTkLabel(
             self.frame, 
             text=game_name,
@@ -398,16 +397,14 @@ class NotificationWindow:
             fg_color=self._rgb_to_hex(COLORS["background"])
         )
         game_label.place(x=75, y=24)
-        
-        # Adicionar mensagem de status
-        # Determinar mensagem de status com base no tipo e direcao
+        # Add status message
+        # Determine status message based on type and direction
         if notification_type == "error":
-            status_message = "Falha no download!" if direction == "down" else "Falha no upload!"
+            status_message = "Download failed!" if direction == "down" else "Upload failed!"
             status_color = self._rgb_to_hex(COLORS["error"])
         else:
-            status_message = "Atualizando seu progresso..." if direction == "down" else "Sincronizando a nuvem..."
+            status_message = "Updating your progress..." if direction == "down" else "Syncing to the cloud..."
             status_color = self._rgb_to_hex(COLORS["text_secondary"])
-        
         status_label = ctk.CTkLabel(
             self.frame, 
             text=status_message,

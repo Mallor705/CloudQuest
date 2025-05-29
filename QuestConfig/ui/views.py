@@ -315,7 +315,7 @@ class QuestConfigView:
         
         # Status
         self.status_var = ctk.StringVar()
-        self.status_var.set("Pronto")
+        self.status_var.set("Ready")
         
         # Carregar valores padroes
         self.load_defaults()
@@ -329,36 +329,36 @@ class QuestConfigView:
         # Mapeamento de campos para descrições
         self.field_descriptions = {
             "executable": {
-                "title": "Executável do Jogo",
-                "text": "Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem."
+                "title": "Game Executable",
+                "text": "Select the main game executable (.exe) file you want to configure for cloud sync."
             },
             "appid": {
                 "title": "Steam AppID",
-                "text": "Identifique o jogo na Steam usando seu AppID único. Este número permite que o sistema localize informações específicas sobre o jogo."
+                "text": "Identify the game on Steam using its unique AppID. This number allows the system to locate specific information about the game."
             },
             "game_name": {
-                "title": "Nome do Jogo",
-                "text": "Forneça o nome completo do jogo para identificação nos registros e arquivos de configuração."
+                "title": "Game Name",
+                "text": "Provide the full name of the game for identification in logs and configuration files."
             },
             "save_dir": {
-                "title": "Diretório do Save",
-                "text": "Indique o diretório onde o jogo armazena seus arquivos de salvamento. Este é o local que será sincronizado com a nuvem."
+                "title": "Save Directory",
+                "text": "Indicate the directory where the game stores its save files. This is the location that will be synced to the cloud."
             },
             "process": {
-                "title": "Processo do Jogo",
-                "text": "Nome do processo executável do jogo no Gerenciador de Tarefas. Usado para detectar quando o jogo é iniciado ou encerrado."
+                "title": "Game Process",
+                "text": "Name of the game's executable process in Task Manager. Used to detect when the game starts or closes."
             },
             "rclone_path": {
-                "title": "Caminho do Rclone",
-                "text": "Especifique o caminho para o executável do Rclone que será utilizado para sincronizar seus saves de jogos com a nuvem."
+                "title": "Rclone Path",
+                "text": "Specify the path to the Rclone executable that will be used to sync your game saves with the cloud."
             },
             "cloud_remote": {
                 "title": "Cloud Remote",
-                "text": "Selecione o remote do Rclone já configurado que será usado para armazenar os saves na nuvem (ex: gdrive, onedrive, etc.)."
+                "text": "Select the already configured Rclone remote that will be used to store saves in the cloud (e.g., gdrive, onedrive, etc.)."
             },
             "cloud_dir": {
-                "title": "Diretório na Nuvem",
-                "text": "Defina o caminho dentro do seu armazenamento na nuvem onde os saves serão armazenados."
+                "title": "Cloud Directory",
+                "text": "Set the path within your cloud storage where the saves will be stored."
             }
         }
         
@@ -403,7 +403,7 @@ class QuestConfigView:
         description_inner = ctk.CTkFrame(description_container, fg_color="transparent")
         description_inner.pack(fill="both", expand=True, anchor="n")
         
-        self.description_title = ctk.CTkLabel(description_inner, text="Executável do Jogo", 
+        self.description_title = ctk.CTkLabel(description_inner, text="Game Executable", 
                                            font=(AppTheme.FONT_MAIN, 18, "bold"), 
                                            text_color=AppTheme.TEXT_DARK, 
                                            anchor="w",
@@ -411,7 +411,7 @@ class QuestConfigView:
         self.description_title.pack(anchor="nw", fill="x")
         
         self.description_text = ctk.CTkLabel(description_inner, 
-                                       text="Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.", 
+                                       text="Select the main game executable (.exe) file you want to configure for cloud sync.", 
                                        font=(AppTheme.FONT_SECONDARY, 13),
                                        text_color=AppTheme.TEXT_SECONDARY,
                                        wraplength=280,
@@ -423,7 +423,7 @@ class QuestConfigView:
         nav_buttons_frame = ctk.CTkFrame(self.right_frame, fg_color="transparent")
         nav_buttons_frame.pack(side="bottom", fill="x", padx=AppTheme.PADDING_LG, pady=AppTheme.PADDING_LG)
         
-        self.back_button = ctk.CTkButton(nav_buttons_frame, text="Voltar", 
+        self.back_button = ctk.CTkButton(nav_buttons_frame, text="Back", 
                                      fg_color=AppTheme.BUTTON_SECONDARY_BG,
                                      hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                                      text_color=AppTheme.TEXT_SECONDARY,
@@ -433,9 +433,9 @@ class QuestConfigView:
                                      height=AppTheme.BUTTON_HEIGHT,
                                      command=self.navigate_back, width=120)
         self.back_button.pack(side="left", padx=(0, 10))
-        self.back_button.configure(state="disabled")  # Inicialmente desabilitado na primeira tela
+        self.back_button.configure(state="disabled")  # Initially disabled on the first screen
         
-        self.next_button = ctk.CTkButton(nav_buttons_frame, text="Próximo", 
+        self.next_button = ctk.CTkButton(nav_buttons_frame, text="Next", 
                                      fg_color=AppTheme.PRIMARY_COLOR,
                                      hover_color=AppTheme.PRIMARY_DARK,
                                      text_color=AppTheme.TEXT_LIGHT,
@@ -488,7 +488,7 @@ class QuestConfigView:
         # Título com estilo Material Design - direto no grid
         title_frame = ctk.CTkFrame(game_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=45)
         title_frame.grid(row=0, column=0, sticky="ew", pady=(AppTheme.PADDING_LG * 1.5, 0))
-        ctk.CTkLabel(title_frame, text="Informações do Jogo", 
+        ctk.CTkLabel(title_frame, text="Game Information", 
                  font=(AppTheme.FONT_MAIN, 22, "bold"),
                  text_color=AppTheme.TEXT_LIGHT).pack(anchor="center", pady=5)
         
@@ -501,7 +501,7 @@ class QuestConfigView:
         form_frame.pack(fill="both", expand=True, pady=0)
         
         # Executável - primeiro campo abaixo do título
-        ctk.CTkLabel(form_frame, text="Executável do Jogo", 
+        ctk.CTkLabel(form_frame, text="Game Executable", 
                    text_color=AppTheme.TEXT_LIGHT,
                    font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(0, 3))
         exe_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
@@ -510,7 +510,7 @@ class QuestConfigView:
         exe_entry = self.apply_modern_entry_style(exe_entry)
         exe_entry.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(exe_entry, "executable")
-        ctk.CTkButton(exe_frame, text="Procurar...", 
+        ctk.CTkButton(exe_frame, text="Browse...", 
                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                     text_color=AppTheme.TEXT_SECONDARY,
@@ -536,7 +536,7 @@ class QuestConfigView:
         appid_entry.pack(side="left", fill="none", expand=False)
         self.bind_click_and_focus(appid_entry, "appid")
         
-        ctk.CTkButton(appid_input_container, text="Detectar e Consultar", 
+        ctk.CTkButton(appid_input_container, text="Detect and Query", 
                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                     text_color=AppTheme.TEXT_SECONDARY,
@@ -547,7 +547,7 @@ class QuestConfigView:
                     command=self.detect_and_query_appid).pack(side="left", padx=(10, 0))
         
         # Nome do Jogo
-        ctk.CTkLabel(form_frame, text="Nome do Jogo", 
+        ctk.CTkLabel(form_frame, text="Game Name", 
                    text_color=AppTheme.TEXT_LIGHT,
                    font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         name_entry = ctk.CTkEntry(form_frame, textvariable=self.game_name, width=350)
@@ -556,7 +556,7 @@ class QuestConfigView:
         self.bind_click_and_focus(name_entry, "game_name")
         
         # Diretório do Save
-        ctk.CTkLabel(form_frame, text="Diretório do Local do Save", 
+        ctk.CTkLabel(form_frame, text="Save Location Directory", 
                    text_color=AppTheme.TEXT_LIGHT,
                    font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         save_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
@@ -565,7 +565,7 @@ class QuestConfigView:
         save_entry = self.apply_modern_entry_style(save_entry)
         save_entry.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(save_entry, "save_dir")
-        ctk.CTkButton(save_frame, text="Procurar...", 
+        ctk.CTkButton(save_frame, text="Browse...", 
                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                     text_color=AppTheme.TEXT_SECONDARY,
@@ -576,7 +576,7 @@ class QuestConfigView:
                     command=self.browse_local_dir).pack(side="right", padx=(5, 0))
         
         # Processo do Jogo
-        ctk.CTkLabel(form_frame, text="Processo do Jogo", 
+        ctk.CTkLabel(form_frame, text="Game Process", 
                    text_color=AppTheme.TEXT_LIGHT,
                    font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(6, 3))
         process_entry = ctk.CTkEntry(form_frame, textvariable=self.game_process, width=350)
@@ -597,7 +597,7 @@ class QuestConfigView:
         # Título com estilo Material Design
         title_frame = ctk.CTkFrame(rclone_frame, fg_color=AppTheme.PRIMARY_DARK, corner_radius=0, height=45)
         title_frame.grid(row=0, column=0, sticky="ew", pady=(AppTheme.PADDING_LG * 1.5, 0))
-        ctk.CTkLabel(title_frame, text="Configuração Rclone", 
+        ctk.CTkLabel(title_frame, text="Rclone Configuration", 
                  font=(AppTheme.FONT_MAIN, 22, "bold"),
                  text_color=AppTheme.TEXT_LIGHT).pack(anchor="center", pady=5)
         
@@ -610,7 +610,7 @@ class QuestConfigView:
         rform_frame.pack(fill="both", expand=True, pady=0)
         
         # Caminho do Rclone - primeiro campo abaixo do título
-        ctk.CTkLabel(rform_frame, text="Caminho do Rclone", 
+        ctk.CTkLabel(rform_frame, text="Rclone Path", 
                    text_color=AppTheme.TEXT_LIGHT,
                    font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(0, 3))
         rclone_path_frame = ctk.CTkFrame(rform_frame, fg_color="transparent")
@@ -619,7 +619,7 @@ class QuestConfigView:
         rclone_entry = self.apply_modern_entry_style(rclone_entry)
         rclone_entry.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(rclone_entry, "rclone_path")
-        ctk.CTkButton(rclone_path_frame, text="Procurar...", 
+        ctk.CTkButton(rclone_path_frame, text="Browse...", 
                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                     text_color=AppTheme.TEXT_SECONDARY,
@@ -649,7 +649,7 @@ class QuestConfigView:
                                          border_width=1.5)
         self.remote_combo.pack(side="left", fill="x", expand=True)
         self.bind_click_and_focus(self.remote_combo, "cloud_remote")
-        ctk.CTkButton(remote_frame, text="Detectar", 
+        ctk.CTkButton(remote_frame, text="Detect", 
                     fg_color=AppTheme.BUTTON_SECONDARY_BG,
                     hover_color=AppTheme.BUTTON_SECONDARY_HOVER,
                     text_color=AppTheme.TEXT_SECONDARY,
@@ -660,7 +660,7 @@ class QuestConfigView:
                     command=self.detect_remotes).pack(side="right", padx=(5, 0))
         
         # Diretório do Save na Nuvem
-        ctk.CTkLabel(rform_frame, text="Diretório do Save na Nuvem", 
+        ctk.CTkLabel(rform_frame, text="Cloud Save Directory", 
                    text_color=AppTheme.TEXT_LIGHT,
                    font=(AppTheme.FONT_SECONDARY, 14)).pack(anchor="w", pady=(AppTheme.PADDING_MD, 5))
         cloud_entry = ctk.CTkEntry(rform_frame, textvariable=self.cloud_dir, width=350)
@@ -674,7 +674,7 @@ class QuestConfigView:
         
         # Checkbox para atalhos
         self.create_shortcut_var = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(checkbox_container, text="Atalho na Área de Trabalho", 
+        ctk.CTkCheckBox(checkbox_container, text="Desktop Shortcut", 
                        variable=self.create_shortcut_var,
                        text_color=AppTheme.TEXT_LIGHT,
                        font=(AppTheme.FONT_SECONDARY, 13),
@@ -735,14 +735,12 @@ class QuestConfigView:
             
         # Atualizar descrição inicial para a seção
         if section_id == "game_info":
-            self.update_description("Executável do Jogo", 
-                                   "Selecione o arquivo executável (.exe) principal do jogo que você deseja configurar para sincronização na nuvem.")
-            # Desabilitar botão de voltar na primeira tela
+            self.update_description("Game Executable", 
+                                   "Select the main game executable (.exe) file you want to configure for cloud sync.")
             self.back_button.configure(state="disabled")
         elif section_id == "rclone_config":
-            self.update_description("Caminho do Rclone", 
-                                   "Especifique o caminho para o executável do Rclone que será utilizado para sincronizar seus saves de jogos com a nuvem.")
-            # Habilitar botão de voltar na segunda tela
+            self.update_description("Rclone Path", 
+                                   "Specify the path to the Rclone executable that will be used to sync your game saves with the cloud.")
             self.back_button.configure(state="normal")
         
         # Atualizar barra de progresso
@@ -754,9 +752,9 @@ class QuestConfigView:
         if hasattr(self, 'next_button'):
             section_order = ["game_info", "rclone_config"]
             if section_id == section_order[-1]:  # Se for a última seção
-                self.next_button.configure(text="Salvar")
+                self.next_button.configure(text="Save")
             else:
-                self.next_button.configure(text="Próximo")
+                self.next_button.configure(text="Next")
     
     def update_description(self, title, description_text):
         """Atualiza o título e o texto de descrição no painel direito."""
@@ -788,8 +786,8 @@ class QuestConfigView:
     def browse_executable(self):
         """Abre dialogo para selecionar o executavel do jogo."""
         filename = modern_file_dialog(
-            title="Selecionar Executável do Jogo", 
-            file_types=[("Executaveis", "*.exe"), ("Todos Arquivos", "*.*")]
+            title="Select Game Executable", 
+            file_types=[("Executables", "*.exe"), ("All Files", "*.*")]
         )
         
         if filename:
@@ -809,8 +807,8 @@ class QuestConfigView:
     def browse_rclone(self):
         """Abre dialogo para selecionar o executavel do rclone."""
         filename = modern_file_dialog(
-            title="Selecionar Executável do Rclone", 
-            file_types=[("Executaveis", "*.exe"), ("Todos Arquivos", "*.*")]
+            title="Select Rclone Executable", 
+            file_types=[("Executables", "*.exe"), ("All Files", "*.*")]
         )
         
         if filename:
@@ -819,7 +817,7 @@ class QuestConfigView:
     def browse_local_dir(self):
         """Abre dialogo para selecionar o diretorio local de saves."""
         directory = modern_file_dialog(
-            title="Selecionar Diretório de Saves",
+            title="Select Save Directory",
             is_dir=True
         )
         
@@ -828,7 +826,7 @@ class QuestConfigView:
     
     def detect_remotes(self):
         """Detecta remotes configurados no Rclone."""
-        self.status_var.set("Detectando remotes...")
+        self.status_var.set("Detecting remotes...")
         self.root.update_idletasks()
         
         def run_detection():
@@ -846,25 +844,23 @@ class QuestConfigView:
         """Atualiza o resultado da deteccao de remotes."""
         if remotes:
             self.remote_combo.configure(values=remotes)
-            
             if remotes and not self.cloud_remote.get():
                 self.cloud_remote.set(remotes[0])
-            
-            self.status_var.set(f"{len(remotes)} remotes detectados")
+            self.status_var.set(f"{len(remotes)} remotes detected")
         else:
             self.remote_combo.configure(values=[])
-            self.status_var.set("Nenhum remote detectado")
-            messagebox.showwarning("Aviso", "Nenhum remote Rclone foi encontrado. Verifique a configuracao do Rclone.")
+            self.status_var.set("No remote detected")
+            messagebox.showwarning("Warning", "No Rclone remote was found. Check your Rclone configuration.")
     
     def detect_and_query_appid(self):
         """Detecta o AppID do jogo e depois consulta a API Steam para obter informações adicionais."""
         exe_path = self.executable_path.get()
         
         if not exe_path or not Path(exe_path).exists():
-            messagebox.showwarning("Aviso", "Selecione um executável válido primeiro.")
+            messagebox.showwarning("Warning", "Select a valid executable first.")
             return
         
-        self.status_var.set("Detectando AppID...")
+        self.status_var.set("Detecting AppID...")
         self.root.update_idletasks()
         
         def run_detection_and_query():
@@ -899,8 +895,8 @@ class QuestConfigView:
     def update_steam_info(self, game_info):
         """Atualiza as informacoes do jogo com dados da Steam."""
         if not game_info:
-            self.status_var.set("Informacoes nao encontradas na Steam")
-            messagebox.showinfo("Informacao", "Nao foi possivel obter informacoes do jogo na Steam.")
+            self.status_var.set("Information not found on Steam")
+            messagebox.showinfo("Information", "Could not get game information from Steam.")
             return
         
         # Atualizar campos
@@ -911,7 +907,7 @@ class QuestConfigView:
         if game_info.get('save_location'):
             self.local_dir.set(game_info['save_location'])
         
-        self.status_var.set(f"Informacoes obtidas para {game_info['name']}")
+        self.status_var.set(f"Information obtained for {game_info['name']}")
         
         # Atualizar diretorio cloud
         self.update_cloud_dir()
@@ -954,30 +950,30 @@ class QuestConfigView:
         config_file = self.config_service.save_game_config(game_data, self.app_paths['profiles_dir'])
         
         if config_file:
-            self.status_var.set(f"Configuracao salva: {config_file}")
+            self.status_var.set(f"Configuration saved: {config_file}")
             
             # Criar atalho se solicitado
             if self.create_shortcut_var.get():
                 success = self.shortcut_service.create_game_shortcut(game_data)
                 if success:
-                    messagebox.showinfo("Sucesso", "Configuracao salva e atalho criado com sucesso!")
+                    messagebox.showinfo("Success", "Configuration saved and shortcut created successfully!")
                 else:
-                    messagebox.showwarning("Aviso", "Configuracao salva, mas houve um erro ao criar o atalho.")
+                    messagebox.showwarning("Warning", "Configuration saved, but there was an error creating the shortcut.")
             else:
-                messagebox.showinfo("Sucesso", "Configuracao salva com sucesso!")
+                messagebox.showinfo("Success", "Configuration saved successfully!")
         else:
-            self.status_var.set("Erro ao salvar configuracao")
-            messagebox.showerror("Erro", "Nao foi possivel salvar a configuracao do jogo.")
+            self.status_var.set("Error saving configuration")
+            messagebox.showerror("Error", "Could not save the game configuration.")
     
     def validate_required_fields(self):
         """Valida os campos obrigatorios."""
         required_fields = [
-            (self.game_name.get(), "Nome do Jogo"),
-            (self.executable_path.get(), "Executavel do Jogo"),
-            (self.game_process.get(), "Processo do Jogo"),
-            (self.local_dir.get(), "Diretorio Local"),
+            (self.game_name.get(), "Game Name"),
+            (self.executable_path.get(), "Game Executable"),
+            (self.game_process.get(), "Game Process"),
+            (self.local_dir.get(), "Local Directory"),
             (self.cloud_remote.get(), "Cloud Remote"),
-            (self.cloud_dir.get(), "Diretorio Cloud")
+            (self.cloud_dir.get(), "Cloud Directory")
         ]
         
         missing = []
@@ -986,8 +982,8 @@ class QuestConfigView:
                 missing.append(name)
         
         if missing:
-            messagebox.showwarning("Campos Obrigatorios", 
-                                  f"Por favor, preencha os seguintes campos:\n- {'\n- '.join(missing)}")
+            messagebox.showwarning("Required Fields", 
+                                  f"Please fill in the following fields:\n- {'\n- '.join(missing)}")
             return False
         
         return True
@@ -1017,7 +1013,7 @@ class QuestConfigView:
         
     def reset_form(self):
         """Limpa todos os campos do formulario."""
-        if messagebox.askyesno("Confirmar", "Deseja limpar todos os campos?"):
+        if messagebox.askyesno("Confirm", "Do you want to clear all fields?"):
             self.executable_path.set("")
             self.app_id.set("")
             self.game_name.set("")
@@ -1034,12 +1030,9 @@ class QuestConfigView:
             if hasattr(self, 'summary_text'):
                 self.summary_text.configure(state="normal")
                 self.summary_text.delete(1.0, "end")
-                self.summary_text.insert("end", "Clique em 'Atualizar Resumo' para ver as configurações")
+                self.summary_text.insert("end", "Click 'Update Summary' to see the settings")
                 self.summary_text.configure(state="disabled")
-            
-            self.status_var.set("Formulário resetado")
-            
-            # Voltar para o primeiro item
+            self.status_var.set("Form reset")
             self.show_game_info()
 
     def apply_modern_entry_style(self, entry_widget):
@@ -1089,10 +1082,10 @@ class QuestConfigView:
         app_id = self.app_id.get()
         
         if not app_id:
-            messagebox.showwarning("Aviso", "Insira um AppID valido primeiro.")
+            messagebox.showwarning("Warning", "Enter a valid AppID first.")
             return
         
-        self.status_var.set("Consultando API Steam...")
+        self.status_var.set("Querying Steam API...")
         self.root.update_idletasks()
         
         def run_query():
