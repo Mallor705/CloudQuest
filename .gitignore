@@ -2,9 +2,7 @@ profiles/
 build/
 logs/
 __pycache__/
-cloudquest.exe
 create_steam_shortcut.py
-questconfig.exe
 *.log
 *.spec
 .venv/
